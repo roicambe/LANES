@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: lanes_postgis_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lanes
+    ports:
+      - "5432:5432"
+    volumes:
+      - lanes_db_data:/var/lib/postgresql/data
+
+volumes:
+  lanes_db_data:
