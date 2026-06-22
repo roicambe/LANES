@@ -3,7 +3,7 @@
 LANES (Localised Alternative Navigation for Environs under Submersion) is a real-time, flood-adaptive navigation system for commuters in Pasig City. Using NLP to process unstructured text from social media and local reports, it dynamically updates maps to route drivers away from flooded streets, offering a new safety layer during severe weather.
 
 ## Project Structure
-- `/frontend`: Next.js application (using Google Maps API) for the commuter and admin dashboards.
+- `/frontend`: Next.js application (using MapLibre GL JS) for the commuter and admin dashboards.
 - `/backend`: FastAPI application for the API server, database connection (PostgreSQL/PostGIS), and pathfinding service.
 
 ---
@@ -14,7 +14,7 @@ LANES (Localised Alternative Navigation for Environs under Submersion) is a real
 - **Node.js** (v18 or higher)
 - **Python** (3.11 or 3.12 highly recommended). *Note: Avoid Python 3.13+ for now, as heavy machine learning libraries like `spacy` do not have pre-compiled packages for it yet, leading to C-compiler build errors.*
 - **Docker Desktop** (Optional, but recommended for running the local PostGIS spatial database).
-- **Google Cloud API Key** (Required for Google Maps and Google Routes API v2).
+
 
 ---
 
@@ -98,19 +98,8 @@ This starts the database on port `5432` with username `postgres`, password `post
 
 ---
 
-## Google Maps Integration Setup
-This application is configured to use Google Maps for rendering and Google Routes API v2 for pathfinding.
-
-1. **Get an API Key:** Create a project in the Google Cloud Console, enable the **Maps JavaScript API** and **Routes API**, and generate an API key.
-2. **Configure Backend:** Add your key in `backend/.env`:
-   ```env
-   GOOGLE_MAPS_API_KEY="AIzaSyYourKeyHere..."
-   ```
-3. **Automatic Client Loading:** The frontend automatically requests the API key from the backend on load, so you do not need to configure the key in multiple places.
-
----
-
 ## Troubleshooting & Fallback Modes
 - **TypeError: Failed to fetch (Frontend):** Ensure the backend FastAPI server is running on `http://localhost:8000` (e.g. check that uvicorn didn't crash or is listening on a different port).
 - **Database Connection Offline:** If Postgres is not running, the backend logs a warning: `Could not create database tables on startup. Continuing startup...`. The API will remain active, and pathfinding queries will return direct paths without PostGIS detour calculations.
+
 
