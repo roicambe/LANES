@@ -51,3 +51,7 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Documentation
+lanes-documentation.md
+
