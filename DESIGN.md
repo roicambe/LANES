@@ -142,38 +142,85 @@ To prevent automated ingestion errors and mapping hallucinations, raw reports ar
 
 ---
 
-## 4. UI/UX Design Philosophy: Utilitarian Minimalism
+## 4. UI Philosophy: Illustrated Minimalist Spatial System
 
-The frontend is structured around **Utilitarian Minimalism**—accessible functionality optimized for real-world commuter deployment during high-stress disaster conditions.
+LANES follows an **Illustrated Minimalist Spatial Design Philosophy**.
 
-```
-+--------------------------------------------------------------+
-| [O] Origin Location                         [D] Destination  |  <-- Floating Search Bar
-+--------------------------------------------------------------+
-|                                                              |
-|                                                              |
-|                     (S) Start Pin                            |
-|                      \                                       |
-|                       =======🟢 (Safe Route) ====> (E) End   |
-|                      /                                       |
-|                  [ 🔴 RED - Active Flood Zone ]              |  <-- Interactive Map Layer
-|                                                              |
-|                                                              |
-+--------------------------------------------------------------+
-|  🛡️ Bypassed Flooded Streets                                 |
-|  Distance: 4.2 km   |   Duration: 12 mins                    |  <-- Bottom Info Drawer
-|  [ 🟢 Swipe Up for Step-by-Step Directions ]                 |
-+--------------------------------------------------------------+
-```
+The interface is designed for **real-time disaster navigation**, where clarity, speed, and comprehension are more important than visual decoration.
 
-### A. Accessibility Design Parameters (WCAG 2.1)
-* **High-Contrast Typography:** Critical instructions use sans-serif fonts (`Inter`) with a minimum font scale of `16px`. Light gray-on-white text is prohibited to prevent screen glare issues during heavy rains.
-* **Oversized Tap Targets:** All inputs, search panels, and buttons maintain a height of `48px` to `56px` with distinct padding, allowing easy interaction while holding an umbrella or inside a moving vehicle.
-* **Universal Emergency Color Theory:**
-  * 🟢 **Green Vector lines:** Safe, unobstructed driving paths.
-  * 🟡 **Yellow/Orange Polygons:** Moderate flooding (knee-deep); warnings for light vehicles/sedans.
-  * 🔴 **Red Spatial Buffers:** Severe flooding (waist-deep or higher); roads are treated as impassable.
-  * 🔵 **Blue Elements:** Exclusively reserved for permanent water features and municipal brand details.
+The system combines three layers of design:
+
+### 1. Spatial Truth Layer (Map as Reality)
+- The map is the primary source of truth
+- All routing, flood data, and hazards are visualized directly on MapLibre GL
+- No UI element should obstruct map understanding
+- Geographic accuracy is prioritized over visual styling
+
+### 2. Minimal Interaction Layer (UI as Control)
+- The interface is intentionally minimal
+- Only essential controls are shown (origin, destination, route actions)
+- UI components follow a clean, flat, distraction-free design
+- No unnecessary navigation menus or decorative elements
+- All interactions must be executable within 1–2 steps
+
+### 3. Illustration Interpretation Layer (Meaning & Guidance)
+- Illustrations are used to explain system states and complex spatial conditions
+- They act as visual translators, not decoration
+- Used for:
+  - Flood severity explanation
+  - System status (loading, offline, no route found)
+  - User guidance (how to use the system)
+  - Emergency context reinforcement
+
+Illustrations must always support understanding, never distract from map data.
+
+---
+
+## Core Design Principles
+
+### 1. Clarity Under Stress
+The interface must remain understandable in emergency situations such as heavy rain, low visibility, or high cognitive load.
+
+### 2. Map-First Experience
+The map is the core interface. UI and illustrations exist only to enhance spatial understanding.
+
+### 3. Minimal Cognitive Load
+Every screen must be readable within 3 seconds without explanation.
+
+### 4. Illustration-Driven Communication
+Complex system states should be communicated visually using simple, consistent vector-style illustrations.
+
+### 5. Fast Interaction Model
+All critical actions (route input, recalculation, rerouting) must require minimal steps and immediate feedback.
+
+---
+
+## Visual Hierarchy
+
+1. Map Layer → Primary spatial data (routes, floods, hazards)
+2. UI Layer → Controls and navigation input
+3. Illustration Layer → Context, meaning, and system state explanation
+
+---
+
+## Design Style Summary
+
+- Style: Illustrated Minimalism
+- Layout: Spatial-first (map dominant)
+- Components: Minimal, reusable, utility-based (Tailwind)
+- Graphics: Simple SVG-based illustrations only
+- Emotion: Calm, neutral, informative (not decorative)
+- Priority: Speed, clarity, survival-grade usability
+
+---
+
+## Anti-Design Rules (Strict)
+
+- No heavy animations during critical routing
+- No decorative-only UI elements
+- No cluttered dashboards
+- No multi-step forms for emergency actions
+- No visual noise that reduces map clarity
 
 ---
 
