@@ -19,6 +19,7 @@ This document establishes the official coding standards, architectural rules, an
 ### C. Styling & UI Layout
 * **Tailwind Utility Classes:** Use Tailwind CSS utility classes for styling. Avoid inline styles (`style={{...}}`) unless dealing with dynamic heights or custom CSS parameters (like map tiles).
 * **Responsive Design:** Viewports must follow mobile-first responsive grid layouts using Tailwind breakpoints (e.g. `md:flex-row`, `sm:grid-cols-2`).
+* **Iconography Standard:** Use the `lucide-react` library for all interface icons to ensure layout symmetry and visual uniformity.
 
 ---
 

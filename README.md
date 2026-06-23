@@ -62,7 +62,7 @@ Flood alerts are classified into four standard safety thresholds based on vehicl
 ---
 
 ## 📁 Project Directory Structure
-* `/frontend`: Next.js application (using **MapLibre GL JS** and Tailwind CSS) representing the client maps and admin dashboards.
+* `/frontend`: Next.js application (using **MapLibre GL JS**, **Tailwind CSS**, and **Lucide React**) representing the client maps and admin dashboards.
 * `/backend`: FastAPI application (using Python, **spaCy**, **SQLAlchemy**, and **OSRM**) serving the API routes, spatial database, and NLP pipeline.
 
 ---

@@ -39,6 +39,7 @@ graph LR
 * **Framework:** Next.js (App Router, Client-Side Rendering).
 * **Styling Framework:** Tailwind CSS for responsive layouts.
 * **Mapping Engine:** MapLibre GL JS utilizing client-side WebGL vector pipelines.
+* **Iconography:** Lucide React for consistent, lightweight vector-style SVG icons.
 * **Role:** A stateless, interactive spatial dashboard showing the commuting canvas, placing start/end coordinates, and overlaying flood pins and hazard polygons.
 
 ### B. Backend Processing Core (`backend`)
