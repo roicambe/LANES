@@ -35,13 +35,13 @@ graph LR
     FastAPI -- Route Optimization Queries --> OSRM
 ```
 
-### A. Frontend Presentation Shell (`lanes-frontend`)
+### A. Frontend Presentation Shell (`frontend`)
 * **Framework:** Next.js (App Router, Client-Side Rendering).
 * **Styling Framework:** Tailwind CSS for responsive layouts.
 * **Mapping Engine:** MapLibre GL JS utilizing client-side WebGL vector pipelines.
 * **Role:** A stateless, interactive spatial dashboard showing the commuting canvas, placing start/end coordinates, and overlaying flood pins and hazard polygons.
 
-### B. Backend Processing Core (`lanes-backend`)
+### B. Backend Processing Core (`backend`)
 * **Framework:** Python, FastAPI (ASGI server pipeline).
 * **Geospatial ORM:** SQLAlchemy paired with GeoAlchemy2 mapping.
 * **NLP Processing Stack:** spaCy using a custom-trained Bilingual Named Entity Recognition (NER) pipeline.
