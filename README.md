@@ -4,6 +4,15 @@ LANES is a real-time, flood-adaptive alternative navigation platform designed fo
 
 ---
 
+## 📖 Documentation Index
+
+To ensure consistency in development, architectural design, coding standards, and collaborative procedures, please refer to the following guidebooks:
+* **Collaboration & Roles:** [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md) outlines roles, rules, iteration loops, and GIS rules.
+* **Architectural Design:** [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) documents system architecture, schemas, and processing flows.
+* **Coding Standards:** [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md) defines specific TypeScript, Next.js, Python, FastAPI, and Database conventions.
+
+---
+
 ## 🎓 Capstone Project Context
 Developed in partial fulfillment of the requirements for the degree of **Bachelor of Science in Information Technology** at the **College of Computer Studies, Pamantasan ng Lungsod ng Pasig (PLP)**.
 

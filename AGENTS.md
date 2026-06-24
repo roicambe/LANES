@@ -2,6 +2,10 @@
 
 This document establishes the collaborative framework for the development of **LANES (Localised Alternative Navigation for Environs under Submersion)**. It defines the responsibilities, operational boundaries, and iterative development loop between the Human Developer and the AI Code Agent.
 
+> [!IMPORTANT]
+> When executing tasks, the AI Agent must also conform to the architecture in [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) and the coding/syntax guidelines in [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md).
+
+
 ```mermaid
 graph TD
     A[Vibe Coder: Architectural Director] -- Directs Milestones & Traces --> B[AI Code Agent: Syntax & Logic Engine]
@@ -90,15 +94,18 @@ Before proposing any code changes:
 
 ---
 
-## 6. Design Authority
+## 6. Design & Coding Standards Authority
 
-`DESIGN.md` is the architectural source of truth.
+* [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) is the architectural source of truth.
+* [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md) is the coding standards and conventions source of truth.
 
 The AI Agent must:
 * **Follow all architecture decisions** defined in `DESIGN.md`.
-* **Never introduce technologies** not defined in `DESIGN.md` without explicit approval.
+* **Adhere strictly to all syntactic, database, language, and API standards** defined in `STANDARDS.md`.
+* **Never introduce technologies** not defined in `design.md` without explicit approval.
 * **Never alter database architecture** (schemas, fields, relations) without approval.
 * **Never replace mapping, NLP, or routing technologies** without approval.
+
 
 ---
 

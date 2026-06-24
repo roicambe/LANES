@@ -2,6 +2,9 @@
 
 This document establishes the official coding standards, architectural rules, and syntactic constraints enforced across the LANES repository. All developers and AI Code Agents must write code adhering strictly to these directives.
 
+> [!IMPORTANT]
+> All developments must also align with the architectural designs in [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) and the operational rules in [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md).
+
 ---
 
 ## 1. Frontend Development (Next.js & React)

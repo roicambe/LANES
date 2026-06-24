@@ -3,6 +3,9 @@
 
 LANES (Localised Alternative Navigation for Environs under Submersion) is an intelligent, real-time routing platform that dynamically computes safe transit vectors in Pasig City by converting unstructured bilingual flood reports into spatial database barriers.
 
+> [!IMPORTANT]
+> Code implementations of this design must strictly conform to [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md) and comply with instructions/rules defined in [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md).
+
 ---
 
 ## 1. High-Level Architecture (Three-Tier Decoupled Model)
