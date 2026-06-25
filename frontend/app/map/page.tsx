@@ -3,13 +3,11 @@ import MapCanvas from "@/features/map/MapCanvas";
 import { MapProvider } from "@/features/map/MapContext";
 import RoutePanel from "@/features/routing/RoutePanel";
 import FloodOverlay from "@/features/hazards/FloodOverlay";
-import FloatingNav from "@/features/navigation/FloatingNav";
 
 function MapPageContent() {
   return (
     <MapProvider>
       <MapCanvas />
-      <FloatingNav />
       <FloodOverlay />
       <RoutePanel />
     </MapProvider>

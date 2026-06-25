@@ -3,8 +3,9 @@
 
 
 import { useState } from "react";
-
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import { Home, Info, Phone, LogIn, Map as MapIcon } from "lucide-react";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 
@@ -19,6 +20,7 @@ import type { LocationSuggestion } from "@/features/geocoding/types";
 export default function LandingView() {
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const [locationLabel, setLocationLabel] = useState("");
 
@@ -124,33 +126,7 @@ export default function LandingView() {
 
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      <header className="w-full bg-white shadow-sm py-4 px-6 md:px-12 flex justify-between items-center">
-
-        <div className="font-bold text-2xl text-blue-700 tracking-tight">LANES</div>
-
-        <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
-
-          <a href="#about" className="hover:text-blue-600 transition">About</a>
-
-          <a href="#contact" className="hover:text-blue-600 transition">Contact Us</a>
-
-        </nav>
-
-        <div>
-
-          <Button variant="secondary" className="text-sm" onClick={() => router.push("/login")}>
-
-            Admin Login
-
-          </Button>
-
-        </div>
-
-      </header>
-
-
-
-      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-12 max-w-7xl mx-auto w-full">
+      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-12 max-w-7xl mx-auto w-full pt-24">
 
         <div className="flex-1 space-y-6 text-center lg:text-left">
 
