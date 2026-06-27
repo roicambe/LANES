@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import { Home, Info, Phone, LogIn, Map as MapIcon } from "lucide-react";
+import { Home, Info, Phone, LogIn, Map as MapIcon, MapPin, ArrowRight } from "lucide-react";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 
@@ -126,7 +126,7 @@ export default function LandingView() {
 
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-12 max-w-7xl mx-auto w-full pt-24">
+      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-8 lg:gap-12 max-w-7xl mx-auto w-full pt-8 lg:pt-24">
 
         <div className="flex-1 space-y-6 text-center lg:text-left">
 
@@ -150,7 +150,7 @@ export default function LandingView() {
 
             <a href="#about" className="text-blue-600 font-semibold hover:underline">
 
-              Learn more about how LANES works &rarr;
+              Learn more about how LANES works <ArrowRight className="inline-block w-4 h-4 ml-1" />
 
             </a>
 
@@ -194,7 +194,7 @@ export default function LandingView() {
 
                   >
 
-                    {isLoading ? "Getting location..." : "📍 Use My Current Location"}
+                    {isLoading ? "Getting location..." : <><MapPin className="inline-block w-4 h-4 mr-2" /> Use My Current Location</>}
 
                   </Button>
 
@@ -292,7 +292,7 @@ export default function LandingView() {
 
                 <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md">
 
-                  Go to Map &rarr;
+                  Go to Map <ArrowRight className="inline-block w-4 h-4 ml-2" />
 
                 </Button>
 
@@ -308,7 +308,7 @@ export default function LandingView() {
 
 
 
-      <footer className="bg-gray-100 py-8 mt-auto">
+      <footer className="bg-gray-100 py-8 pb-24 sm:pb-8 mt-auto">
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
 

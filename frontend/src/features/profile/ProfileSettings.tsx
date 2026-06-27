@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "../../shared/ui/Card";
-import { Button } from "../../shared/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
+import { Button } from "@/shared/ui/Button";
 
 export default function ProfileSettings() {
   return (

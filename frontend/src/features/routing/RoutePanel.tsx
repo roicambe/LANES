@@ -10,6 +10,8 @@ import {
   Navigation,
   ArrowLeftRight,
   Check,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
@@ -194,7 +196,7 @@ export default function RoutePanel() {
   };
 
   return (
-    <Card className="absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-1.25rem)] overflow-y-auto shadow-xl">
+    <Card className="absolute top-4 left-4 right-4 sm:right-auto z-10 w-auto sm:w-80 max-h-[45vh] sm:max-h-[calc(100vh-1.25rem)] overflow-y-auto shadow-xl transition-all">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-100">
@@ -267,7 +269,7 @@ export default function RoutePanel() {
 
         {routeError && (
           <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
-            <span className="text-lg">⚠</span>
+            <AlertTriangle className="h-5 w-5 shrink-0" />
             <span>{routeError}</span>
           </div>
         )}
@@ -296,7 +298,7 @@ export default function RoutePanel() {
                   : "bg-green-50 text-green-700"
               )}
             >
-              {routeInfo.blocked ? "⚠" : "✅"}
+              {routeInfo.blocked ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
               <span>
                 {routeInfo.blocked
                   ? "May pass through flooded areas"

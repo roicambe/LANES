@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "../../shared/ui/Card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 
 export default function SavedRoutesList() {
   return (
