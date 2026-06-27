@@ -4,7 +4,7 @@
 LANES (Localised Alternative Navigation for Environs under Submersion) is an intelligent, real-time routing platform that dynamically computes safe transit vectors in Pasig City by converting unstructured bilingual flood reports into spatial database barriers.
 
 > [!IMPORTANT]
-> Code implementations of this design must strictly conform to [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md) and comply with instructions/rules defined in [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md).
+> Code implementations of this design must strictly conform to the coding standards and operational rules defined in [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md).
 
 ---
 
@@ -51,6 +51,10 @@ graph LR
 * **NLP Processing Stack:** spaCy using a custom-trained Bilingual Named Entity Recognition (NER) pipeline.
 * **Routing Compute Engine:** Open Source Routing Machine (OSRM) matrix calculations.
 * **Role:** Handles text ingestion, processes Taglish depth phrases into standardized severity scales, queries coordinate geocodes, and serves route calculations.
+
+### C. Project Directory Structure
+* `/frontend`: Next.js application (using **MapLibre GL JS**, **Tailwind CSS**, and **Lucide React**) representing the client maps and admin dashboards.
+* `/backend`: FastAPI application (using Python, **spaCy**, **SQLAlchemy**, and **OSRM**) serving the API routes, spatial database, and NLP pipeline.
 
 ---
 
@@ -103,7 +107,20 @@ erDiagram
 
 ## 3. Data Processing & Spatial Pipeline
 
-This flowchart outlines how raw, unstructured Taglish text is captured, analyzed, validated by local disaster administrators, geocoded, and ultimately injected as physical barriers into the navigation engine.
+The system operates strictly as a software-based solution, avoiding expensive IoT hardware or sensor grids by transforming digital community reports into active geospatial barriers across three computational phases:
+
+```
+[ Unstructured Text Ingestion ]
+             │
+             ▼
+  (Phase 1: Bilingual NLP)  ──► Tokenize Taglish & classify depth severity
+             │
+             ▼
+ (Phase 2: PostGIS Buffer)  ──► Geocode & calculate 50m bounding polygon
+             │
+             ▼
+ (Phase 3: Route Rerouting) ──► Mark flood edge weights as infinity (∞) in OSRM
+```
 
 ```mermaid
 flowchart TD
@@ -141,8 +158,19 @@ To prevent automated ingestion errors and mapping hallucinations, raw reports ar
 2. **Confidence Storing**: The schema stores two distinct numeric validation metrics for every incoming report:
    * `location_confidence`: Named Entity Recognition (NER) output probability rating (value 0.0 to 1.0) indicating coordinate parsing precision.
    * `severity_confidence`: Regex/Keyword depth mapping density rating (value 0.0 to 1.0) indicating Taglish depth phrase matching precision.
-3. **moderation Flow**: 
+3. **Moderation Flow**: 
    $$\text{NLP Parsing} \longrightarrow \text{Confidence Scoring} \longrightarrow \text{DRRM Admin Review Queue}$$
+
+### B. Standardized Flood Severity & Routing Scale
+
+Flood alerts are classified into four standard safety thresholds based on vehicle clearing heights:
+
+| Tier | Severity | Height Benchmark | Taglish Keywords | Routing Behavior |
+| :--- | :--- | :--- | :--- | :--- |
+| ⬜ **White** | **Low / Passable** | `10cm` to `20cm` (Ankle-deep) | *basang-basa, bukton* | Passable. No detour required. |
+| 🟨 **Yellow** | **Moderate** | `21cm` to `50cm` (Knee-deep) | *tuhod, hanggang-tuhod* | Warning issued. Passable for heavy vehicles. |
+| 🟧 **Orange** | **High** | `51cm` to `140cm` (Waist/Chest) | *dibdib, kiwang, bewang* | **Hazardous. Path is blocked in OSRM.** |
+| 🟥 **Red** | **Extreme** | Above `140cm` (Neck-deep / Submerged) | *leeg, lubog, lagpas-tao* | **Impassable. Path is blocked in OSRM.** |
 
 ---
 
@@ -294,5 +322,3 @@ To guarantee the platform runs successfully during weather-induced emergency sce
 To maintain administrative accountability and track disaster database updates:
 * **`moderation_logs`**: Automatically tracks every report moderation event. Stores the `admin_id` of the reviewing officer, the action executed (`approved`, `rejected`, `adjusted`), and the database record timestamp.
 * **`audit_logs`**: Tracks critical state modifications (e.g. system variable updates, bulk avoidance zone changes) to create a tamper-evident administrative timeline.
-
-

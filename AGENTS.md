@@ -1,10 +1,9 @@
 # LANES Development Engine: Agent Roles & Collaboration Protocol
 
-This document establishes the collaborative framework for the development of **LANES (Localised Alternative Navigation for Environs under Submersion)**. It defines the responsibilities, operational boundaries, and iterative development loop between the Human Developer and the AI Code Agent.
+This document establishes the collaborative framework for the development of **LANES (Localised Alternative Navigation for Environs under Submersion)**. It defines the responsibilities, operational boundaries, and iterative development loop between the Human Developer and the AI Code Agent, as well as the coding standards enforced across the repository.
 
 > [!IMPORTANT]
-> When executing tasks, the AI Agent must also conform to the architecture in [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) and the coding/syntax guidelines in [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md).
-
+> The AI Agent MUST read and understand [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) before implementing or proposing any code changes to ensure alignment with the system architecture.
 
 ```mermaid
 graph TD
@@ -97,15 +96,14 @@ Before proposing any code changes:
 ## 6. Design & Coding Standards Authority
 
 * [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) is the architectural source of truth.
-* [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md) is the coding standards and conventions source of truth.
+* This `AGENTS.md` document is the single source of truth for coding standards, rules, and collaborative procedures.
 
 The AI Agent must:
 * **Follow all architecture decisions** defined in `DESIGN.md`.
-* **Adhere strictly to all syntactic, database, language, and API standards** defined in `STANDARDS.md`.
-* **Never introduce technologies** not defined in `design.md` without explicit approval.
+* **Adhere strictly to all syntactic, database, language, and API standards** defined in Section 9 (Coding Standards) of this document.
+* **Never introduce technologies** not defined in `DESIGN.md` without explicit approval.
 * **Never alter database architecture** (schemas, fields, relations) without approval.
 * **Never replace mapping, NLP, or routing technologies** without approval.
-
 
 ---
 
@@ -132,3 +130,41 @@ The AI Agent must:
 * **Preserve route calculation accuracy** by checking full line vectors rather than single points for route hazards.
 * **Consider flood avoidance zones as critical routing constraints** that force route deflections.
 
+---
+
+## 9. Appendix: Coding Standards & Conventions
+
+All developers and AI Code Agents must write code adhering strictly to the following syntactic constraints.
+
+### A. Frontend Development (Next.js & React)
+* **TypeScript Only:** Plain JavaScript (`.js`, `.jsx`) is strictly prohibited. All UI components and utilities must be written in TypeScript (`.ts`, `.tsx`).
+* **Strict Type Safety:** The use of the `any` type is banned. Every variable, component prop, hook, and function parameter must be explicitly typed.
+  * *Bad:* `const handleRoute = (data: any) => {}`
+  * *Good:* `const handleRoute = (data: RouteResponse) => {}`
+* **Reusability:** Components must be kept small, modular, and focused on a single responsibility. Shared components (such as buttons, cards, modals) belong in a dedicated component directory.
+* **Component Types:** Prefer functional components with standard React hooks (`useState`, `useEffect`, `useRef`).
+* **Tailwind Utility Classes:** Use Tailwind CSS utility classes for styling. Avoid inline styles (`style={{...}}`) unless dealing with dynamic heights or custom CSS parameters (like map tiles).
+* **Responsive Design:** Viewports must follow mobile-first responsive grid layouts using Tailwind breakpoints (e.g. `md:flex-row`, `sm:grid-cols-2`).
+* **Iconography Standard:** Use the `lucide-react` library for all interface icons to ensure layout symmetry and visual uniformity.
+
+### B. Backend Development (FastAPI & Python)
+* **Type Hints Required:** Every function signature must contain explicit type hints for both input arguments and return types.
+  * *Bad:* `def get_safe_route(start, end):`
+  * *Good:* `def get_safe_route(start: List[float], end: List[float]) -> Dict[str, Any]:`
+* **Docstrings:** Every module, class, and function must have descriptive Google-style docstrings explaining parameters, logic, and return types.
+* **Pydantic Validation:** All request payloads, response schemas, and external API configurations must use **Pydantic v2** models to validate schema structure, types, and constraints.
+* **Database Models:** Keep database models (`app.models`) cleanly mapped to Pydantic schemas (`app.schemas`) using `ConfigDict(from_attributes=True)`.
+* **Service Layer Architecture:** Keep the endpoint route layer (`app.api`) completely separated from the core business logic. All database checks, NLP executions, and pathfinding queries must live inside a dedicated service module (such as `app.services`).
+
+### C. Database Management (PostgreSQL & PostGIS)
+* **Alembic Migrations Only:** All schema adjustments, database migrations, and table modifications must be executed via Alembic migrations. Direct schema modifications (`CREATE TABLE`, `ALTER TABLE`) performed raw in the DBMS console are forbidden.
+* **Migration Integrity:** Ensure migrations are reversible (having an explicit `upgrade()` and `downgrade()` pipeline).
+* **Strict SRID Enforcement:** Always set and validate spatial coordinate reference systems using `SRID 4326` (GPS longitude/latitude decimal degrees).
+* **Indexed Math:** Ensure all queries checking polygon overlaps or line crossings use GIST indexes and native spatial triggers (e.g. `func.ST_Intersects`).
+
+### D. API Design & Routing
+* **RESTful Naming Conventions:** Endpoints must use resource-based, lowercase nouns. Use proper HTTP request verbs (`GET` for retrieval, `POST` for creation, `PUT` / `PATCH` for updates, `DELETE` for removal).
+  * *Bad:* `/api/v1/getSafeRoute`
+  * *Good:* `POST /api/v1/reports/route`
+* **HTTP Exceptions:** Never let raw errors propagate to the client. Wrap exceptions inside FastAPI's `HTTPException` with clear statuses (e.g. `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`).
+* **Structured Payload:** Standardize validation failure bodies so the frontend client can parse error arrays consistently.

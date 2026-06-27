@@ -4,15 +4,6 @@ LANES is a real-time, flood-adaptive alternative navigation platform designed fo
 
 ---
 
-## 📖 Documentation Index
-
-To ensure consistency in development, architectural design, coding standards, and collaborative procedures, please refer to the following guidebooks:
-* **Collaboration & Roles:** [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md) outlines roles, rules, iteration loops, and GIS rules.
-* **Architectural Design:** [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) documents system architecture, schemas, and processing flows.
-* **Coding Standards:** [`STANDARDS.md`](file:///e:/Files/Documents/GitHub/LANES/STANDARDS.md) defines specific TypeScript, Next.js, Python, FastAPI, and Database conventions.
-
----
-
 ## 🎓 Capstone Project Context
 Developed in partial fulfillment of the requirements for the degree of **Bachelor of Science in Information Technology** at the **College of Computer Studies, Pamantasan ng Lungsod ng Pasig (PLP)**.
 
@@ -26,53 +17,10 @@ Developed in partial fulfillment of the requirements for the degree of **Bachelo
 
 ---
 
-## ⚙️ Core System Concept & Routing Algorithm
+## 📖 Documentation Index
 
-The system operates strictly as a software-based solution, avoiding expensive IoT hardware or sensor grids by transforming digital community reports into active geospatial barriers across three computational phases:
-
-```
-[ Unstructured Text Ingestion ]
-             │
-             ▼
-  (Phase 1: Bilingual NLP)  ──► Tokenize Taglish & classify depth severity
-             │
-             ▼
- (Phase 2: PostGIS Buffer)  ──► Geocode & calculate 50m bounding polygon
-             │
-             ▼
- (Phase 3: Route Rerouting) ──► Mark flood edge weights as infinity (∞) in OSRM
-```
-
-### Phase 1: Bilingual Ingestion & NLP Parsing
-* RawTaglish strings (e.g., *“Baha sa may Caruncho Ave Pasig malapit sa mega market lagpas tuhod na raw”*) are scanned by a custom-trained **Named Entity Recognition (NER)** pipeline using **spaCy**.
-* The parser isolates street-level location tokens (e.g. `Caruncho Ave`) and scans keywords for colloquial depth descriptions to automatically assign a flood severity tier.
-
-### Phase 2: Geocoding & PostGIS Spatial Buffering
-* Parsed street entities are geocoded into precise GPS coordinates `[longitude, latitude]`.
-* Upon admin review and approval, the coordinate point is committed to the PostgreSQL database. The system executes a PostGIS spatial query (`ST_Buffer`) to expand the coordinate point into a **50-meter bounding polygon** covering the surrounding street width.
-
-### Phase 3: Graph Network Routing & Cost Matrix Override
-* The **Open Source Routing Machine (OSRM)** represents the Pasig City road network as a graph of nodes (intersections) and edges (streets).
-* When a commuter requests a route, the backend checks for intersections between the baseline path and active flood polygons. If an intersection is found, OSRM sets the edge weights of the flooded streets to **infinity ($\infty$)**, forcing the engine to calculate a safe alternative detour.
-
----
-
-## 📊 Standardized Flood Severity & Routing Scale
-
-Flood alerts are classified into four standard safety thresholds based on vehicle clearing heights:
-
-| Tier | Severity | Height Benchmark | Taglish Keywords | Routing Behavior |
-| :--- | :--- | :--- | :--- | :--- |
-| ⬜ **White** | **Low / Passable** | `10cm` to `20cm` (Ankle-deep) | *basang-basa, bukton* | Passable. No detour required. |
-| 🟨 **Yellow** | **Moderate** | `21cm` to `50cm` (Knee-deep) | *tuhod, hanggang-tuhod* | Warning issued. Passable for heavy vehicles. |
-| 🟧 **Orange** | **High** | `51cm` to `140cm` (Waist/Chest) | *dibdib, kiwang, bewang* | **Hazardous. Path is blocked in OSRM.** |
-| 🟥 **Red** | **Extreme** | Above `140cm` (Neck-deep / Submerged) | *leeg, lubog, lagpas-tao* | **Impassable. Path is blocked in OSRM.** |
-
----
-
-## 📁 Project Directory Structure
-* `/frontend`: Next.js application (using **MapLibre GL JS**, **Tailwind CSS**, and **Lucide React**) representing the client maps and admin dashboards.
-* `/backend`: FastAPI application (using Python, **spaCy**, **SQLAlchemy**, and **OSRM**) serving the API routes, spatial database, and NLP pipeline.
+* **For AI Agents & Developers:** [`AGENTS.md`](file:///e:/Files/Documents/GitHub/LANES/AGENTS.md) contains all collaboration protocols, operational boundaries, and coding standards. **AI agents must consult this file for interaction rules.**
+* **For System Architecture:** [`DESIGN.md`](file:///e:/Files/Documents/GitHub/LANES/DESIGN.md) serves as the single source of truth for technical design, database schemas, processing flows, and non-functional requirements.
 
 ---
 
