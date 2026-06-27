@@ -1,35 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../shared/ui/Card";
-import { Button } from "../../shared/ui/Button";
-import { Input } from "../../shared/ui/Input";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
+import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
+import { apiClient } from "@/lib/apiClient";
 
 // Helper function to create a 32-point circle approximation for PostGIS Polygon input
 function createBufferPolygon(center: [number, number], radiusInMeters: number = 80): number[][][] {
   const [lng, lat] = center;
   const points = 32;
   const coords: number[][] = [];
-  
+
   const latDegree = radiusInMeters / 111320;
   const lngDegree = radiusInMeters / (111320 * Math.cos((lat * Math.PI) / 180));
-  
+
   for (let i = 0; i <= points; i++) {
     const angle = (i * 2 * Math.PI) / points;
     const pLng = lng + lngDegree * Math.cos(angle);
     const pLat = lat + latDegree * Math.sin(angle);
     coords.push([pLng, pLat]);
   }
-  
+
   return [coords];
 }
 
 export default function FloodOverlay() {
   const [reports, setReports] = useState<any[]>([]);
   const [activeZones, setActiveZones] = useState<any[]>([]);
-  
+
   // New Report Form
   const [reportText, setReportText] = useState("");
   const [reportSource, setReportSource] = useState("direct_user");
@@ -40,16 +39,11 @@ export default function FloodOverlay() {
   // Fetch reports & active avoidance zones from backend
   const fetchData = async () => {
     try {
-      const reportsRes = await fetch(`${BACKEND_URL}/api/v1/reports/`);
-      if (reportsRes.ok) {
-        const data = await reportsRes.json();
-        setReports(data);
-      }
-      const zonesRes = await fetch(`${BACKEND_URL}/api/v1/reports/active-zones`);
-      if (zonesRes.ok) {
-        const data = await zonesRes.json();
-        setActiveZones(data);
-      }
+      const reportsData = await apiClient.get<any[]>('/reports/');
+      setReports(reportsData);
+      
+      const zonesData = await apiClient.get<any[]>('/reports/active-zones');
+      setActiveZones(zonesData);
     } catch (err) {
       console.error("Failed to fetch reports/zones:", err);
     }
@@ -67,33 +61,21 @@ export default function FloodOverlay() {
 
     try {
       // 1. Submit flood report
-      const reportRes = await fetch(`${BACKEND_URL}/api/v1/reports/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          raw_text: reportText,
-          source: reportSource,
-          severity: reportSeverity,
-          geometry: { type: "Point", coordinates: coords },
-        }),
+      const dbReport = await apiClient.post<any>('/reports/', {
+        raw_text: reportText,
+        source: reportSource,
+        severity: reportSeverity,
+        geometry: { type: "Point", coordinates: coords },
       });
-
-      if (!reportRes.ok) throw new Error("Report creation failed");
-      const dbReport = await reportRes.json();
 
       // 2. Submit associated avoidance zone if requested
       if (createZone) {
         const bufferPoly = createBufferPolygon(coords, 100); // 100 meter buffer
-        const zoneRes = await fetch(`${BACKEND_URL}/api/v1/reports/avoidance-zones`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            report_id: dbReport.id,
-            is_active: true,
-            geometry: { type: "Polygon", coordinates: bufferPoly },
-          }),
+        await apiClient.post<any>('/reports/avoidance-zones', {
+          report_id: dbReport.id,
+          is_active: true,
+          geometry: { type: "Polygon", coordinates: bufferPoly },
         });
-        if (!zoneRes.ok) console.error("Failed to create avoidance zone");
       }
 
       setReportText("");

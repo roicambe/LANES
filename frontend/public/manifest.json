@@ -1,0 +1,23 @@
+{
+  "name": "LANES: Localised Alternative Navigation",
+  "short_name": "LANES",
+  "description": "Real-time, flood-adaptive alternative navigation platform designed for commuters in Pasig City.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/lanes-logo/lanes-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/lanes-logo/lanes-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

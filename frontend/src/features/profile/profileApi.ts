@@ -1,4 +1,4 @@
-import { apiClient } from "../../shared/api";
+import { apiClient } from "@/shared/api";
 
 export const profileApi = {
   getProfile: async () => {

@@ -20,7 +20,7 @@ export default function FloatingNav() {
   const isMapPage = pathname === "/map";
 
   return (
-    <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+    <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
       <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-2 py-1.5 transition-all duration-500 ease-in-out">
         <div className="flex items-center gap-0.5 px-3 hidden sm:flex">
           <Image src="/lanes-logo/lanes-logo.svg" alt="L Logo" width={20} height={20} className="h-5 w-auto" />
