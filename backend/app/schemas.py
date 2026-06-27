@@ -201,4 +201,5 @@ class RouteResponse(BaseModel):
     distance: float  # In meters
     duration: float  # In seconds
     avoided_floods: bool  # True if the path had to divert around active flood zones
+    blocked: bool = False  # True if no safe route could be found
 

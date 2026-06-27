@@ -13,7 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { parseCoords } from "@/features/geocoding/geocodingApi";
 import { getRoute, type RouteGeometry, type RouteResult } from "@/features/routing/routingApi";
 
-export type ActivePoint = "start" | "end";
+export type ActivePoint = "start" | "end" | null;
 
 export interface MapPoint {
   coords: [number, number];
@@ -29,12 +29,13 @@ interface MapContextValue {
   isRouting: boolean;
   routeError: string | null;
   setActivePoint: (point: ActivePoint) => void;
-  setStart: (coords: [number, number], label?: string) => void;
-  setEnd: (coords: [number, number], label?: string) => void;
+  setStart: (coords: [number, number] | null, label?: string) => void;
+  setEnd: (coords: [number, number] | null, label?: string) => void;
   setStartLabel: (label: string) => void;
   setEndLabel: (label: string) => void;
   setPointFromMap: (coords: [number, number]) => void;
   clearRoute: () => void;
+  resetAll: () => void;
 }
 
 const MapContext = createContext<MapContextValue | null>(null);
@@ -51,7 +52,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   const [start, setStartState] = useState<MapPoint | null>(null);
   const [end, setEndState] = useState<MapPoint | null>(null);
-  const [activePoint, setActivePoint] = useState<ActivePoint>("start");
+  const [activePoint, setActivePoint] = useState<ActivePoint>(null);
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null);
   const [routeInfo, setRouteInfo] = useState<Omit<RouteResult, "geometry"> | null>(null);
   const [isRouting, setIsRouting] = useState(false);
@@ -75,15 +76,23 @@ export function MapProvider({ children }: { children: ReactNode }) {
     }
   }, [locationParam, typeParam, labelParam]);
 
-  const setStart = useCallback((coords: [number, number], label?: string) => {
-    setStartState({ coords, label: label ?? coordsLabel(coords) });
+  const setStart = useCallback((coords: [number, number] | null, label?: string) => {
+    if (coords === null) {
+      setStartState(null);
+    } else {
+      setStartState({ coords, label: label ?? coordsLabel(coords) });
+    }
     setRouteGeometry(null);
     setRouteInfo(null);
     setRouteError(null);
   }, []);
 
-  const setEnd = useCallback((coords: [number, number], label?: string) => {
-    setEndState({ coords, label: label ?? coordsLabel(coords) });
+  const setEnd = useCallback((coords: [number, number] | null, label?: string) => {
+    if (coords === null) {
+      setEndState(null);
+    } else {
+      setEndState({ coords, label: label ?? coordsLabel(coords) });
+    }
     setRouteGeometry(null);
     setRouteInfo(null);
     setRouteError(null);
@@ -99,6 +108,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   const setPointFromMap = useCallback(
     (coords: [number, number]) => {
+      if (!activePoint) return;
       const label = coordsLabel(coords);
       if (activePoint === "start") {
         setStart(coords, label);
@@ -114,6 +124,13 @@ export function MapProvider({ children }: { children: ReactNode }) {
     setRouteInfo(null);
     setRouteError(null);
   }, []);
+
+  const resetAll = useCallback(() => {
+    setStartState(null);
+    setEndState(null);
+    setActivePoint("start");
+    clearRoute();
+  }, [clearRoute]);
 
   useEffect(() => {
     if (!start || !end) {
@@ -172,6 +189,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setEndLabel,
       setPointFromMap,
       clearRoute,
+      resetAll,
     }),
     [
       start,
@@ -187,6 +205,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setEndLabel,
       setPointFromMap,
       clearRoute,
+      resetAll,
     ]
   );
 

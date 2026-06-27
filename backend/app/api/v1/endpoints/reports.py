@@ -8,7 +8,7 @@ from app.core.database import get_db
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.FloodReportResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.FloodReportResponse, status_code=status.HTTP_201_CREATED)
 def create_report(report: schemas.FloodReportCreate, db: Session = Depends(get_db)):
     """
     Submit a new flood report (raw Taglish text and optional coordinates).
@@ -16,7 +16,7 @@ def create_report(report: schemas.FloodReportCreate, db: Session = Depends(get_d
     return crud.create_flood_report(db=db, report=report)
 
 
-@router.get("/", response_model=List[schemas.FloodReportResponse])
+@router.get("", response_model=List[schemas.FloodReportResponse])
 def read_reports(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Retrieve list of flood reports (paginated).

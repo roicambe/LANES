@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, X } from "lucide-react";
 import { Input } from "./Input";
 import { cn } from "@/lib/utils";
 import { searchLocations } from "@/features/geocoding/geocodingApi";
@@ -11,6 +11,7 @@ interface LocationAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   onSelect: (suggestion: LocationSuggestion) => void;
+  onClear?: () => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -20,6 +21,7 @@ export function LocationAutocomplete({
   value,
   onChange,
   onSelect,
+  onClear,
   placeholder = "Search for a street or place",
   disabled = false,
   className,
@@ -30,6 +32,7 @@ export function LocationAutocomplete({
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipSearchRef = useRef(false);
 
   const fetchSuggestions = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
@@ -53,6 +56,11 @@ export function LocationAutocomplete({
   }, []);
 
   useEffect(() => {
+    if (skipSearchRef.current) {
+      skipSearchRef.current = false;
+      return;
+    }
+
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
@@ -76,6 +84,7 @@ export function LocationAutocomplete({
   }, []);
 
   const handleSelect = (suggestion: LocationSuggestion) => {
+    skipSearchRef.current = true;
     onChange(suggestion.label);
     onSelect(suggestion);
     setIsOpen(false);
@@ -110,10 +119,22 @@ export function LocationAutocomplete({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
+          className={value || isSearching ? "pr-8" : ""}
         />
-        {isSearching && (
+        {isSearching ? (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
-        )}
+        ) : value ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (onClear) onClear();
+              else onChange("");
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
 
       {isOpen && suggestions.length > 0 && (

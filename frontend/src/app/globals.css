@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media (max-width: 640px) {
+  .mapboxgl-ctrl-bottom-right,
+  .maplibregl-ctrl-bottom-right {
+    bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+    right: 8px !important;
+  }
+}
