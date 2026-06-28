@@ -14,8 +14,30 @@ async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
         print("Database tables created or already exist.")
+        
+        # Seed default admin user
+        from sqlalchemy.orm import Session
+        from app.core.database import SessionLocal
+        from app.crud.user import get_user_by_username, create_user
+        from app.schemas.user import UserCreate
+        
+        db = SessionLocal()
+        try:
+            admin_user = get_user_by_username(db, username="admin")
+            if not admin_user:
+                admin_in = UserCreate(
+                    username="admin",
+                    email="admin@lanes.local",
+                    password="admin",
+                    role="admin"
+                )
+                create_user(db, user=admin_in)
+                print("Default admin user created (admin/admin).")
+        finally:
+            db.close()
+
     except Exception as e:
-        print(f"Warning: Could not create database tables on startup ({e}). Continuing startup...")
+        print(f"Warning: Could not create database tables or seed data on startup ({e}). Continuing startup...")
     yield
 
 

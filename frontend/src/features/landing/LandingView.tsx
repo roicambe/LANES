@@ -2,7 +2,7 @@
 
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { Home, Info, Phone, LogIn, Map as MapIcon, MapPin, ArrowRight } from "lucide-react";
@@ -24,6 +24,26 @@ export default function LandingView() {
   const pathname = usePathname();
 
   const [locationLabel, setLocationLabel] = useState("");
+  const [typedText, setTypedText] = useState("");
+  const fullText = "Learn more about LANES";
+
+  useEffect(() => {
+    let i = 0;
+    let pauseCount = 0;
+    const intervalId = setInterval(() => {
+      if (i <= fullText.length) {
+        setTypedText(fullText.substring(0, i));
+        i++;
+      } else {
+        pauseCount++;
+        if (pauseCount > 30) { // pause for ~2.25 seconds before restarting
+          i = 0;
+          pauseCount = 0;
+        }
+      }
+    }, 75);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null);
 
@@ -112,14 +132,11 @@ export default function LandingView() {
 
           </p>
 
-          <div className="pt-4 flex gap-4 justify-center lg:justify-start">
-
-            <a href="/about" className="text-blue-600 font-semibold hover:underline">
-
-              Learn more about how LANES works <ArrowRight className="inline-block w-4 h-4 ml-1" />
-
+          <div className="pt-4 flex gap-4 justify-center lg:justify-start h-8">
+            <a href="/about" className="text-blue-600 font-semibold hover:underline flex items-center">
+              {typedText}
+              <ArrowRight className="inline-block w-4 h-4 ml-1" />
             </a>
-
           </div>
 
         </div>

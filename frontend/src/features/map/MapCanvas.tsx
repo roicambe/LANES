@@ -38,7 +38,8 @@ export default function MapCanvas() {
       style: "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU",
       center: CONSTANTS.DEFAULT_CENTER,
       zoom: 16.5, // Zoom in closer to see building details
-      pitch: 60, // Tilt the camera by 60 degrees to see 3D buildings
+      pitch: 0, // Default to top view
+      maxPitch: 85, // Allow maximum tilt (MapLibre max is 85 degrees)
       bearing: -17.6, // Slightly rotate the camera for a dynamic perspective
       maxBounds: [
         [110.0, 0.0], // Expanded Southwest coordinates to add panning padding
