@@ -55,3 +55,17 @@ Thumbs.db
 # Documentation
 lanes-documentation.md
 
+# Large data files
+data/
+*.mbtiles
+
+# Node modules at root
+node_modules/
+
+# IDE / Tool configs
+.gemini/
+.codex/
+.zed/
+.mcp.json
+opencode.json
+mcporter.json

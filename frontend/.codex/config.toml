@@ -1,3 +1,0 @@
-[mcp_servers.frontendchecklist]
-type = "http"
-url = "https://mcp.frontendchecklist.io"
