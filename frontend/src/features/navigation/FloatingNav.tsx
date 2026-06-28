@@ -4,14 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Home, Info, Phone, LogIn, Map as MapIcon } from "lucide-react";
+import { Home, Info, LogIn, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/map", label: "Map", icon: MapIcon },
-  { href: "/#about", label: "About", icon: Info },
-  { href: "/#contact", label: "Contact Us", icon: Phone },
+  { href: "/about", label: "About", icon: Info },
   { href: "/login", label: "Login", icon: LogIn },
 ] as const;
 

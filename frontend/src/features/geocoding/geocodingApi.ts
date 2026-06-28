@@ -105,3 +105,32 @@ export function parseCoords(value: string): [number, number] | null {
 
   return [lng, lat];
 }
+
+export async function getCurrentLocation(): Promise<[number, number]> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by your browser"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve([position.coords.longitude, position.coords.latitude]),
+      async (error) => {
+        console.warn("Geolocation API failed, falling back to IP-based location:", error.message);
+        try {
+          const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+          if (!res.ok) throw new Error("IP Fallback failed");
+          const data = await res.json();
+          resolve([parseFloat(data.longitude), parseFloat(data.latitude)]);
+        } catch {
+          reject(new Error("Unable to retrieve your location. Please check your location permissions."));
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  });
+}

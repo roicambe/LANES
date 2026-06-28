@@ -17,5 +17,5 @@ export async function getRoute(
   start: [number, number],
   end: [number, number]
 ): Promise<RouteResult> {
-  return apiClient.post<RouteResult>("/api/v1/reports/route", { start, end });
+  return apiClient.post<RouteResult>("/reports/route", { start, end });
 }

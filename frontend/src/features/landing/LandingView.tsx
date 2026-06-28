@@ -14,6 +14,7 @@ import { Button } from "@/shared/ui/Button";
 import { LocationAutocomplete } from "@/shared/ui/LocationAutocomplete";
 
 import type { LocationSuggestion } from "@/features/geocoding/types";
+import { getCurrentLocation } from "@/features/geocoding/geocodingApi";
 
 
 
@@ -32,52 +33,17 @@ export default function LandingView() {
 
 
 
-  const handleUseCurrentLocation = () => {
-
+  const handleUseCurrentLocation = async () => {
     setIsLoading(true);
-
-    if (!navigator.geolocation) {
-
-      alert("Geolocation is not supported by your browser");
-
+    try {
+      const coords = await getCurrentLocation();
+      setSelectedCoords(coords);
+      setLocationLabel("Current Location");
+    } catch (err: any) {
+      alert(err.message || "Unable to retrieve your location");
+    } finally {
       setIsLoading(false);
-
-      return;
-
     }
-
-
-
-    navigator.geolocation.getCurrentPosition(
-
-      (position) => {
-
-        const coords: [number, number] = [
-
-          position.coords.longitude,
-
-          position.coords.latitude,
-
-        ];
-
-        setSelectedCoords(coords);
-
-        setLocationLabel("Current Location");
-
-        setIsLoading(false);
-
-      },
-
-      () => {
-
-        alert("Unable to retrieve your location");
-
-        setIsLoading(false);
-
-      }
-
-    );
-
   };
 
 
@@ -148,7 +114,7 @@ export default function LandingView() {
 
           <div className="pt-4 flex gap-4 justify-center lg:justify-start">
 
-            <a href="#about" className="text-blue-600 font-semibold hover:underline">
+            <a href="/about" className="text-blue-600 font-semibold hover:underline">
 
               Learn more about how LANES works <ArrowRight className="inline-block w-4 h-4 ml-1" />
 
