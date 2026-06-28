@@ -1,0 +1,10 @@
+{
+  "context_servers": {
+    "frontendchecklist": {
+      "source": "custom",
+      "type": "http",
+      "url": "https://mcp.frontendchecklist.io",
+      "headers": {}
+    }
+  }
+}
