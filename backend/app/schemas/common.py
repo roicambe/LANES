@@ -1,0 +1,71 @@
+import struct
+from typing import List
+from pydantic import BaseModel
+
+# ==========================================
+# 1. EWKB Binary Geometry Parsers
+# ==========================================
+
+def parse_ewkb_point(data: bytes) -> List[float]:
+    """
+    Parses a PostGIS EWKB (Extended Well-Known Binary) Point into [longitude, latitude].
+    """
+    byte_order = '<' if data[0] == 1 else '>'
+    geom_type = struct.unpack(f"{byte_order}I", data[1:5])[0]
+    
+    offset = 5
+    # If EWKB has SRID flag (0x20000000)
+    if geom_type & 0x20000000:
+        offset += 4
+        
+    # Read X and Y (8 bytes each, double precision float)
+    x, y = struct.unpack(f"{byte_order}dd", data[offset:offset+16])
+    return [x, y]
+
+
+def parse_ewkb_polygon(data: bytes) -> List[List[List[float]]]:
+    """
+    Parses a PostGIS EWKB (Extended Well-Known Binary) Polygon into a list of coordinate rings.
+    """
+    byte_order = '<' if data[0] == 1 else '>'
+    geom_type = struct.unpack(f"{byte_order}I", data[1:5])[0]
+    
+    offset = 5
+    # If EWKB has SRID flag (0x20000000)
+    if geom_type & 0x20000000:
+        offset += 4
+        
+    num_rings = struct.unpack(f"{byte_order}I", data[offset:offset+4])[0]
+    offset += 4
+    
+    rings = []
+    for _ in range(num_rings):
+        num_points = struct.unpack(f"{byte_order}I", data[offset:offset+4])[0]
+        offset += 4
+        points = []
+        for _ in range(num_points):
+            x, y = struct.unpack(f"{byte_order}dd", data[offset:offset+16])
+            offset += 16
+            points.append([x, y])
+        rings.append(points)
+    return rings
+
+
+# ==========================================
+# 2. GeoJSON Pydantic Helper Schemas
+# ==========================================
+
+class PointGeometry(BaseModel):
+    """
+    GeoJSON Point geometry.
+    """
+    type: str = "Point"
+    coordinates: List[float]  # [longitude, latitude]
+
+
+class PolygonGeometry(BaseModel):
+    """
+    GeoJSON Polygon geometry.
+    """
+    type: str = "Polygon"
+    coordinates: List[List[List[float]]]  # Rings -> Points -> [longitude, latitude]

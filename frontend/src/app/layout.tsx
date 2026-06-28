@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
-import FloatingNav from "@/features/navigation/FloatingNav";
-import MobileNav from "@/features/navigation/MobileNav";
+import NavigationWrapper from "@/features/navigation/NavigationWrapper";
 import Providers from "./providers";
 import OfflineBanner from "@/features/offline/OfflineBanner";
 
@@ -47,13 +46,12 @@ export default function RootLayout({
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sans">
         <OfflineBanner />
-        <FloatingNav />
+        <NavigationWrapper />
         <Providers>
           {children}
         </Providers>
-        <MobileNav />
       </body>
     </html>
   );

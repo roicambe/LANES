@@ -1,21 +1,101 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
+import { apiClient } from "@/lib/apiClient";
+import { Loader2 } from "lucide-react";
 
 export default function LoginForm() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new URLSearchParams();
+      formData.append("username", username);
+      formData.append("password", password);
+
+      return apiClient.post<{ access_token: string }>("/auth/login/access-token", formData.toString(), {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        // We override body in post but because we pass a string, we need to bypass the JSON.stringify in apiClient.
+        // Actually, our apiClient does JSON.stringify by default for POST. Let's use request directly:
+      });
+    },
+    onError: (error: any) => {
+      setErrorMsg(error.message || "Failed to log in. Please check your credentials.");
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("lanes_token", data.access_token);
+      router.push("/admin/reports");
+    },
+  });
+
+  // Custom request for form data to bypass JSON stringify
+  const handleDirectLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Implementation for login
+    setErrorMsg("");
+    
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+      const response = await fetch(`${baseUrl}/auth/login/access-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString(),
+      });
+
+      if (!response.ok) {
+        throw new Error("Incorrect username or password");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("lanes_token", data.access_token);
+      
+      // Determine role by fetching profile
+      const profileResponse = await fetch(`${baseUrl}/auth/test-token`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${data.access_token}` }
+      });
+      
+      if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        if (profile.role === "admin") {
+          router.push("/admin/reports");
+          return;
+        }
+      }
+      
+      // If not an admin, just refresh the profile view
+      window.location.reload();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Login failed");
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleDirectLogin} className="space-y-4">
+      {errorMsg && (
+        <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg font-medium">
+          {errorMsg}
+        </div>
+      )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Email or Username</label>
         <Input
-          type="email"
-          placeholder="you@example.com"
+          type="text"
+          placeholder="admin"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
       </div>
@@ -24,12 +104,27 @@ export default function LoginForm() {
         <Input
           type="password"
           placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <div className="flex justify-end mt-1">
+          <a href="#" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline transition-colors">Forgot password?</a>
+        </div>
       </div>
-      <Button type="submit" className="w-full">
-        Sign In
-      </Button>
+      <div className="pt-2">
+        <Button type="submit" className="w-full">
+          Sign In
+        </Button>
+      </div>
+      <div className="text-center pt-2">
+        <p className="text-sm text-gray-600">
+          Don't have an account?{" "}
+          <a href="#" className="text-blue-600 font-medium hover:text-blue-500 hover:underline transition-colors">
+            Sign up
+          </a>
+        </p>
+      </div>
     </form>
   );
 }

@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Map as MapIcon, Info, LogIn } from "lucide-react";
+import { Home, Map as MapIcon, User, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MOBILE_NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/feed", label: "Feed", icon: Newspaper },
   { href: "/map", label: "Map", icon: MapIcon },
-  { href: "/about", label: "About", icon: Info },
-  { href: "/login", label: "Login", icon: LogIn },
+  { href: "/profile", label: "Profile", icon: User },
 ] as const;
 
 export default function MobileNav() {

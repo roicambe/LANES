@@ -4,14 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Home, Info, LogIn, Map as MapIcon } from "lucide-react";
+import { Home, Map as MapIcon, User, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/feed", label: "Feed", icon: Newspaper },
   { href: "/map", label: "Map", icon: MapIcon },
-  { href: "/about", label: "About", icon: Info },
-  { href: "/login", label: "Login", icon: LogIn },
+  { href: "/profile", label: "Profile", icon: User },
 ] as const;
 
 export default function FloatingNav() {

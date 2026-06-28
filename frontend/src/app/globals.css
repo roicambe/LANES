@@ -22,7 +22,20 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Global Interactive Cursor Fixes */
+@layer base {
+  button, 
+  [role="button"],
+  a {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  button[disabled] {
+    cursor: not-allowed;
+  }
 }
 
 @media (max-width: 640px) {

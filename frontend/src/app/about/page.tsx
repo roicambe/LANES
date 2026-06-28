@@ -1,6 +1,7 @@
-import { Info, Users, Map as MapIcon, Cpu, Construction } from "lucide-react";
+import { Info, Users, Map as MapIcon, Cpu, Construction, ChevronRight } from "lucide-react";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export const metadata = {
   title: "About | LANES",
@@ -12,6 +13,23 @@ export default function AboutPage() {
     <div className="min-h-screen bg-gray-50 pt-8 sm:pt-24 pb-24 sm:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12">
         
+        {/* Breadcrumbs */}
+        <nav className="flex text-sm text-gray-500 mb-4 sm:mb-8" aria-label="Breadcrumb">
+          <ol className="inline-flex items-center space-x-1 md:space-x-3">
+            <li className="inline-flex items-center">
+              <Link href="/" className="inline-flex items-center hover:text-blue-600 transition-colors">
+                Home
+              </Link>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <ChevronRight className="w-4 h-4 mx-1" />
+                <span className="text-gray-400">About</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
         {/* Hero Section */}
         <div className="text-center space-y-4 flex flex-col items-center">
           <Image 
