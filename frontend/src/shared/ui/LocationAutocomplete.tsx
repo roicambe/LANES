@@ -15,6 +15,7 @@ interface LocationAutocompleteProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  renderTopOptions?: React.ReactNode;
 }
 
 export function LocationAutocomplete({
@@ -25,6 +26,7 @@ export function LocationAutocomplete({
   placeholder = "Search for a street or place",
   disabled = false,
   className,
+  renderTopOptions,
 }: LocationAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -114,7 +116,9 @@ export function LocationAutocomplete({
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => suggestions.length > 0 && setIsOpen(true)}
+          onFocus={() => {
+            if (suggestions.length > 0 || renderTopOptions) setIsOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
@@ -137,8 +141,9 @@ export function LocationAutocomplete({
         ) : null}
       </div>
 
-      {isOpen && suggestions.length > 0 && (
+      {isOpen && (suggestions.length > 0 || renderTopOptions) && (
         <ul className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+          {renderTopOptions}
           {suggestions.map((suggestion, index) => (
             <li key={suggestion.id}>
               <button

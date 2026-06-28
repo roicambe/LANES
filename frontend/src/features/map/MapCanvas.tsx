@@ -6,6 +6,7 @@ import type { Map, Marker, MapMouseEvent } from "maplibre-gl";
 import { Loader2, MapPin } from "lucide-react";
 import { CONSTANTS } from "./mapUtils";
 import { useMapContext } from "./MapContext";
+import { LoadingOverlay } from "@/shared/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const ROUTE_SOURCE_ID = "route-line";
@@ -25,7 +26,7 @@ export default function MapCanvas() {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
 
-  const { start, end, routeGeometry, setPointFromMap, activePoint } = useMapContext();
+  const { start, end, routeGeometry, setPointFromMap, activePoint, isPickingOnMap } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);
   setPointFromMapRef.current = setPointFromMap;
 
@@ -220,19 +221,30 @@ export default function MapCanvas() {
     mapRef.current.flyTo({ center: end.coords, zoom: Math.max(mapRef.current.getZoom(), 14), duration: 600 });
   }, [end?.coords[0], end?.coords[1], isLoaded]);
 
+  // Zoom in slightly when picking on map mode is activated
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current || !isPickingOnMap) return;
+    const currentZoom = mapRef.current.getZoom();
+    mapRef.current.flyTo({ zoom: currentZoom + 1, duration: 400 });
+    
+    // Immediately dispatch center so it's available for selection without panning
+    const center = mapRef.current.getCenter();
+    window.dispatchEvent(new CustomEvent("map-center-changed", { detail: [center.lng, center.lat] }));
+  }, [isPickingOnMap, isLoaded]);
+
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full bg-neutral-200" />
 
-      {!isLoaded && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-100/50 backdrop-blur-sm pointer-events-none z-20">
-          <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
-          <p className="text-neutral-600 font-medium animate-pulse">Initializing 3D Map Engine...</p>
-        </div>
-      )}
+      <LoadingOverlay 
+        isVisible={!isLoaded} 
+        message="Initializing 3D Map Engine..." 
+        variant="absolute" 
+        zIndex={20} 
+      />
 
       {/* Center Pin Overlay (for touch device panning) */}
-      {isTouchDevice && activePoint && (
+      {isTouchDevice && isPickingOnMap && activePoint && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full mt-[1.5px] pointer-events-none z-10 drop-shadow-md">
           <svg width="32" height="32" viewBox="0 0 24 24" className="animate-bounce">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill={activePoint === "start" ? "#16a34a" : "#dc2626"} stroke={activePoint === "start" ? "#16a34a" : "#dc2626"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

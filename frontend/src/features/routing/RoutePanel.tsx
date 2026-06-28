@@ -16,9 +16,11 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  X,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 import { LocationAutocomplete } from "@/shared/ui/LocationAutocomplete";
+import { LoadingOverlay } from "@/shared/ui";
 import { cn } from "@/lib/utils";
 import { useMapContext, type ActivePoint } from "@/features/map/MapContext";
 import type { LocationSuggestion } from "@/features/geocoding/types";
@@ -146,6 +148,8 @@ export default function RoutePanel() {
     setStartLabel,
     setEndLabel,
     resetAll,
+    isPickingOnMap,
+    setIsPickingOnMap,
   } = useMapContext();
 
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
@@ -164,18 +168,23 @@ export default function RoutePanel() {
   }, []);
 
   const handlePickOnMapToggle = (target: ActivePoint) => {
-    if (isMobile && activePoint === target && mapCenter) {
+    setActivePoint(target);
+    setIsPickingOnMap(true);
+  };
+
+  const confirmMapLocation = () => {
+    if (activePoint && mapCenter) {
       const label = `${mapCenter[0].toFixed(5)}, ${mapCenter[1].toFixed(5)}`;
-      if (target === "start") {
+      if (activePoint === "start") {
         setStart(mapCenter, label);
         setStartInput(label);
         setActivePoint("end");
       } else {
         setEnd(mapCenter, label);
         setEndInput(label);
+        setActivePoint(null); // Deselect after setting end
       }
-    } else {
-      setActivePoint(target);
+      setIsPickingOnMap(false);
     }
   };
 
@@ -226,8 +235,69 @@ export default function RoutePanel() {
   };
 
   if (isMobile) {
+    if (isPickingOnMap && activePoint) {
+      return (
+        <div className="absolute inset-0 pointer-events-none z-40 flex flex-col justify-between">
+          <div className="p-4 pointer-events-auto">
+            <button
+              onClick={() => {
+                setIsPickingOnMap(false);
+                if (!start && !end) setActivePoint(null);
+              }}
+              className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md text-gray-900 hover:bg-gray-100 border border-gray-300"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="p-4 pointer-events-auto flex justify-center pb-24">
+            <button
+              onClick={confirmMapLocation}
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white rounded-full px-6 py-3 shadow-lg font-bold text-base border border-blue-500 hover:bg-blue-700 transition-all min-w-[200px]"
+            >
+              <Check className="w-5 h-5" />
+              Set {activePoint === "start" ? "Start" : "Destination"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const renderTopOptions = (target: ActivePoint) => (
+      <>
+        <li>
+          <button
+            type="button"
+            className="flex w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-blue-50 transition-colors border-b border-gray-100"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => handlePickOnMapToggle(target)}
+          >
+            <div className="bg-blue-100 p-1.5 rounded-full shrink-0">
+              <Crosshair className="h-4 w-4 text-blue-700" />
+            </div>
+            <span className="flex flex-col justify-center h-7 font-semibold text-blue-700">Choose on Map</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            className="flex w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-blue-50 transition-colors border-b border-gray-100 mb-1"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => handleUseCurrentLocation(target)}
+          >
+            <div className="bg-gray-100 p-1.5 rounded-full shrink-0">
+              <MapPin className="h-4 w-4 text-gray-700" />
+            </div>
+            <span className="flex flex-col justify-center h-7 font-semibold text-gray-800">Use Current Location</span>
+          </button>
+        </li>
+      </>
+    );
+
     return (
       <>
+        <LoadingOverlay isVisible={isRouting} message="Calculating safe route..." />
+        
         {/* Google Maps Style Mobile Top Search Bar */}
         <div className="absolute top-4 left-4 right-4 z-40 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-visible transition-all">
           <div className="flex p-3 pr-2">
@@ -245,12 +315,14 @@ export default function RoutePanel() {
                 onClick={() => setActivePoint("start")}
               >
                 <LocationAutocomplete 
+                  key={`start-${activePoint}`}
                   value={startInput} 
                   onChange={(val) => { setStartInput(val); setStartLabel(val); }}
                   onSelect={(s) => { setStart([s.lng, s.lat], s.label); setStartInput(s.label); setActivePoint("end"); }}
                   onClear={() => { setStart(null, ""); setStartInput(""); setStartLabel(""); }}
                   placeholder="Your location" 
                   className="[&_input]:border-none [&_input]:h-10 [&_input]:bg-transparent [&_input]:text-sm [&_input]:font-medium"
+                  renderTopOptions={renderTopOptions("start")}
                 />
               </div>
               <div 
@@ -258,12 +330,14 @@ export default function RoutePanel() {
                 onClick={() => setActivePoint("end")}
               >
                 <LocationAutocomplete 
+                  key={`end-${activePoint}`}
                   value={endInput} 
                   onChange={(val) => { setEndInput(val); setEndLabel(val); }}
                   onSelect={(s) => { setEnd([s.lng, s.lat], s.label); setEndInput(s.label); }}
                   onClear={() => { setEnd(null, ""); setEndInput(""); setEndLabel(""); }}
                   placeholder="Choose destination" 
                   className="[&_input]:border-none [&_input]:h-10 [&_input]:bg-transparent [&_input]:text-sm [&_input]:font-medium"
+                  renderTopOptions={renderTopOptions("end")}
                 />
               </div>
             </div>
@@ -280,33 +354,6 @@ export default function RoutePanel() {
               ) : null}
             </div>
           </div>
-          
-          {/* Action Row below inputs if an input is actively selected */}
-          {activePoint && (
-            <div className="flex border-t border-gray-100 bg-white p-2 px-3 gap-2 rounded-b-2xl shadow-inner">
-                <button
-                  type="button"
-                  onClick={() => handlePickOnMapToggle(activePoint)}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-semibold transition-all",
-                    mapCenter
-                      ? (activePoint === "start" ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-red-600 text-white border-red-600 shadow-md")
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  )}
-                >
-                  <Crosshair className="h-4 w-4" />
-                  {mapCenter ? "Confirm Location" : "Pick on map"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUseCurrentLocation(activePoint)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2 text-xs font-semibold text-gray-600 bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Use Current
-                </button>
-            </div>
-          )}
         </div>
 
         {/* Mobile Bottom Sheet for Route Summary */}
@@ -391,9 +438,11 @@ export default function RoutePanel() {
 
   // Desktop view
   return (
-    <motion.div
-      drag
-      dragMomentum={false}
+    <>
+      <LoadingOverlay isVisible={isRouting} message="Calculating safe route..." />
+      <motion.div
+        drag
+        dragMomentum={false}
       initial={{ x: 16, y: 16 }}
       className="absolute top-0 left-0 z-40"
     >
@@ -505,13 +554,6 @@ export default function RoutePanel() {
                   onClear={() => { setEnd(null, ""); setEndInput(""); setEndLabel(""); }}
                 />
 
-                {isRouting && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
-                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                    <span>Calculating safe route...</span>
-                  </div>
-                )}
-
                 {routeError && (
                   <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
                     <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -554,5 +596,6 @@ export default function RoutePanel() {
         </AnimatePresence>
       </Card>
     </motion.div>
+    </>
   );
 }

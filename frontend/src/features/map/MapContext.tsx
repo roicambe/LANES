@@ -28,6 +28,8 @@ interface MapContextValue {
   routeInfo: Omit<RouteResult, "geometry"> | null;
   isRouting: boolean;
   routeError: string | null;
+  isPickingOnMap: boolean;
+  setIsPickingOnMap: (value: boolean) => void;
   setActivePoint: (point: ActivePoint) => void;
   setStart: (coords: [number, number] | null, label?: string) => void;
   setEnd: (coords: [number, number] | null, label?: string) => void;
@@ -57,6 +59,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [routeInfo, setRouteInfo] = useState<Omit<RouteResult, "geometry"> | null>(null);
   const [isRouting, setIsRouting] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const [isPickingOnMap, setIsPickingOnMap] = useState(false);
 
   useEffect(() => {
     if (!locationParam) return;
@@ -182,6 +185,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
       routeInfo,
       isRouting,
       routeError,
+      isPickingOnMap,
+      setIsPickingOnMap,
       setActivePoint,
       setStart,
       setEnd,
@@ -199,6 +204,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
       routeInfo,
       isRouting,
       routeError,
+      isPickingOnMap,
+      setIsPickingOnMap,
       setStart,
       setEnd,
       setStartLabel,
