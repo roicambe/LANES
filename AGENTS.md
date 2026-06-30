@@ -141,7 +141,13 @@ All developers and AI Code Agents must write code adhering strictly to the follo
 * **Strict Type Safety:** The use of the `any` type is banned. Every variable, component prop, hook, and function parameter must be explicitly typed.
   * *Bad:* `const handleRoute = (data: any) => {}`
   * *Good:* `const handleRoute = (data: RouteResponse) => {}`
-* **Reusability:** Components must be kept small, modular, and focused on a single responsibility. Shared components (such as buttons, cards, modals) belong in a dedicated component directory.
+* **Feature-Based Architecture:** The frontend is organized by feature domain, not by file type. The `src/` directory follows this structure:
+  * `app/` — Next.js App Router page files only. Each page file imports its feature component and renders it. No business logic lives here.
+  * `features/` — One subdirectory per feature domain (e.g. `admin/`, `map/`, `routing/`, `auth/`). Each domain owns its components, API calls, types, and state hooks.
+  * `shared/ui/` — Reusable, domain-agnostic UI primitives only (e.g. `Button`, `Card`, `Modal`, `Input`). These must have no dependency on any specific feature.
+  * `hooks/` — Shared React custom hooks used across multiple features.
+  * `lib/` — Shared utilities and the central `apiClient.ts`.
+  * `styles/` — Global CSS and Tailwind base styles.
 * **Component Types:** Prefer functional components with standard React hooks (`useState`, `useEffect`, `useRef`).
 * **Tailwind Utility Classes:** Use Tailwind CSS utility classes for styling. Avoid inline styles (`style={{...}}`) unless dealing with dynamic heights or custom CSS parameters (like map tiles).
 * **Responsive Design:** Viewports must follow mobile-first responsive grid layouts using Tailwind breakpoints (e.g. `md:flex-row`, `sm:grid-cols-2`).
@@ -154,7 +160,7 @@ All developers and AI Code Agents must write code adhering strictly to the follo
 * **Docstrings:** Every module, class, and function must have descriptive Google-style docstrings explaining parameters, logic, and return types.
 * **Pydantic Validation:** All request payloads, response schemas, and external API configurations must use **Pydantic v2** models to validate schema structure, types, and constraints.
 * **Database Models:** Keep database models (`app.models`) cleanly mapped to Pydantic schemas (`app.schemas`) using `ConfigDict(from_attributes=True)`.
-* **Service Layer Architecture:** Keep the endpoint route layer (`app.api`) completely separated from the core business logic. All database checks, NLP executions, and pathfinding queries must live inside a dedicated service module (such as `app.services`).
+* **Domain-Based Architecture:** The backend follows a domain-based organizational pattern. Business logic is separated by domain into dedicated service modules inside `app/services/` (e.g. `routing.py`, `admin_service.py`). Each domain's route handler in `app/api/` must remain thin — receiving the request and delegating computation to the matching service module. Database queries belong in `app/crud/` and must not be embedded directly inside route handlers or service logic.
 
 ### C. Database Management (PostgreSQL & PostGIS)
 * **Alembic Migrations Only:** All schema adjustments, database migrations, and table modifications must be executed via Alembic migrations. Direct schema modifications (`CREATE TABLE`, `ALTER TABLE`) performed raw in the DBMS console are forbidden.
