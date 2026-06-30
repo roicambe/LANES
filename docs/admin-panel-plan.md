@@ -68,7 +68,7 @@ All implementations must comply with:
 
 ## Phase 0 — Admin Shell & Navigation (🔴 Immediate)
 
-> **Goal:** Expand the existing sidebar to include all 9 sections. Add "Under Development" placeholder for unready pages. This phase makes the nav complete from day one.
+> **Goal:** Create the shared admin layout with a persistent sidebar, header, and routing structure. All pages that are not yet ready display a "Under Development" placeholder.
 
 **Frontend — [`AdminLayout.tsx`](../frontend/src/features/admin/AdminLayout.tsx)**
 - [x] Expand `navItems` array in `AdminLayout.tsx` to include all 9 sections:
@@ -81,9 +81,9 @@ All implementations must comply with:
   - Audit Trail → `/admin/audit`
   - Data Management → `/admin/data`
   - System Settings → `/admin/settings`
-- [x] Update Lucide icons per section (`Layers`, `FileText`, `Users`, `ShieldCheck`, `ClipboardList`, `Database`, `Settings`)
-- [x] Fix the "Live Map" nav item — was linking to `/` (landing page). Changed to `/admin/map`
-- [x] Fix the redirect in `app/admin/page.tsx` — updated from `/admin/reports` to `/admin/dashboard`
+- [x] Update Lucide icons per section (e.g. `Users`, `ShieldCheck`, `ClipboardList`, `Database`, `Settings`)
+- [x] Fix the "Live Map" nav item — currently links to `/` (landing page). Change to `/admin/map`
+- [x] Fix the redirect in `app/admin/page.tsx` — update from `/admin/reports` to `/admin/dashboard`
 
 **Frontend — New Files**
 - [x] Create `features/admin/UnderDevelopment.tsx` — reusable placeholder component
@@ -96,7 +96,7 @@ All implementations must comply with:
   - `app/admin/audit/page.tsx`
   - `app/admin/data/page.tsx`
   - `app/admin/settings/page.tsx`
-- [x] Apply "Under Development" to: `roles`, `audit`, `data`, `settings` until their phases are built
+- [x] Apply "Under Development" placeholder to: `roles`, `audit`, `data`, `settings` (initially)
 
 ---
 
