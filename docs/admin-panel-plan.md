@@ -10,6 +10,9 @@ All implementations must comply with:
 - **Architecture** defined in [`DESIGN.md`](../DESIGN.md) (Three-tier decoupled model, PostGIS/SRID 4326, spaCy NLP, MapLibre GL JS).
 - **Design Philosophy** from `DESIGN.md` §4: Illustrated Minimalist Spatial System — clarity-first, map-dominant, minimal cognitive load.
 
+> [!IMPORTANT]
+> **AI Collaboration Constraint:** The AI Code Agent MUST explicitly notify and confirm with the Human Developer before starting to build or modify any database models, database schemas, ORM objects, or Alembic migrations.
+
 ---
 
 ## Current State Audit
@@ -58,8 +61,8 @@ All implementations must comply with:
 | **Dashboard** | ❌ Needs stats endpoint | ❌ No | 🔴 Phase 2 |
 | **Active Zones** | ✅ Yes (GET only) | ❌ No | 🟠 Phase 3 |
 | **Live Map** | ✅ Yes | ❌ No | 🟠 Phase 4 |
-| **User Registry** | ❌ No list/update | ❌ No | 🟡 Phase 5 |
-| **Audit Trail** | ❌ No table/endpoints | ❌ No | 🟡 Phase 6 |
+| **User Registry** | ✅ Yes | ✅ Yes | 🟡 Phase 5 |
+| **Audit Trail** | ✅ Yes | ✅ Yes | 🟡 Phase 6 |
 | **Roles** | ❌ No roles table | ❌ No | 🟢 Phase 7 |
 | **Data Management** | ❌ Not started | ❌ No | 🟢 Phase 8 |
 | **System Settings** | ❌ Not started | ❌ No | 🟢 Phase 9 |
@@ -106,23 +109,23 @@ All implementations must comply with:
 > **Backend is fully ready.** This is pure frontend work.
 
 **Backend Tasks**
-- [ ] Add `GET /api/v1/admin/reports/all` endpoint — returns ALL reports (pending + approved + rejected) with pagination and optional `?status=` filter
+- [x] Add `GET /api/v1/admin/reports/all` endpoint — returns ALL reports (pending + approved + rejected) with pagination and optional `?status=` filter
 
 **Frontend Tasks — `features/admin/ReportsPage.tsx` (rename/replace `AdminDashboard.tsx`)**
-- [ ] Build proper tab switcher: **Pending** / **Approved** / **Rejected** / **All**
-- [ ] Add search bar filtering by `raw_text` keyword
-- [ ] Add severity filter dropdown: Low / Medium / High (per `DESIGN.md` §3.B tiers)
-- [ ] Add sort control: Newest / Oldest
-- [ ] Show severity tier color badge per `DESIGN.md` scale:
+- [x] Build proper tab switcher: **Pending** / **Approved** / **Rejected** / **All**
+- [x] Add search bar filtering by `raw_text` keyword
+- [x] Add severity filter dropdown: Low / Medium / High (per `DESIGN.md` §3.B tiers)
+- [x] Add sort control: Newest / Oldest
+- [x] Show severity tier color badge per `DESIGN.md` scale:
   - ⬜ `low` — White / Passable
   - 🟨 `medium` — Yellow / Moderate
   - 🟧 `high` — Orange / Hazardous
   - 🟥 `extreme` — Red / Impassable
-- [ ] Show `source` tag badge (twitter / facebook / user_report / manual)
-- [ ] Show coordinate label or "No coordinates" indicator
-- [ ] Keep Approve / Reject buttons — add loading spinners and success/error toast feedback
-- [ ] Add pagination controls
-- [ ] Update `app/admin/reports/page.tsx` to import `ReportsPage` instead of `AdminDashboard`
+- [x] Show `source` tag badge (twitter / facebook / user_report / manual)
+- [x] Show coordinate label or "No coordinates" indicator
+- [x] Keep Approve / Reject buttons — add loading spinners and success/error toast feedback
+- [x] Add pagination controls
+- [x] Update `app/admin/reports/page.tsx` to import `ReportsPage` instead of `AdminDashboard`
 
 ---
 
@@ -131,25 +134,15 @@ All implementations must comply with:
 > **Backend needs a new stats endpoint. Frontend does not yet exist.**
 
 **Backend Tasks — `app/api/v1/endpoints/admin.py`**
-- [ ] Add `GET /api/v1/admin/dashboard/stats` endpoint (admin-only) returning:
-  ```json
-  {
-    "total_pending_reports": 12,
-    "total_active_zones": 5,
-    "total_approved_today": 3,
-    "total_rejected_today": 1,
-    "total_users": 8,
-    "database_status": "connected"
-  }
-  ```
-- [ ] Add service-layer function in `app/services/` for dashboard aggregation (follow service-layer separation per `AGENTS.md §9.B`)
+- [x] Add `GET /api/v1/admin/dashboard/stats` endpoint (admin-only) returning stats JSON schema.
+- [x] Add service-layer function in `app/services/` for dashboard aggregation (follow service-layer separation per `AGENTS.md §9.B`)
 
 **Frontend Tasks — `features/admin/DashboardPage.tsx`**
-- [ ] Build 4-card metrics grid: Pending Reports, Active Zones, Approved Today, Rejected Today
-- [ ] Add System Health card: database connection status (green/red indicator)
-- [ ] Add "Recent Activity" feed — last 10 approve/reject events with admin user + timestamp
-- [ ] Add Quick Action buttons: "Review Pending Reports" → `/admin/reports`, "View Active Zones" → `/admin/zones`
-- [ ] Update `app/admin/dashboard/page.tsx` to render `DashboardPage`
+- [x] Build 4-card metrics grid: Pending Reports, Active Zones, Approved Today, Rejected Today
+- [x] Add System Health card: database connection status (green/red indicator)
+- [x] Add "Recent Activity" feed — last 10 approve/reject events with admin user + timestamp
+- [x] Add Quick Action buttons: "Review Pending Reports" → `/admin/reports`, "View Active Zones" → `/admin/zones`
+- [x] Update `app/admin/dashboard/page.tsx` to render `DashboardPage`
 
 ---
 
@@ -158,19 +151,19 @@ All implementations must comply with:
 > **Backend GET endpoint exists. Needs deactivation endpoints. Frontend does not exist.**
 
 **Backend Tasks**
-- [ ] Add `PATCH /api/v1/admin/zones/{zone_id}/deactivate` endpoint (sets `is_active = false`)
-- [ ] Add `POST /api/v1/admin/zones/deactivate-bulk` endpoint (accepts `{ "zone_ids": [1, 2, 3] }`)
-- [ ] Add service functions in `app/services/` for zone deactivation logic
+- [x] Add `PATCH /api/v1/admin/zones/{zone_id}/deactivate` endpoint (sets `is_active = false`)
+- [x] Add `POST /api/v1/admin/zones/deactivate-bulk` endpoint (accepts `{ "zone_ids": [1, 2, 3] }`)
+- [x] Add service functions in `app/services/` for zone deactivation logic
 
 **Frontend Tasks — `features/admin/ActiveZonesPage.tsx`**
-- [ ] Build sortable data table of all active zones
-- [ ] Columns: Zone ID, Linked Report ID, Severity (from linked report), Created At, Expires At, Status
-- [ ] Add severity color row highlighting per `DESIGN.md` tier scale
-- [ ] Add individual "Deactivate" button per row (with `ConfirmDialog`)
-- [ ] Add row checkboxes + bulk "Deactivate Selected" action toolbar
-- [ ] Show empty state when no zones are active
-- [ ] Build shared `DataTable.tsx` reusable component (sortable columns, row selection, pagination) in `shared/ui/`
-- [ ] Build shared `ConfirmDialog.tsx` modal in `shared/ui/`
+- [x] Build sortable data table of all active zones
+- [x] Columns: Zone ID, Linked Report ID, Severity (from linked report), Created At, Expires At, Status
+- [x] Add severity color row highlighting per `DESIGN.md` tier scale
+- [x] Add individual "Deactivate" button per row (with `ConfirmDialog`)
+- [x] Add row checkboxes + bulk "Deactivate Selected" action toolbar
+- [x] Show empty state when no zones are active
+- [x] Build shared `DataTable.tsx` reusable component (sortable columns, row selection, pagination) in `shared/ui/`
+- [x] Build shared `ConfirmDialog.tsx` modal in `shared/ui/`
 
 ---
 
@@ -179,15 +172,15 @@ All implementations must comply with:
 > **Backend is ready. Frontend does not exist yet for the admin context.**
 
 **Frontend Tasks — `features/admin/LiveMapPage.tsx`**
-- [ ] Embed MapLibre GL JS map (reuse same `style.json` URL from `MapCanvas.tsx`)
-- [ ] Fetch and overlay all active avoidance zone polygons as filled GeoJSON layers
-- [ ] Color-code polygon fills by severity per `DESIGN.md` §3.B:
+- [x] Embed MapLibre GL JS map (reuse same `style.json` URL from `MapCanvas.tsx`)
+- [x] Fetch and overlay all active avoidance zone polygons as filled GeoJSON layers
+- [x] Color-code polygon fills by severity per `DESIGN.md` §3.B:
   - White (low), Yellow (medium), Orange (high), Red (extreme)
-- [ ] Add floating filter panel (checkboxes to toggle severity levels on/off)
-- [ ] Show a popup on polygon click: Report ID, Raw Text, Severity, Created At, Expires At
-- [ ] Add a map legend card in the corner explaining the severity color scale
-- [ ] Auto-refresh zone data every 30 seconds (use `setInterval` or React Query's `refetchInterval`)
-- [ ] Note: Admin map is **read-only** — no click-to-set-point or routing interaction
+- [x] Add floating filter panel (checkboxes to toggle severity levels on/off)
+- [x] Show a popup on polygon click: Report ID, Raw Text, Severity, Created At, Expires At
+- [x] Add a map legend card in the corner explaining the severity color scale
+- [x] Auto-refresh zone data every 30 seconds (use `setInterval` or React Query's `refetchInterval`)
+- [x] Note: Admin map is **read-only** — no click-to-set-point or routing interaction
 
 ---
 
@@ -196,18 +189,18 @@ All implementations must comply with:
 > **Backend has register only. List/update/deactivate endpoints need to be added.**
 
 **Backend Tasks**
-- [ ] Add `GET /api/v1/admin/users` endpoint — paginated list of all users
-- [ ] Add `PATCH /api/v1/admin/users/{user_id}/activate`
-- [ ] Add `PATCH /api/v1/admin/users/{user_id}/deactivate`
-- [ ] Add `DELETE /api/v1/admin/users/{user_id}` (admin-only, non-self)
+- [x] Add `GET /api/v1/admin/users` endpoint — paginated list of all users
+- [x] Add `PATCH /api/v1/admin/users/{user_id}/activate`
+- [x] Add `PATCH /api/v1/admin/users/{user_id}/deactivate`
+- [x] Add `DELETE /api/v1/admin/users/{user_id}` (admin-only, non-self)
 
 **Frontend Tasks — `features/admin/UsersPage.tsx`**
-- [ ] Data table: Username, Email, Role, Status (Active/Inactive), Created At
-- [ ] Search bar (by username or email)
-- [ ] Role filter dropdown (admin / commuter)
-- [ ] Activate / Deactivate toggle per row (with `ConfirmDialog`)
-- [ ] Delete user button (with `ConfirmDialog`)
-- [ ] Pagination controls
+- [x] Data table: Username, Email, Role, Status (Active/Inactive), Created At
+- [x] Search bar (by username or email)
+- [x] Role filter dropdown (admin / commuter)
+- [x] Activate / Deactivate toggle per row (with `ConfirmDialog`)
+- [x] Delete user button (with `ConfirmDialog`)
+- [x] Pagination controls
 
 ---
 
@@ -219,7 +212,7 @@ All implementations must comply with:
 > Per `AGENTS.md §9.C`: All schema changes must use Alembic `upgrade()` / `downgrade()`. No raw SQL.
 
 **Backend Tasks**
-- [ ] Create Alembic migration for `audit_logs` table:
+- [x] Create Alembic migration for `audit_logs` table:
   ```
   id            INTEGER PK
   admin_id      INTEGER FK → users.id
@@ -230,22 +223,22 @@ All implementations must comply with:
   ip_address    VARCHAR(45) (nullable)
   created_at    TIMESTAMP
   ```
-- [ ] Create `AuditLog` SQLAlchemy model in `app/models/`
-- [ ] Create `AuditLogResponse` Pydantic schema in `app/schemas/`
-- [ ] Create `crud.create_audit_log()` helper in `app/crud/`
-- [ ] Integrate audit log writes into:
+- [x] Create `AuditLog` SQLAlchemy model in `app/models/`
+- [x] Create `AuditLogResponse` Pydantic schema in `app/schemas/`
+- [x] Create `crud.create_audit_log()` helper in `app/crud/`
+- [x] Integrate audit log writes into:
   - `auth.py` login endpoint → action `LOGIN`
   - `admin.py` approve endpoint → action `APPROVE_REPORT`
   - `admin.py` reject endpoint → action `REJECT_REPORT`
   - Zone deactivation endpoints → action `DEACTIVATE_ZONE`
   - User activate/deactivate → action `UPDATE_USER`
-- [ ] Add `GET /api/v1/admin/audit-logs` with query filters: `?user_id=`, `?action_type=`, `?date_from=`, `?date_to=`, `?limit=`, `?skip=`
+- [x] Add `GET /api/v1/admin/audit-logs` with query filters: `?user_id=`, `?action_type=`, `?date_from=`, `?date_to=`, `?limit=`, `?skip=`
 
 **Frontend Tasks — `features/admin/AuditTrailPage.tsx`**
-- [ ] Chronological log table: Timestamp, Admin User, Action Type, Target, IP Address
-- [ ] Filter panel: date range picker, action type dropdown, admin user selector
-- [ ] Search by action keyword
-- [ ] "Export to CSV" button
+- [x] Chronological log table: Timestamp, Admin User, Action Type, Target, IP Address
+- [x] Filter panel: date range picker, action type dropdown, admin user selector
+- [x] Search by action keyword
+- [x] "Export to CSV" button
 
 ---
 

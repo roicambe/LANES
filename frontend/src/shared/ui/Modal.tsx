@@ -20,7 +20,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       />
       
       {/* Dialog */}
-      <div className="relative z-10 w-full max-w-md bg-white rounded-xl shadow-2xl p-6 transform scale-100 transition-all">
+      <div className="relative z-10 w-full max-w-md bg-white text-gray-900 rounded-xl shadow-2xl p-6 transform scale-100 transition-all">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button 

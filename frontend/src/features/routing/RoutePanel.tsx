@@ -58,7 +58,7 @@ function DesktopPointSelector({
   onUseCurrent,
   onClear,
 }: {
-  point: ActivePoint;
+  point: "start" | "end";
   label: string;
   placeholder: string;
   isActive: boolean;
@@ -443,9 +443,9 @@ export default function RoutePanel() {
       <motion.div
         drag
         dragMomentum={false}
-      initial={{ x: 16, y: 16 }}
-      className="absolute top-0 left-0 z-40"
-    >
+        initial={{ x: 16, y: 16 }}
+        className="absolute top-0 left-0 z-40 cursor-move"
+      >
       <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)]">
         <CardHeader className="pb-3 pt-4">
           <div className="flex items-center justify-between">

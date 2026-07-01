@@ -1,5 +1,5 @@
-from typing import List, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Any, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -26,6 +26,7 @@ def get_pending_reports(
 @router.post("/reports/{report_id}/approve", response_model=schemas.FloodReportResponse)
 def approve_report(
     report_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_admin),
 ) -> Any:
@@ -64,12 +65,32 @@ def approve_report(
         )
         crud.create_flood_avoidance_zone(db, zone=zone_in)
 
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="APPROVE_REPORT",
+            target_table="flood_reports",
+            target_id=report.id,
+            metadata_json={
+                "report_id": report.id,
+                "severity": report.severity,
+                "detour_generated": {
+                    "has_geometry": bool(response_report.geometry)
+                }
+            },
+            ip_address=client_ip
+        )
+    )
+
     return report
 
 
 @router.post("/reports/{report_id}/reject", response_model=schemas.FloodReportResponse)
 def reject_report(
     report_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_admin),
 ) -> Any:
@@ -81,4 +102,261 @@ def reject_report(
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     
-    return crud.update_flood_report_status(db, report_id=report_id, status="rejected")
+    updated_report = crud.update_flood_report_status(db, report_id=report_id, status="rejected")
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="REJECT_REPORT",
+            target_table="flood_reports",
+            target_id=report_id,
+            metadata_json={"report_id": report_id, "reason": "Admin manual rejection"},
+            ip_address=client_ip
+        )
+    )
+    return updated_report
+
+
+@router.get("/reports/all", response_model=schemas.FloodReportsPaginatedResponse)
+def get_all_reports(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+    skip: int = 0,
+    limit: int = 10,
+    status: Optional[str] = None,
+    severity: Optional[str] = None,
+    search: Optional[str] = None,
+    sort_by: str = "newest",
+) -> Any:
+    """
+    Retrieve all flood reports with pagination, filtering, and search.
+    Requires admin privileges.
+    """
+    reports, total = crud.get_all_flood_reports_filtered(
+        db=db,
+        skip=skip,
+        limit=limit,
+        status=status,
+        severity=severity,
+        search=search,
+        sort_by=sort_by
+    )
+    return {"reports": reports, "total": total}
+
+
+@router.get("/dashboard/stats", response_model=schemas.AdminDashboardStats)
+def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Retrieve aggregated metrics for the admin dashboard.
+    Requires admin privileges.
+    """
+    return crud.get_admin_dashboard_stats(db=db)
+
+
+@router.get("/zones/all", response_model=schemas.FloodAvoidanceZonesPaginatedResponse)
+def get_all_zones(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+    skip: int = 0,
+    limit: int = 10,
+    active_only: bool = False,
+) -> Any:
+    """
+    Retrieve all flood avoidance zones (detours) with pagination.
+    Requires admin privileges.
+    """
+    zones, total = crud.get_all_avoidance_zones_filtered(
+        db=db,
+        skip=skip,
+        limit=limit,
+        active_only=active_only
+    )
+    return {"zones": zones, "total": total}
+
+
+@router.patch("/zones/{zone_id}/deactivate", response_model=schemas.FloodAvoidanceZoneResponse)
+def deactivate_zone(
+    zone_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Deactivate a single flood avoidance zone (detour).
+    Requires admin privileges.
+    """
+    zone = crud.deactivate_flood_avoidance_zone(db=db, zone_id=zone_id)
+    if not zone:
+        raise HTTPException(status_code=404, detail="Avoidance zone not found")
+
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="DEACTIVATE_ZONE",
+            target_table="flood_avoidance_zones",
+            target_id=zone_id,
+            metadata_json={"zone_id": zone_id},
+            ip_address=client_ip
+        )
+    )
+    return zone
+
+
+@router.post("/zones/deactivate-bulk")
+def deactivate_zones_bulk(
+    payload: schemas.AvoidanceZoneDeactivateBulkRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Deactivate multiple flood avoidance zones (detours) in bulk.
+    Requires admin privileges.
+    """
+    count = crud.deactivate_flood_avoidance_zones_bulk(db=db, zone_ids=payload.zone_ids)
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="DEACTIVATE_ZONES_BULK",
+            target_table="flood_avoidance_zones",
+            target_id=None,
+            metadata_json={"zone_ids": payload.zone_ids, "count": count},
+            ip_address=client_ip
+        )
+    )
+    return {"message": f"Successfully deactivated {count} avoidance zones", "count": count}
+
+
+@router.get("/users", response_model=schemas.UsersPaginatedResponse)
+def get_admin_users(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+    skip: int = 0,
+    limit: int = 10,
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+) -> Any:
+    """
+    Retrieve all users with filtering, search, and pagination.
+    Requires admin privileges.
+    """
+    users, total = crud.get_users_filtered(
+        db=db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        role=role
+    )
+    return {"users": users, "total": total}
+
+
+@router.patch("/users/{user_id}/status", response_model=schemas.UserResponse)
+def update_admin_user_status(
+    user_id: int,
+    payload: schemas.UserStatusUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Toggle a user's active status (activate/deactivate).
+    Requires admin privileges.
+    """
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot change your own active status")
+    
+    user = crud.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    previous_status = "active" if user.is_active else "disabled"
+    new_status = "active" if payload.is_active else "disabled"
+
+    updated_user = crud.update_user_status(db=db, user_id=user_id, is_active=payload.is_active)
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="UPDATE_USER_STATUS",
+            target_table="users",
+            target_id=user_id,
+            metadata_json={
+                "target_user_id": user_id,
+                "target_username": user.username,
+                "previous_status": previous_status,
+                "new_status": new_status,
+                "reason": "Admin status toggle"
+            },
+            ip_address=client_ip
+        )
+    )
+    return updated_user
+
+
+@router.delete("/users/{user_id}")
+def delete_admin_user(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Delete a user account.
+    Requires admin privileges. Cannot delete yourself.
+    """
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own admin account")
+    
+    user = crud.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    success = crud.delete_user(db=db, user_id=user_id)
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="DELETE_USER",
+            target_table="users",
+            target_id=user_id,
+            metadata_json={
+                "target_user_id": user_id,
+                "target_username": user.username
+            },
+            ip_address=client_ip
+        )
+    )
+    return {"message": "User deleted successfully"}
+
+
+@router.get("/audit-logs", response_model=schemas.AuditLogsPaginatedResponse)
+def get_audit_trail(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+    skip: int = 0,
+    limit: int = 50,
+    action_type: Optional[str] = None,
+    admin_id: Optional[int] = None,
+) -> Any:
+    """
+    Retrieve system action audit logs.
+    Requires admin privileges.
+    """
+    logs, total = crud.get_audit_logs(
+        db=db,
+        skip=skip,
+        limit=limit,
+        action_type=action_type,
+        admin_id=admin_id,
+    )
+    return {"logs": logs, "total": total}

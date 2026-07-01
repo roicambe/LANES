@@ -71,3 +71,107 @@ def create_flood_avoidance_zone(db: Session, zone: schemas.FloodAvoidanceZoneCre
     db.commit()
     db.refresh(db_zone)
     return db_zone
+
+
+def get_all_flood_reports_filtered(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[str] = None,
+    severity: Optional[str] = None,
+    search: Optional[str] = None,
+    sort_by: str = "newest",
+) -> tuple[List[models.FloodReport], int]:
+    """
+    Retrieve all flood reports matching filter criteria, with pagination and search.
+    Returns a tuple of (reports, total_count).
+    """
+    query = db.query(models.FloodReport)
+
+    if status and status != "all":
+        query = query.filter(models.FloodReport.status == status)
+    if severity and severity != "all":
+        query = query.filter(models.FloodReport.severity == severity)
+    if search:
+        query = query.filter(models.FloodReport.raw_text.ilike(f"%{search}%"))
+
+    if sort_by == "oldest":
+        query = query.order_by(models.FloodReport.created_at.asc())
+    else:
+        query = query.order_by(models.FloodReport.created_at.desc())
+
+    total = query.count()
+    reports = query.offset(skip).limit(limit).all()
+    return reports, total
+
+
+def get_admin_dashboard_stats(db: Session) -> dict:
+    """
+    Get aggregated dashboard stats for administrators.
+    """
+    from datetime import datetime, time
+    now = datetime.utcnow()
+    start_of_today = datetime.combine(now.date(), time.min)
+
+    total_pending = db.query(models.FloodReport).filter(models.FloodReport.status == "pending").count()
+    
+    total_active_zones = db.query(models.FloodAvoidanceZone).filter(
+        models.FloodAvoidanceZone.is_active == True,
+        (models.FloodAvoidanceZone.expires_at == None) | (models.FloodAvoidanceZone.expires_at > func.now())
+    ).count()
+
+    total_approved_today = db.query(models.FloodReport).filter(
+        models.FloodReport.status == "approved",
+        models.FloodReport.updated_at >= start_of_today
+    ).count()
+
+    total_rejected_today = db.query(models.FloodReport).filter(
+        models.FloodReport.status == "rejected",
+        models.FloodReport.updated_at >= start_of_today
+    ).count()
+
+    total_users = db.query(models.User).count()
+
+    return {
+        "total_pending_reports": total_pending,
+        "total_active_zones": total_active_zones,
+        "total_approved_today": total_approved_today,
+        "total_rejected_today": total_rejected_today,
+        "total_users": total_users,
+        "database_status": "connected"
+    }
+
+
+def deactivate_flood_avoidance_zone(db: Session, zone_id: int) -> Optional[models.FloodAvoidanceZone]:
+    db_zone = db.query(models.FloodAvoidanceZone).filter(models.FloodAvoidanceZone.id == zone_id).first()
+    if db_zone:
+        db_zone.is_active = False
+        db.commit()
+        db.refresh(db_zone)
+    return db_zone
+
+
+def deactivate_flood_avoidance_zones_bulk(db: Session, zone_ids: List[int]) -> int:
+    result = db.query(models.FloodAvoidanceZone).filter(models.FloodAvoidanceZone.id.in_(zone_ids)).update(
+        {"is_active": False}, synchronize_session=False
+    )
+    db.commit()
+    return result
+
+
+def get_all_avoidance_zones_filtered(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    active_only: bool = False
+) -> tuple[List[models.FloodAvoidanceZone], int]:
+    query = db.query(models.FloodAvoidanceZone)
+    if active_only:
+        query = query.filter(
+            models.FloodAvoidanceZone.is_active == True,
+            (models.FloodAvoidanceZone.expires_at == None) | (models.FloodAvoidanceZone.expires_at > func.now())
+        )
+    
+    total = query.count()
+    zones = query.order_by(models.FloodAvoidanceZone.created_at.desc()).offset(skip).limit(limit).all()
+    return zones, total

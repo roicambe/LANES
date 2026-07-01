@@ -1,10 +1,5 @@
-import UnderDevelopment from "@/features/admin/UnderDevelopment";
+import ActiveZonesPage from "@/features/admin/ActiveZonesPage";
 
-export default function ActiveZonesPage() {
-  return (
-    <UnderDevelopment
-      sectionName="Active Zones"
-      description="A sortable table of all active flood avoidance zones with bulk deactivation controls will be displayed here."
-    />
-  );
+export default function Page() {
+  return <ActiveZonesPage />;
 }
