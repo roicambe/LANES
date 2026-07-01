@@ -12,12 +12,48 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 const ROUTE_SOURCE_ID = "route-line";
 const ROUTE_LAYER_ID = "route-line-layer";
 
+const OSM_FALLBACK_STYLE = {
+  version: 8,
+  sources: {
+    osm: {
+      type: "raster",
+      tiles: [
+        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      ],
+      tileSize: 256,
+      attribution: "&copy; OpenStreetMap contributors"
+    }
+  },
+  layers: [
+    {
+      id: "osm-tiles",
+      type: "raster",
+      source: "osm",
+      minzoom: 0,
+      maxzoom: 19
+    }
+  ]
+};
+
+const SEVERITY_COLORS: Record<string, string> = {
+  low: "#10b981",      // Green
+  medium: "#f59e0b",   // Amber
+  high: "#f97316",     // Orange
+  extreme: "#ef4444",  // Red
+};
+
 export default function MapCanvas() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const startMarkerRef = useRef<Marker | null>(null);
   const endMarkerRef = useRef<Marker | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [mapStyle, setMapStyle] = useState<any>(
+    "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU"
+  );
+  const [usingFallback, setUsingFallback] = useState(false);
 
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
@@ -31,11 +67,29 @@ export default function MapCanvas() {
   setPointFromMapRef.current = setPointFromMap;
 
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!mapContainerRef.current) return;
+
+    let fallbackTimeout: NodeJS.Timeout;
+    let didFail = false;
+
+    const handleFailure = (reason: string) => {
+      if (didFail || usingFallback) return;
+      didFail = true;
+      console.warn(`Map load failed (${reason}). Switching to OpenStreetMap fallback.`);
+      setUsingFallback(true);
+      setMapStyle(OSM_FALLBACK_STYLE);
+    };
+
+    // If style hasn't loaded successfully in 8 seconds, fall back
+    fallbackTimeout = setTimeout(() => {
+      if (!isLoaded) {
+        handleFailure("Timeout waiting for style to load");
+      }
+    }, 8000);
 
     const mapInstance = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU",
+      style: mapStyle,
       center: CONSTANTS.DEFAULT_CENTER,
       zoom: 16.5, // Initial zoom level (street level)
       maxZoom: 20, // Allow zooming in close to buildings
@@ -62,7 +116,20 @@ export default function MapCanvas() {
       "bottom-right"
     );
 
+    mapInstance.on("error", (e) => {
+      const errMsg = (e.message || (e.error && e.error.message) || "").toLowerCase();
+      // Check if it's a style-related load failure (fatal)
+      const isStyleError = errMsg.includes("style") || 
+                           errMsg.includes("fetch") || 
+                           errMsg.includes("failed to fetch") || 
+                           errMsg.includes("ajax");
+      if (isStyleError && !isLoaded) {
+        handleFailure(errMsg || "MapLibre AJAX or source loading error");
+      }
+    });
+
     mapInstance.on("load", () => {
+      clearTimeout(fallbackTimeout);
       mapRef.current = mapInstance;
 
       // 1. Add Philippines Border Line
@@ -131,14 +198,16 @@ export default function MapCanvas() {
     });
 
     return () => {
+      clearTimeout(fallbackTimeout);
       startMarkerRef.current?.remove();
       endMarkerRef.current?.remove();
       startMarkerRef.current = null;
       endMarkerRef.current = null;
       mapInstance.remove();
       mapRef.current = null;
+      setIsLoaded(false);
     };
-  }, []);
+  }, [mapStyle]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
@@ -213,6 +282,76 @@ export default function MapCanvas() {
     mapRef.current.getCanvas().style.cursor = "crosshair";
   }, [isLoaded]);
 
+  // Poll and render active flood avoidance zone polygons on the commuter map
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    const fetchAndDrawActiveZones = async () => {
+      try {
+        const response = await fetch("/api/v1/reports/active-zones");
+        if (!response.ok) throw new Error("Failed to fetch active zones");
+        const zones = await response.json();
+
+        // Remove existing sources/layers if they exist
+        if (map.getLayer("active-zones-layer")) map.removeLayer("active-zones-layer");
+        if (map.getLayer("active-zones-outline")) map.removeLayer("active-zones-outline");
+        if (map.getSource("active-zones-source")) map.removeSource("active-zones-source");
+
+        const features = zones.map((zone: any) => {
+          const severity = zone.severity || "medium";
+          const color = SEVERITY_COLORS[severity] || "#f59e0b";
+          return {
+            type: "Feature",
+            properties: {
+              id: zone.id,
+              severity: severity.toUpperCase(),
+              color: color,
+            },
+            geometry: zone.geometry
+          };
+        });
+
+        map.addSource("active-zones-source", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: features
+          }
+        });
+
+        map.addLayer({
+          id: "active-zones-layer",
+          type: "fill",
+          source: "active-zones-source",
+          paint: {
+            "fill-color": ["get", "color"],
+            "fill-opacity": 0.4,
+          }
+        });
+
+        map.addLayer({
+          id: "active-zones-outline",
+          type: "line",
+          source: "active-zones-source",
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": 2
+          }
+        });
+      } catch (err) {
+        console.error("Failed to load active zones on commuter map:", err);
+      }
+    };
+
+    fetchAndDrawActiveZones();
+    const interval = setInterval(fetchAndDrawActiveZones, 30000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isLoaded]);
+
   useEffect(() => {
     if (!isLoaded || !mapRef.current || !start) return;
     mapRef.current.flyTo({ center: start.coords, zoom: Math.max(mapRef.current.getZoom(), 14), duration: 600 });
@@ -237,6 +376,12 @@ export default function MapCanvas() {
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full bg-neutral-200" />
+
+      {usingFallback && (
+        <div className="absolute top-20 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 z-30 bg-amber-500/95 text-white text-xs md:text-sm px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 backdrop-blur-sm animate-pulse max-w-md pointer-events-auto border border-amber-400/20 font-medium">
+          <span>⚠️ MapTiler tiles blocked or offline. Switched to OpenStreetMap fallback.</span>
+        </div>
+      )}
 
       <LoadingOverlay
         isVisible={!isLoaded}

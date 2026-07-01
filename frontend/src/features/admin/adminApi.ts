@@ -1,5 +1,186 @@
-import { apiClient } from "@/shared/api";
+import { apiClient } from "@/lib/apiClient";
 
-export async function approveReport(reportId: number) {
-  // Call to FastAPI backend to approve a queued report
+export interface PointGeometry {
+  type: "Point";
+  coordinates: [number, number];
+}
+
+export interface FloodReport {
+  id: number;
+  source: string;
+  raw_text: string;
+  severity: "low" | "medium" | "high" | "extreme";
+  geometry: PointGeometry | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedReportsResponse {
+  reports: FloodReport[];
+  total: number;
+}
+
+export interface DashboardStats {
+  total_pending_reports: number;
+  total_active_zones: number;
+  total_approved_today: number;
+  total_rejected_today: number;
+  total_users: number;
+  database_status: string;
+}
+
+export interface GetReportsOptions {
+  page: number;
+  limit: number;
+  status?: string;
+  severity?: string;
+  search?: string;
+  sortBy?: string;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  return apiClient.get<DashboardStats>("/admin/dashboard/stats");
+}
+
+export async function getReports(options: GetReportsOptions): Promise<PaginatedReportsResponse> {
+  const skip = (options.page - 1) * options.limit;
+  const params = new URLSearchParams();
+  params.append("skip", skip.toString());
+  params.append("limit", options.limit.toString());
+  
+  if (options.status && options.status !== "all") {
+    params.append("status", options.status);
+  }
+  if (options.severity && options.severity !== "all") {
+    params.append("severity", options.severity);
+  }
+  if (options.search) {
+    params.append("search", options.search);
+  }
+  if (options.sortBy) {
+    params.append("sort_by", options.sortBy);
+  }
+
+  return apiClient.get<PaginatedReportsResponse>(`/admin/reports/all?${params.toString()}`);
+}
+
+export async function approveReport(reportId: number): Promise<FloodReport> {
+  return apiClient.post<FloodReport>(`/admin/reports/${reportId}/approve`, {});
+}
+
+export async function rejectReport(reportId: number): Promise<FloodReport> {
+  return apiClient.post<FloodReport>(`/admin/reports/${reportId}/reject`, {});
+}
+
+export interface PolygonGeometry {
+  type: "Polygon";
+  coordinates: [number, number][][];
+}
+
+export interface AvoidanceZone {
+  id: number;
+  report_id: number;
+  geometry: PolygonGeometry;
+  is_active: boolean;
+  created_at: string;
+  expires_at: string | null;
+}
+
+export interface PaginatedZonesResponse {
+  zones: AvoidanceZone[];
+  total: number;
+}
+
+export async function getZones(page: number, limit: number, activeOnly: boolean = false): Promise<PaginatedZonesResponse> {
+  const skip = (page - 1) * limit;
+  return apiClient.get<PaginatedZonesResponse>(`/admin/zones/all?skip=${skip}&limit=${limit}&active_only=${activeOnly}`);
+}
+
+export async function deactivateZone(zoneId: number): Promise<AvoidanceZone> {
+  return apiClient.request<AvoidanceZone>(`/admin/zones/${zoneId}/deactivate`, { method: "PATCH" });
+}
+
+export async function deactivateZonesBulk(zoneIds: number[]): Promise<{ message: string; count: number }> {
+  return apiClient.post<{ message: string; count: number }>("/admin/zones/deactivate-bulk", { zone_ids: zoneIds });
+}
+
+export interface UserRecord {
+  id: number;
+  username: string;
+  email: string;
+  role: "admin" | "commuter";
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PaginatedUsersResponse {
+  users: UserRecord[];
+  total: number;
+}
+
+export async function getUsers(
+  page: number,
+  limit: number,
+  search?: string,
+  role?: string
+): Promise<PaginatedUsersResponse> {
+  const skip = (page - 1) * limit;
+  const params = new URLSearchParams();
+  params.append("skip", skip.toString());
+  params.append("limit", limit.toString());
+  if (search) params.append("search", search);
+  if (role && role !== "all") params.append("role", role);
+  
+  return apiClient.get<PaginatedUsersResponse>(`/admin/users?${params.toString()}`);
+}
+
+export async function updateUserStatus(userId: number, isActive: boolean): Promise<UserRecord> {
+  return apiClient.request<UserRecord>(`/admin/users/${userId}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_active: isActive }),
+  });
+}
+
+export async function deleteUser(userId: number): Promise<{ message: string }> {
+  return apiClient.request<{ message: string }>(`/admin/users/${userId}`, { method: "DELETE" });
+}
+
+export interface AuditLogRecord {
+  id: number;
+  admin_id: number | null;
+  action_type: string;
+  target_table: string;
+  target_id: number | null;
+  metadata_json: any | null;
+  ip_address: string | null;
+  created_at: string;
+  admin?: {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+  } | null;
+}
+
+export interface PaginatedAuditLogsResponse {
+  logs: AuditLogRecord[];
+  total: number;
+}
+
+export async function getAuditLogs(
+  page: number,
+  limit: number,
+  actionType?: string,
+  adminId?: number
+): Promise<PaginatedAuditLogsResponse> {
+  const skip = (page - 1) * limit;
+  const params = new URLSearchParams();
+  params.append("skip", skip.toString());
+  params.append("limit", limit.toString());
+  if (actionType && actionType !== "all") params.append("action_type", actionType);
+  if (adminId) params.append("admin_id", adminId.toString());
+
+  return apiClient.get<PaginatedAuditLogsResponse>(`/admin/audit-logs?${params.toString()}`);
 }

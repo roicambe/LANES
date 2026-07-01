@@ -137,7 +137,7 @@ export function LocationAutocomplete({
       </div>
 
       {isOpen && (suggestions.length > 0 || renderTopOptions) && (
-        <ul className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+        <ul className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg">
           {renderTopOptions}
           {suggestions.map((suggestion, index) => (
             <li key={suggestion.id}>

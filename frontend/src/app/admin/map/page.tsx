@@ -1,10 +1,5 @@
-import UnderDevelopment from "@/features/admin/UnderDevelopment";
+import LiveMapPage from "@/features/admin/LiveMapPage";
 
-export default function LiveMapPage() {
-  return (
-    <UnderDevelopment
-      sectionName="Live Map"
-      description="Real-time flood avoidance zone overlays and severity filters will be displayed here."
-    />
-  );
+export default function Page() {
+  return <LiveMapPage />;
 }

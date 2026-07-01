@@ -1,10 +1,5 @@
-import UnderDevelopment from "@/features/admin/UnderDevelopment";
+import DashboardPage from "@/features/admin/DashboardPage";
 
-export default function DashboardPage() {
-  return (
-    <UnderDevelopment
-      sectionName="Dashboard"
-      description="Key metrics, system health status, and recent activity will be displayed here."
-    />
-  );
+export default function Page() {
+  return <DashboardPage />;
 }

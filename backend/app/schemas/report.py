@@ -72,3 +72,26 @@ class FloodAvoidanceZoneResponse(FloodAvoidanceZoneBase):
                 print(f"Warning: Failed parsing Polygon EWKB: {e}")
                 return None
         return v
+
+
+class FloodReportsPaginatedResponse(BaseModel):
+    reports: list[FloodReportResponse]
+    total: int
+
+
+class AdminDashboardStats(BaseModel):
+    total_pending_reports: int
+    total_active_zones: int
+    total_approved_today: int
+    total_rejected_today: int
+    total_users: int
+    database_status: str
+
+
+class FloodAvoidanceZonesPaginatedResponse(BaseModel):
+    zones: list[FloodAvoidanceZoneResponse]
+    total: int
+
+
+class AvoidanceZoneDeactivateBulkRequest(BaseModel):
+    zone_ids: list[int]

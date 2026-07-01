@@ -18,3 +18,12 @@ class UserResponse(UserBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UsersPaginatedResponse(BaseModel):
+    users: list[UserResponse]
+    total: int
+
+
+class UserStatusUpdateRequest(BaseModel):
+    is_active: bool

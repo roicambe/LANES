@@ -12,3 +12,4 @@ pydantic-settings==2.3.3
 python-jose[cryptography]
 bcrypt
 python-multipart
+alembic==1.18.5
