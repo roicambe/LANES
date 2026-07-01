@@ -34,7 +34,6 @@ export function LocationAutocomplete({
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const skipSearchRef = useRef(false);
 
   const fetchSuggestions = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
@@ -57,22 +56,15 @@ export function LocationAutocomplete({
     }
   }, []);
 
-  useEffect(() => {
-    if (skipSearchRef.current) {
-      skipSearchRef.current = false;
-      return;
-    }
-
+  const handleInputChange = (newValue: string) => {
+    onChange(newValue);
+    
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
+    
     debounceRef.current = setTimeout(() => {
-      void fetchSuggestions(value);
+      void fetchSuggestions(newValue);
     }, 300);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [value, fetchSuggestions]);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -86,11 +78,11 @@ export function LocationAutocomplete({
   }, []);
 
   const handleSelect = (suggestion: LocationSuggestion) => {
-    skipSearchRef.current = true;
     onChange(suggestion.label);
     onSelect(suggestion);
     setIsOpen(false);
     setSuggestions([]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -115,7 +107,7 @@ export function LocationAutocomplete({
       <div className="relative">
         <Input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => {
             if (suggestions.length > 0 || renderTopOptions) setIsOpen(true);
           }}
@@ -133,6 +125,9 @@ export function LocationAutocomplete({
             onClick={() => {
               if (onClear) onClear();
               else onChange("");
+              setSuggestions([]);
+              setIsOpen(false);
+              if (debounceRef.current) clearTimeout(debounceRef.current);
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
           >

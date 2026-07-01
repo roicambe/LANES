@@ -4,20 +4,32 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  LayoutDashboard, 
-  Map, 
-  AlertTriangle, 
+import {
+  LayoutDashboard,
+  Map,
+  Layers,
+  FileText,
+  Users,
+  ShieldCheck,
+  ClipboardList,
+  Database,
+  Settings,
   LogOut,
-  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { name: "Dashboard", href: "/admin/reports", icon: LayoutDashboard },
-  { name: "Live Map", href: "/", icon: Map },
-  { name: "Active Zones", href: "/admin/zones", icon: AlertTriangle },
+  { name: "Dashboard",      href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Live Map",       href: "/admin/map",       icon: Map },
+  { name: "Active Zones",   href: "/admin/zones",     icon: Layers },
+  { name: "Reports",        href: "/admin/reports",   icon: FileText },
+  { name: "User Registry",  href: "/admin/users",     icon: Users },
+  { name: "Roles",          href: "/admin/roles",     icon: ShieldCheck },
+  { name: "Audit Trail",    href: "/admin/audit",     icon: ClipboardList },
+  { name: "Data Management",href: "/admin/data",      icon: Database },
+  { name: "System Settings",href: "/admin/settings",  icon: Settings },
 ];
+
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();

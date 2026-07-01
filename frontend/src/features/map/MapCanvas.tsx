@@ -21,7 +21,7 @@ export default function MapCanvas() {
 
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
-  
+
   useEffect(() => {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
@@ -37,9 +37,10 @@ export default function MapCanvas() {
       container: mapContainerRef.current,
       style: "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU",
       center: CONSTANTS.DEFAULT_CENTER,
-      zoom: 16.5, // Zoom in closer to see building details
+      zoom: 16.5, // Initial zoom level (street level)
+      maxZoom: 20, // Allow zooming in close to buildings
       pitch: 0, // Default to top view
-      maxPitch: 85, // Allow maximum tilt (MapLibre max is 85 degrees)
+      maxPitch: 70, // Capped at 70 (only achievable when zoomed in)
       bearing: -17.6, // Slightly rotate the camera for a dynamic perspective
       maxBounds: [
         [110.0, 0.0], // Expanded Southwest coordinates to add panning padding
@@ -63,13 +64,13 @@ export default function MapCanvas() {
 
     mapInstance.on("load", () => {
       mapRef.current = mapInstance;
-      
+
       // 1. Add Philippines Border Line
       mapInstance.addSource("philippines-boundary", {
         type: "geojson",
         data: "/philippines-boundary.geojson"
       });
-      
+
       mapInstance.addLayer({
         id: "philippines-boundary-line",
         type: "line",
@@ -102,7 +103,7 @@ export default function MapCanvas() {
         type: "geojson",
         data: "/pasig-boundary.geojson"
       });
-      
+
       mapInstance.addLayer({
         id: "pasig-boundary-line",
         type: "line",
@@ -227,7 +228,7 @@ export default function MapCanvas() {
     if (!isLoaded || !mapRef.current || !isPickingOnMap) return;
     const currentZoom = mapRef.current.getZoom();
     mapRef.current.flyTo({ zoom: currentZoom + 1, duration: 400 });
-    
+
     // Immediately dispatch center so it's available for selection without panning
     const center = mapRef.current.getCenter();
     window.dispatchEvent(new CustomEvent("map-center-changed", { detail: [center.lng, center.lat] }));
@@ -237,19 +238,19 @@ export default function MapCanvas() {
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full bg-neutral-200" />
 
-      <LoadingOverlay 
-        isVisible={!isLoaded} 
-        message="Initializing 3D Map Engine..." 
-        variant="absolute" 
-        zIndex={20} 
+      <LoadingOverlay
+        isVisible={!isLoaded}
+        message="Initializing 3D Map Engine..."
+        variant="absolute"
+        zIndex={20}
       />
 
       {/* Center Pin Overlay (for touch device panning) */}
       {isTouchDevice && isPickingOnMap && activePoint && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full mt-[1.5px] pointer-events-none z-10 drop-shadow-md">
           <svg width="32" height="32" viewBox="0 0 24 24" className="animate-bounce">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill={activePoint === "start" ? "#16a34a" : "#dc2626"} stroke={activePoint === "start" ? "#16a34a" : "#dc2626"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="12" cy="10" r="3" fill="white"/>
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill={activePoint === "start" ? "#16a34a" : "#dc2626"} stroke={activePoint === "start" ? "#16a34a" : "#dc2626"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="10" r="3" fill="white" />
           </svg>
           <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-1 bg-black/25 rounded-full blur-[1px]"></div>
         </div>
