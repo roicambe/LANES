@@ -26,9 +26,9 @@ class FloodReport(Base):
     severity: Mapped[str] = mapped_column(String(20))  # 'low', 'medium', 'high', 'extreme'
     status: Mapped[str] = mapped_column(String(20), default="pending")  # 'pending', 'approved', 'rejected'
     
-    # PostGIS Geometry column for latitude/longitude points (SRID 4326 = WGS 84 coordinate system)
+    # PostGIS Geometry column for generic geometry (Point or LineString) (SRID 4326 = WGS 84 coordinate system)
     geometry: Mapped[Any] = mapped_column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        Geometry(geometry_type="GEOMETRY", srid=4326, spatial_index=True),
         nullable=True
     )
 
@@ -83,3 +83,11 @@ class FloodAvoidanceZone(Base):
 
     # Relationships
     report: Mapped["FloodReport"] = relationship("FloodReport", back_populates="avoidance_zones")
+
+    @property
+    def severity(self) -> str:
+        return self.report.severity if self.report else "medium"
+
+    @property
+    def report_geometry(self) -> Any:
+        return self.report.geometry if self.report else None

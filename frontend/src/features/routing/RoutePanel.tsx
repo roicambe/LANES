@@ -443,7 +443,7 @@ export default function RoutePanel() {
       <motion.div
         drag
         dragMomentum={false}
-        initial={{ x: 16, y: 16 }}
+        initial={{ x: 16, y: 80 }}
         className="absolute top-0 left-0 z-40 cursor-move"
       >
       <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)]">

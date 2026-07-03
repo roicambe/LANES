@@ -44,6 +44,25 @@ const SEVERITY_COLORS: Record<string, string> = {
   extreme: "#ef4444",  // Red
 };
 
+const isPointInPolygon = (point: [number, number], polygon: any): boolean => {
+  if (!polygon || polygon.type !== "Polygon" || !polygon.coordinates) return false;
+  const x = point[0];
+  const y = point[1];
+  let inside = false;
+  const ring = polygon.coordinates[0];
+  if (!ring) return false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+    const intersect = ((yi > y) !== (yj > y))
+      && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+};
+
 export default function MapCanvas() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
@@ -54,6 +73,7 @@ export default function MapCanvas() {
     "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU"
   );
   const [usingFallback, setUsingFallback] = useState(false);
+  const [activeZones, setActiveZones] = useState<any[]>([]);
 
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
@@ -62,7 +82,7 @@ export default function MapCanvas() {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
 
-  const { start, end, routeGeometry, setPointFromMap, activePoint, isPickingOnMap } = useMapContext();
+  const { start, end, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);
   setPointFromMapRef.current = setPointFromMap;
 
@@ -246,8 +266,114 @@ export default function MapCanvas() {
 
     if (!routeGeometry) return;
 
+    // Default: solid blue gradient for clear routes
+    let gradientExpression: any = [
+      "interpolate",
+      ["linear"],
+      ["line-progress"],
+      0.0, "#2563eb",
+      1.0, "#2563eb"
+    ];
+
+    // Calculate dynamic gradient based on flood intersection progress
+    const coords = routeGeometry.coordinates;
+    if (coords && coords.length > 0) {
+      // 1. Calculate cumulative distance along path (in meters)
+      const dists = [0];
+      let totalDist = 0;
+      for (let i = 1; i < coords.length; i++) {
+        const c1 = coords[i - 1];
+        const c2 = coords[i];
+        const dx = c2[0] - c1[0];
+        const dy = c2[1] - c1[1];
+        const degDist = Math.sqrt(dx * dx + dy * dy);
+        const distInMeters = degDist * 111000; // Approximate degrees to meters
+        totalDist += distInMeters;
+        dists.push(totalDist);
+      }
+
+      // 2. Find first and last coordinate intersecting any active zone
+      let firstIntersectIdx = -1;
+      let lastIntersectIdx = -1;
+      for (let i = 0; i < coords.length; i++) {
+        const pt = coords[i] as [number, number];
+        const isFlooded = activeZones.some(zone => isPointInPolygon(pt, zone.geometry));
+        if (isFlooded) {
+          if (firstIntersectIdx === -1) {
+            firstIntersectIdx = i;
+          }
+          lastIntersectIdx = i;
+        }
+      }
+
+      if (firstIntersectIdx !== -1 && totalDist > 0) {
+        const D_start = dists[firstIntersectIdx];
+        const D_end = dists[lastIntersectIdx];
+
+        const P_start_flood = D_start / totalDist;
+        const P_end_flood = D_end / totalDist;
+
+        // Define progress thresholds based on absolute distances in meters
+        const p_blue_approach = Math.max(0.0, D_start - 80) / totalDist;
+        const p_yellow_approach = Math.max(0.0, D_start - 40) / totalDist;
+        const p_orange_approach = Math.max(0.0, D_start - 15) / totalDist;
+
+        const rawStops = [
+          // Approach gradient (before the flood)
+          { p: 0.0, c: "#2563eb" }, // Blue
+          { p: p_blue_approach, c: "#2563eb" }, // Blue
+          { p: p_yellow_approach, c: "#eab308" }, // Yellow warning
+          { p: p_orange_approach, c: "#f97316" }, // Orange danger
+          { p: P_start_flood, c: "#ef4444" }, // Red flooded road starts
+
+          // Flood segment (stays Red)
+          { p: P_end_flood, c: "#ef4444" } // Red flooded road ends
+        ];
+
+        // Receding gradient (after the flood)
+        if (P_end_flood < 1.0) {
+          const p_orange_recede = Math.min(totalDist, D_end + 15) / totalDist;
+          const p_yellow_recede = Math.min(totalDist, D_end + 40) / totalDist;
+          const p_blue_recede = Math.min(totalDist, D_end + 80) / totalDist;
+
+          rawStops.push({ p: p_orange_recede, c: "#f97316" }); // Orange receding
+          rawStops.push({ p: p_yellow_recede, c: "#eab308" }); // Yellow receding
+          rawStops.push({ p: p_blue_recede, c: "#2563eb" }); // Blue receding
+          rawStops.push({ p: 1.0, c: "#2563eb" }); // Blue end
+        }
+
+        // Sort stops and deduplicate overlapping progress values
+        rawStops.sort((a, b) => a.p - b.p);
+        const uniqueStops: [number, string][] = [];
+        rawStops.forEach(stop => {
+          if (uniqueStops.length === 0) {
+            uniqueStops.push([stop.p, stop.c]);
+          } else {
+            const last = uniqueStops[uniqueStops.length - 1];
+            if (last[0] === stop.p) {
+              last[1] = stop.c;
+            } else {
+              uniqueStops.push([stop.p, stop.c]);
+            }
+          }
+        });
+
+        gradientExpression = [
+          "interpolate",
+          ["linear"],
+          ["line-progress"],
+        ];
+        uniqueStops.forEach(([p, c]) => {
+          gradientExpression.push(p);
+          gradientExpression.push(c);
+        });
+      }
+    }
+
+
     map.addSource(ROUTE_SOURCE_ID, {
       type: "geojson",
+      lineMetrics: true, // Required for line-gradient
       data: {
         type: "Feature",
         properties: {},
@@ -261,7 +387,7 @@ export default function MapCanvas() {
       source: ROUTE_SOURCE_ID,
       layout: { "line-join": "round", "line-cap": "round" },
       paint: {
-        "line-color": "#2563eb",
+        "line-gradient": gradientExpression,
         "line-width": 5,
         "line-opacity": 0.85,
       },
@@ -275,7 +401,7 @@ export default function MapCanvas() {
       bounds.extend(coord as [number, number]);
     }
     map.fitBounds(bounds, { padding: 80, maxZoom: 15 });
-  }, [routeGeometry, isLoaded]);
+  }, [routeGeometry, routeInfo, activeZones, isLoaded]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
@@ -292,24 +418,50 @@ export default function MapCanvas() {
         const response = await fetch("/api/v1/reports/active-zones");
         if (!response.ok) throw new Error("Failed to fetch active zones");
         const zones = await response.json();
+        
+        setActiveZones(zones);
 
         // Remove existing sources/layers if they exist
         if (map.getLayer("active-zones-layer")) map.removeLayer("active-zones-layer");
         if (map.getLayer("active-zones-outline")) map.removeLayer("active-zones-outline");
+        if (map.getLayer("active-zones-road-layer")) map.removeLayer("active-zones-road-layer");
         if (map.getSource("active-zones-source")) map.removeSource("active-zones-source");
 
-        const features = zones.map((zone: any) => {
+        const features: any[] = [];
+        zones.forEach((zone: any) => {
           const severity = zone.severity || "medium";
           const color = SEVERITY_COLORS[severity] || "#f59e0b";
-          return {
+          const isRoadBased = zone.report_geometry && zone.report_geometry.type === "LineString";
+
+          if (isRoadBased) {
+            // Add LineString feature for highlighted road segment
+            features.push({
+              type: "Feature",
+              properties: {
+                id: zone.id,
+                report_id: zone.report_id,
+                severity: severity.toUpperCase(),
+                color: color,
+                is_road_line: true,
+                is_road_based: true,
+              },
+              geometry: zone.report_geometry
+            });
+          }
+
+          // Add Polygon feature (avoidance zone buffer)
+          features.push({
             type: "Feature",
             properties: {
               id: zone.id,
+              report_id: zone.report_id,
               severity: severity.toUpperCase(),
               color: color,
+              is_road_line: false,
+              is_road_based: isRoadBased,
             },
             geometry: zone.geometry
-          };
+          });
         });
 
         map.addSource("active-zones-source", {
@@ -320,6 +472,7 @@ export default function MapCanvas() {
           }
         });
 
+        // 1. Polygon Fill Layer (only for point-based/non-road-based zones)
         map.addLayer({
           id: "active-zones-layer",
           type: "fill",
@@ -327,9 +480,11 @@ export default function MapCanvas() {
           paint: {
             "fill-color": ["get", "color"],
             "fill-opacity": 0.4,
-          }
+          },
+          filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
         });
 
+        // 2. Polygon Outline Layer (only for point-based/non-road-based zones)
         map.addLayer({
           id: "active-zones-outline",
           type: "line",
@@ -337,8 +492,27 @@ export default function MapCanvas() {
           paint: {
             "line-color": ["get", "color"],
             "line-width": 2
-          }
+          },
+          filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
         });
+
+        // 3. Highlighted Road Line Layer (only for road segment LineStrings)
+        // Set width to 10 and opacity to 0.45 to form a soft background glow around the street
+        map.addLayer({
+          id: "active-zones-road-layer",
+          type: "line",
+          source: "active-zones-source",
+          layout: {
+            "line-join": "round",
+            "line-cap": "round"
+          },
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": 10,
+            "line-opacity": 0.45
+          },
+          filter: ["==", ["geometry-type"], "LineString"]
+        }, map.getLayer(ROUTE_LAYER_ID) ? ROUTE_LAYER_ID : undefined);
       } catch (err) {
         console.error("Failed to load active zones on commuter map:", err);
       }
