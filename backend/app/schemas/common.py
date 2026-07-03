@@ -51,6 +51,29 @@ def parse_ewkb_polygon(data: bytes) -> List[List[List[float]]]:
     return rings
 
 
+def parse_ewkb_linestring(data: bytes) -> List[List[float]]:
+    """
+    Parses a PostGIS EWKB (Extended Well-Known Binary) LineString into [[longitude, latitude], ...].
+    """
+    byte_order = '<' if data[0] == 1 else '>'
+    geom_type = struct.unpack(f"{byte_order}I", data[1:5])[0]
+    
+    offset = 5
+    # If EWKB has SRID flag (0x20000000)
+    if geom_type & 0x20000000:
+        offset += 4
+        
+    num_points = struct.unpack(f"{byte_order}I", data[offset:offset+4])[0]
+    offset += 4
+    
+    points = []
+    for _ in range(num_points):
+        x, y = struct.unpack(f"{byte_order}dd", data[offset:offset+16])
+        offset += 16
+        points.append([x, y])
+    return points
+
+
 # ==========================================
 # 2. GeoJSON Pydantic Helper Schemas
 # ==========================================
@@ -61,6 +84,14 @@ class PointGeometry(BaseModel):
     """
     type: str = "Point"
     coordinates: List[float]  # [longitude, latitude]
+
+
+class LineStringGeometry(BaseModel):
+    """
+    GeoJSON LineString geometry.
+    """
+    type: str = "LineString"
+    coordinates: List[List[float]]  # Points -> [longitude, latitude]
 
 
 class PolygonGeometry(BaseModel):

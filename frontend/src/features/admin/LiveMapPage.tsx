@@ -148,26 +148,48 @@ export default function LiveMapPage() {
     // Remove existing sources/layers if they exist
     if (map.getLayer("active-zones-layer")) map.removeLayer("active-zones-layer");
     if (map.getLayer("active-zones-outline")) map.removeLayer("active-zones-outline");
+    if (map.getLayer("active-zones-road-layer")) map.removeLayer("active-zones-road-layer");
     if (map.getSource("active-zones-source")) map.removeSource("active-zones-source");
 
     // Format active detours to GeoJSON FeatureCollection
-    const features = zones.map((zone: any) => {
-      // Determine severity color
+    const features: any[] = [];
+    zones.forEach((zone: any) => {
       const severity = zone.severity || "medium";
       const color = SEVERITY_COLORS[severity] || "#f59e0b";
-      
-      return {
+      const isRoadBased = zone.report_geometry && zone.report_geometry.type === "LineString";
+
+      const commonProps = {
+        id: zone.id,
+        report_id: zone.report_id,
+        severity: severity.toUpperCase(),
+        color: color,
+        created_at: new Date(zone.created_at).toLocaleString(),
+        expires_at: zone.expires_at ? new Date(zone.expires_at).toLocaleString() : "Never",
+      };
+
+      if (isRoadBased) {
+        // LineString road segment highlight
+        features.push({
+          type: "Feature",
+          properties: {
+            ...commonProps,
+            is_road_line: true,
+            is_road_based: true,
+          },
+          geometry: zone.report_geometry
+        });
+      }
+
+      // Polygon avoidance zone buffer
+      features.push({
         type: "Feature",
         properties: {
-          id: zone.id,
-          report_id: zone.report_id,
-          severity: severity.toUpperCase(),
-          color: color,
-          created_at: new Date(zone.created_at).toLocaleString(),
-          expires_at: zone.expires_at ? new Date(zone.expires_at).toLocaleString() : "Never",
+          ...commonProps,
+          is_road_line: false,
+          is_road_based: isRoadBased,
         },
         geometry: zone.geometry
-      };
+      });
     });
 
     map.addSource("active-zones-source", {
@@ -178,7 +200,7 @@ export default function LiveMapPage() {
       }
     });
 
-    // Filled detour overlay layer
+    // 1. Polygon Fill Layer (only for point-based/non-road-based zones)
     map.addLayer({
       id: "active-zones-layer",
       type: "fill",
@@ -186,10 +208,11 @@ export default function LiveMapPage() {
       paint: {
         "fill-color": ["get", "color"],
         "fill-opacity": 0.45,
-      }
+      },
+      filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
     });
 
-    // Outline layer
+    // 2. Outline layer (only for point-based/non-road-based zones)
     map.addLayer({
       id: "active-zones-outline",
       type: "line",
@@ -197,11 +220,29 @@ export default function LiveMapPage() {
       paint: {
         "line-color": ["get", "color"],
         "line-width": 2
-      }
+      },
+      filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
+    });
+
+    // 3. Highlighted Road Line Layer (only for road segment LineStrings)
+    map.addLayer({
+      id: "active-zones-road-layer",
+      type: "line",
+      source: "active-zones-source",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": ["get", "color"],
+        "line-width": 10,
+        "line-opacity": 0.45
+      },
+      filter: ["==", ["geometry-type"], "LineString"]
     });
 
     // Click popup details
-    map.on("click", "active-zones-layer", (e) => {
+    const handlePopup = (e: any) => {
       if (!e.features || e.features.length === 0) return;
       const properties = e.features[0].properties;
       if (!properties) return;
@@ -223,15 +264,23 @@ export default function LiveMapPage() {
           </div>
         `)
         .addTo(map);
-    });
+    };
+
+    map.on("click", "active-zones-layer", handlePopup);
+    map.on("click", "active-zones-road-layer", handlePopup);
 
     // Mouse styling updates
-    map.on("mouseenter", "active-zones-layer", () => {
+    const handleMouseEnter = () => {
       map.getCanvas().style.cursor = "pointer";
-    });
-    map.on("mouseleave", "active-zones-layer", () => {
+    };
+    const handleMouseLeave = () => {
       map.getCanvas().style.cursor = "";
-    });
+    };
+
+    map.on("mouseenter", "active-zones-layer", handleMouseEnter);
+    map.on("mouseleave", "active-zones-layer", handleMouseLeave);
+    map.on("mouseenter", "active-zones-road-layer", handleMouseEnter);
+    map.on("mouseleave", "active-zones-road-layer", handleMouseLeave);
   };
 
   return (

@@ -18,6 +18,31 @@ interface LocationAutocompleteProps {
   renderTopOptions?: React.ReactNode;
 }
 
+function tryParseCoordinates(query: string): { lng: number; lat: number } | null {
+  const parts = query.split(",").map((p) => p.trim());
+  if (parts.length !== 2) return null;
+  const val1 = Number(parts[0]);
+  const val2 = Number(parts[1]);
+  if (Number.isNaN(val1) || Number.isNaN(val2)) return null;
+
+  // In the Philippines (specifically Pasig/Metro Manila), longitude is ~121.0, latitude is ~14.5
+  const isLng = (v: number) => v >= 115 && v <= 126;
+  const isLat = (v: number) => v >= 5 && v <= 22;
+
+  if (isLng(val1) && isLat(val2)) {
+    return { lng: val1, lat: val2 };
+  }
+  if (isLat(val1) && isLng(val2)) {
+    return { lng: val2, lat: val1 };
+  }
+
+  // Fallback assuming [longitude, latitude] if first is larger than second
+  if (Math.abs(val1) > Math.abs(val2)) {
+    return { lng: val1, lat: val2 };
+  }
+  return { lng: val2, lat: val1 };
+}
+
 export function LocationAutocomplete({
   value,
   onChange,
@@ -36,21 +61,55 @@ export function LocationAutocomplete({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchSuggestions = useCallback(async (query: string) => {
+    const parsedCoords = tryParseCoordinates(query);
+
     if (query.trim().length < 2) {
-      setSuggestions([]);
-      setIsOpen(false);
-      return;
+      if (parsedCoords) {
+        // If coordinate is valid even if query is short, show it
+      } else {
+        setSuggestions([]);
+        setIsOpen(false);
+        return;
+      }
     }
 
     setIsSearching(true);
     try {
       const results = await searchLocations(query);
-      setSuggestions(results);
-      setIsOpen(results.length > 0);
+      
+      if (parsedCoords) {
+        const coordSuggestion: LocationSuggestion = {
+          id: `coords-${parsedCoords.lng}-${parsedCoords.lat}`,
+          label: `${parsedCoords.lng.toFixed(5)}, ${parsedCoords.lat.toFixed(5)}`,
+          displayName: `Coordinates: ${parsedCoords.lng.toFixed(5)}, ${parsedCoords.lat.toFixed(5)}`,
+          lng: parsedCoords.lng,
+          lat: parsedCoords.lat,
+          relevanceScore: 1000,
+        };
+        // Prepend coordinate suggestion to Nominatim search results
+        setSuggestions([coordSuggestion, ...results]);
+        setIsOpen(true);
+      } else {
+        setSuggestions(results);
+        setIsOpen(results.length > 0);
+      }
       setHighlightIndex(-1);
     } catch {
-      setSuggestions([]);
-      setIsOpen(false);
+      if (parsedCoords) {
+        const coordSuggestion: LocationSuggestion = {
+          id: `coords-${parsedCoords.lng}-${parsedCoords.lat}`,
+          label: `${parsedCoords.lng.toFixed(5)}, ${parsedCoords.lat.toFixed(5)}`,
+          displayName: `Coordinates: ${parsedCoords.lng.toFixed(5)}, ${parsedCoords.lat.toFixed(5)}`,
+          lng: parsedCoords.lng,
+          lat: parsedCoords.lat,
+          relevanceScore: 1000,
+        };
+        setSuggestions([coordSuggestion]);
+        setIsOpen(true);
+      } else {
+        setSuggestions([]);
+        setIsOpen(false);
+      }
     } finally {
       setIsSearching(false);
     }

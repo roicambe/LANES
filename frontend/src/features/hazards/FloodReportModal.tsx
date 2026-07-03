@@ -128,7 +128,7 @@ export function FloodReportModal({ isOpen, onClose }: FloodReportModalProps) {
               initial={{ opacity: 0, scale: 0.9, x: 0, y: 0 }}
               animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="absolute top-4 right-4 z-50 cursor-move"
+              className="absolute top-20 right-4 z-50 cursor-move"
             >
               {modalContent}
             </motion.div>

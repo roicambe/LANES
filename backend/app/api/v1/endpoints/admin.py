@@ -46,24 +46,29 @@ def approve_report(
     # The geometry field on the response schema will have the PointGeometry parsed from EWKB
     response_report = schemas.FloodReportResponse.model_validate(report)
     if response_report.geometry:
-        lng, lat = response_report.geometry.coordinates
-        radius = 0.002  # roughly 200m buffer
-        polygon = schemas.PolygonGeometry(
-            type="Polygon",
-            coordinates=[[
-                [lng - radius, lat - radius],
-                [lng + radius, lat - radius],
-                [lng + radius, lat + radius],
-                [lng - radius, lat + radius],
-                [lng - radius, lat - radius],
-            ]]
-        )
-        zone_in = schemas.FloodAvoidanceZoneCreate(
-            report_id=report.id,
-            geometry=polygon,
-            is_active=True
-        )
-        crud.create_flood_avoidance_zone(db, zone=zone_in)
+        from sqlalchemy import func
+        import json
+
+        is_linestring = response_report.geometry.type == "LineString"
+        buffer_radius = 0.00015 if is_linestring else 0.0005
+
+        # Query PostGIS to calculate the buffer polygon
+        buffered_geojson_str = db.query(
+            func.ST_AsGeoJSON(func.ST_Buffer(report.geometry, buffer_radius))
+        ).scalar()
+
+        if buffered_geojson_str:
+            polygon_data = json.loads(buffered_geojson_str)
+            polygon = schemas.PolygonGeometry(
+                type="Polygon",
+                coordinates=polygon_data["coordinates"]
+            )
+            zone_in = schemas.FloodAvoidanceZoneCreate(
+                report_id=report.id,
+                geometry=polygon,
+                is_active=True
+            )
+            crud.create_flood_avoidance_zone(db, zone=zone_in)
 
     client_ip = request.client.host if request.client else None
     crud.create_audit_log(
