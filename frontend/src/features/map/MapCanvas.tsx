@@ -393,14 +393,6 @@ export default function MapCanvas() {
       },
     });
 
-    const bounds = new maplibregl.LngLatBounds(
-      routeGeometry.coordinates[0] as [number, number],
-      routeGeometry.coordinates[0] as [number, number]
-    );
-    for (const coord of routeGeometry.coordinates) {
-      bounds.extend(coord as [number, number]);
-    }
-    map.fitBounds(bounds, { padding: 80, maxZoom: 15 });
   }, [routeGeometry, routeInfo, activeZones, isLoaded]);
 
   useEffect(() => {
@@ -508,8 +500,8 @@ export default function MapCanvas() {
           },
           paint: {
             "line-color": ["get", "color"],
-            "line-width": 10,
-            "line-opacity": 0.45
+            "line-width": 22,
+            "line-opacity": 0.6
           },
           filter: ["==", ["geometry-type"], "LineString"]
         }, map.getLayer(ROUTE_LAYER_ID) ? ROUTE_LAYER_ID : undefined);
@@ -528,22 +520,41 @@ export default function MapCanvas() {
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current || !start) return;
-    mapRef.current.flyTo({ center: start.coords, zoom: Math.max(mapRef.current.getZoom(), 14), duration: 600 });
+    const map = mapRef.current;
+    map.flyTo({
+      center: start.coords,
+      zoom: Math.max(map.getZoom(), 14),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+      duration: 600,
+    });
   }, [start?.coords[0], start?.coords[1], isLoaded]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current || !end) return;
-    mapRef.current.flyTo({ center: end.coords, zoom: Math.max(mapRef.current.getZoom(), 14), duration: 600 });
+    const map = mapRef.current;
+    map.flyTo({
+      center: end.coords,
+      zoom: Math.max(map.getZoom(), 14),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+      duration: 600,
+    });
   }, [end?.coords[0], end?.coords[1], isLoaded]);
 
   // Zoom in slightly when picking on map mode is activated
   useEffect(() => {
     if (!isLoaded || !mapRef.current || !isPickingOnMap) return;
-    const currentZoom = mapRef.current.getZoom();
-    mapRef.current.flyTo({ zoom: currentZoom + 1, duration: 400 });
+    const map = mapRef.current;
+    map.flyTo({
+      zoom: map.getZoom() + 1,
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+      duration: 400,
+    });
 
     // Immediately dispatch center so it's available for selection without panning
-    const center = mapRef.current.getCenter();
+    const center = map.getCenter();
     window.dispatchEvent(new CustomEvent("map-center-changed", { detail: [center.lng, center.lat] }));
   }, [isPickingOnMap, isLoaded]);
 
