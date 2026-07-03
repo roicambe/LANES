@@ -174,3 +174,46 @@ All developers and AI Code Agents must write code adhering strictly to the follo
   * *Good:* `POST /api/v1/reports/route`
 * **HTTP Exceptions:** Never let raw errors propagate to the client. Wrap exceptions inside FastAPI's `HTTPException` with clear statuses (e.g. `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`).
 * **Structured Payload:** Standardize validation failure bodies so the frontend client can parse error arrays consistently.
+
+---
+
+## 10. Git Push Protocol
+
+When the Vibe Coder says **"push to [branch]"** (e.g. "push to main", "push to dev"), the AI Agent must execute the following steps **automatically and in full**, without asking for further input:
+
+### Step 1 — Stage all changes
+```powershell
+git add -A
+```
+
+### Step 2 — Synthesise the commit message from the conversation
+The AI Agent must review the current conversation and produce:
+* **Summary line** (`<type>(<scope>): <short imperative description>`) — max 72 characters, using [Conventional Commits](https://www.conventionalcommits.org/) types: `feat`, `fix`, `refactor`, `style`, `chore`, `docs`, `test`.
+* **Body** — a bullet-point description of every meaningful change made during the session, written in plain English. Each bullet covers *what* changed and *why*.
+
+Format:
+```
+<type>(<scope>): <summary>
+
+- <change 1 description>
+- <change 2 description>
+- ...
+```
+
+### Step 3 — Commit with the generated message
+```powershell
+git commit -m "<summary line>" -m "<body as newline-separated bullets>"
+```
+
+### Step 4 — Push to the specified branch
+```powershell
+git push origin <branch>
+```
+
+### Rules
+* **Never ask the Vibe Coder to write the commit message** — the AI Agent is responsible for synthesising it from the conversation.
+* **Always include a body.** A summary-only commit is not acceptable.
+* **Scope** should reflect the primary domain touched (e.g. `map`, `routing`, `admin`, `db`, `auth`).
+* If multiple domains were touched, list them comma-separated: `fix(map,routing):`.
+* If the push fails (e.g. non-fast-forward), report the exact git error and suggest the correct resolution (e.g. `git pull --rebase origin <branch>`) — do not force-push without explicit approval.
+
