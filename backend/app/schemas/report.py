@@ -1,6 +1,6 @@
 from datetime import datetime
 import struct
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, field_validator
 from geoalchemy2.elements import WKBElement
 
@@ -17,7 +17,7 @@ from app.schemas.common import (
 class FloodReportBase(BaseModel):
     raw_text: str
     source: str
-    severity: str = "medium"  # 'low', 'medium', 'high', 'extreme'
+    severity: Literal["low", "medium", "extreme"] = "medium"
 
 
 class FloodReportCreate(FloodReportBase):

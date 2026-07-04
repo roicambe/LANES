@@ -6,7 +6,8 @@ import {
   getReports, 
   approveReport, 
   rejectReport, 
-  FloodReport 
+  FloodReport,
+  ReportGeometry
 } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { 
@@ -29,10 +30,24 @@ const LIMIT = 8;
 export default function ReportsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<string>("all"); // "all" | "pending" | "approved" | "rejected"
-  const [severity, setSeverity] = useState<string>("all"); // "all" | "low" | "medium" | "high" | "extreme"
+  const [status, setStatus] = useState<string>("all");
+  const [severity, setSeverity] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("newest"); // "newest" | "oldest"
+  const [sortBy, setSortBy] = useState("newest");
+
+  /**
+   * Returns a human-readable coordinate label for a report geometry.
+   * Points show the exact lat/lng; LineStrings show the midpoint prefixed with "~".
+   */
+  const getGeometryLabel = (geometry: ReportGeometry): string => {
+    if (geometry.type === "Point") {
+      const [lng, lat] = geometry.coordinates;
+      return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+    // LineString — use the midpoint coordinate as a representative location
+    const mid = geometry.coordinates[Math.floor(geometry.coordinates.length / 2)];
+    return `~${mid[1].toFixed(5)}, ${mid[0].toFixed(5)}`;
+  };
 
   const { data, isLoading, isPlaceholderData, refetch } = useQuery({
     queryKey: ["adminReports", page, status, severity, search, sortBy],
@@ -284,7 +299,7 @@ export default function ReportsPage() {
                   {report.geometry ? (
                     <div className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
                       <MapPin className="w-3.5 h-3.5 mr-1" />
-                      {report.geometry.coordinates[1].toFixed(5)}, {report.geometry.coordinates[0].toFixed(5)}
+                      {getGeometryLabel(report.geometry)}
                     </div>
                   ) : (
                     <div className="flex items-center text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
@@ -365,7 +380,7 @@ export default function ReportsPage() {
                   disabled={page === 1}
                   className="inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
-                  <ChevronLeft className="h-5 h-5" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <button
@@ -385,7 +400,7 @@ export default function ReportsPage() {
                   disabled={page === totalPages}
                   className="inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
-                  <ChevronRight className="h-5 h-5" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </nav>
             </div>
