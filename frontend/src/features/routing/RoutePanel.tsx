@@ -14,11 +14,10 @@ import {
   Check,
   AlertTriangle,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   X,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
+import { Panel } from "@/shared/ui/Panel";
+import { CardContent } from "@/shared/ui/Card";
 import { LocationAutocomplete } from "@/shared/ui/LocationAutocomplete";
 import { LoadingOverlay } from "@/shared/ui";
 import { cn } from "@/lib/utils";
@@ -29,7 +28,8 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const POINT_COLORS = {
   start: {
-    accent: "border-l-green-500",
+    accent: "border-green-200",
+    stripe: "from-green-500 to-emerald-400",
     bg: "bg-green-50",
     text: "text-green-700",
     icon: "text-green-600",
@@ -37,7 +37,8 @@ const POINT_COLORS = {
     label: "Start",
   },
   end: {
-    accent: "border-l-red-500",
+    accent: "border-red-200",
+    stripe: "from-red-500 to-rose-400",
     bg: "bg-red-50",
     text: "text-red-700",
     icon: "text-red-600",
@@ -75,10 +76,20 @@ function DesktopPointSelector({
   return (
     <div
       className={cn(
-        "border-l-4 rounded-r-lg border bg-white transition-all",
-        isActive ? "shadow-md border-l-blue-500 ring-1 ring-blue-200" : colors.accent
+        "rounded-xl border bg-white transition-all overflow-hidden",
+        isActive
+          ? "shadow-md border-blue-200 ring-1 ring-blue-100"
+          : colors.accent
       )}
     >
+      {/* Top accent stripe */}
+      <div
+        className={cn(
+          "h-[3px] w-full bg-gradient-to-r",
+          isActive ? "from-blue-500 to-indigo-400" : colors.stripe
+        )}
+      />
+
       <div className="flex items-center justify-between px-3 pt-2 pb-1">
         <div className="flex items-center gap-1.5">
           <Icon className={cn("h-4 w-4", colors.icon)} />
@@ -436,166 +447,144 @@ export default function RoutePanel() {
     );
   }
 
-  // Desktop view
+  // Desktop view — uses shared Panel shell
+  const clearButton =
+    start || end ? (
+      <button
+        onClick={() => {
+          resetAll();
+          setStartInput("");
+          setEndInput("");
+        }}
+        className="text-[11px] font-medium text-gray-500 hover:text-red-600 transition-colors px-2 py-1 mr-1"
+        title="Clear route and inputs"
+      >
+        Clear
+      </button>
+    ) : undefined;
+
+  const collapsedSummary =
+    isCollapsed && routeInfo ? (
+      <div className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-gray-900">
+            {(routeInfo.distance / 1000).toFixed(1)} km
+          </span>
+          <span className="text-gray-400">•</span>
+          <span className="font-medium text-gray-700">
+            {formatDuration(routeInfo.duration)}
+          </span>
+        </div>
+        {routeInfo.blocked ? (
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+        ) : routeInfo.avoided_floods ? (
+          <CheckCircle className="h-4 w-4 text-amber-500" />
+        ) : (
+          <CheckCircle className="h-4 w-4 text-green-600" />
+        )}
+      </div>
+    ) : undefined;
+
   return (
     <>
       <LoadingOverlay isVisible={isRouting} message="Calculating safe route..." />
-      <motion.div
-        drag
-        dragMomentum={false}
-        initial={{ x: 16, y: 80 }}
-        className="absolute top-0 left-0 z-40 cursor-move"
+      <Panel
+        title="Route Planner"
+        icon={<Navigation className="h-4 w-4 text-blue-600" />}
+        iconBgClassName="bg-blue-100"
+        isCollapsed={isCollapsed}
+        onCollapseToggle={() => setIsCollapsed(!isCollapsed)}
+        isMobile={false}
+        initialPosition={{ x: 16, y: 80 }}
+        headerActions={clearButton}
+        collapsedSummary={collapsedSummary}
       >
-      <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)]">
-        <CardHeader className="pb-3 pt-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-100">
-                <Navigation className="h-4 w-4 text-blue-600" />
+        <DesktopPointSelector
+          point="start"
+          label={startInput}
+          placeholder="e.g. C. Santos, Taft Ave"
+          isActive={activePoint === "start"}
+          isSet={!!start}
+          onActivate={() => handlePickOnMapToggle("start")}
+          onLabelChange={(val) => { setStartInput(val); setStartLabel(val); }}
+          onSelect={(s) => { setStart([s.lng, s.lat], s.label); setStartInput(s.label); setActivePoint("end"); }}
+          onUseCurrent={() => handleUseCurrentLocation("start")}
+          onClear={() => { setStart(null, ""); setStartInput(""); setStartLabel(""); }}
+        />
+
+        {start && end && (
+          <div className="flex justify-center -my-3 z-10 relative">
+            <button
+              type="button"
+              onClick={handleSwap}
+              title="Swap start and destination"
+              className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-blue-600 hover:border-blue-300 transition-all shadow-md"
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        <DesktopPointSelector
+          point="end"
+          label={endInput}
+          placeholder="e.g. Pasig City Hall"
+          isActive={activePoint === "end"}
+          isSet={!!end}
+          onActivate={() => handlePickOnMapToggle("end")}
+          onLabelChange={(val) => { setEndInput(val); setEndLabel(val); }}
+          onSelect={(s) => { setEnd([s.lng, s.lat], s.label); setEndInput(s.label); }}
+          onUseCurrent={() => handleUseCurrentLocation("end")}
+          onClear={() => { setEnd(null, ""); setEndInput(""); setEndLabel(""); }}
+        />
+
+        {routeError && (
+          <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span>{routeError}</span>
+          </div>
+        )}
+
+        {routeInfo && !isRouting && (
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="flex border-b border-gray-100">
+              <div className="flex-1 text-center py-2.5 border-r border-gray-100">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide">Distance</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {(routeInfo.distance / 1000).toFixed(1)} km
+                </p>
               </div>
-              <span>Route Planner</span>
-            </CardTitle>
-            <div className="flex items-center gap-1">
-              {(start || end) && (
-                <button
-                  onClick={() => {
-                    resetAll();
-                    setStartInput("");
-                    setEndInput("");
-                  }}
-                  className="text-[11px] font-medium text-gray-500 hover:text-red-600 transition-colors px-2 py-1 mr-1"
-                  title="Clear route and inputs"
-                >
-                  Clear
-                </button>
+              <div className="flex-1 text-center py-2.5">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide">Duration</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {formatDuration(routeInfo.duration)}
+                </p>
+              </div>
+            </div>
+            <div
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 text-xs font-medium",
+                routeInfo.blocked
+                  ? "bg-red-50 text-red-700"
+                  : "bg-green-50 text-green-700"
               )}
-              <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-                title={isCollapsed ? "Expand panel" : "Collapse panel"}
-              >
-                {isCollapsed ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronUp className="w-5 h-5 text-gray-500" />}
-              </button>
+            >
+              {routeInfo.blocked ? (
+                <AlertTriangle className="h-4 w-4" />
+              ) : (
+                <CheckCircle className="h-4 w-4" />
+              )}
+              <span>
+                {routeInfo.blocked
+                  ? "May pass through flooded areas"
+                  : routeInfo.avoided_floods
+                    ? "Safe detour applied"
+                    : "Clear path — all safe"}
+              </span>
             </div>
           </div>
-
-          <AnimatePresence>
-            {isCollapsed && routeInfo && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="pt-2"
-              >
-                <div className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-900">{(routeInfo.distance / 1000).toFixed(1)} km</span>
-                    <span className="text-gray-400">•</span>
-                    <span className="font-medium text-gray-700">{formatDuration(routeInfo.duration)}</span>
-                  </div>
-                  {routeInfo.blocked ? (
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                  ) : routeInfo.avoided_floods ? (
-                    <CheckCircle className="h-4 w-4 text-amber-500" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardHeader>
-
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-y-auto flex-1 pb-4"
-            >
-              <CardContent className="space-y-4">
-                <DesktopPointSelector
-                  point="start"
-                  label={startInput}
-                  placeholder="e.g. C. Santos, Taft Ave"
-                  isActive={activePoint === "start"}
-                  isSet={!!start}
-                  onActivate={() => handlePickOnMapToggle("start")}
-                  onLabelChange={(val) => { setStartInput(val); setStartLabel(val); }}
-                  onSelect={(s) => { setStart([s.lng, s.lat], s.label); setStartInput(s.label); setActivePoint("end"); }}
-                  onUseCurrent={() => handleUseCurrentLocation("start")}
-                  onClear={() => { setStart(null, ""); setStartInput(""); setStartLabel(""); }}
-                />
-
-                {start && end && (
-                  <div className="flex justify-center -my-3 z-10 relative">
-                    <button
-                      type="button"
-                      onClick={handleSwap}
-                      title="Swap start and destination"
-                      className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-blue-600 hover:border-blue-300 transition-all shadow-md"
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-
-                <DesktopPointSelector
-                  point="end"
-                  label={endInput}
-                  placeholder="e.g. Pasig City Hall"
-                  isActive={activePoint === "end"}
-                  isSet={!!end}
-                  onActivate={() => handlePickOnMapToggle("end")}
-                  onLabelChange={(val) => { setEndInput(val); setEndLabel(val); }}
-                  onSelect={(s) => { setEnd([s.lng, s.lat], s.label); setEndInput(s.label); }}
-                  onUseCurrent={() => handleUseCurrentLocation("end")}
-                  onClear={() => { setEnd(null, ""); setEndInput(""); setEndLabel(""); }}
-                />
-
-                {routeError && (
-                  <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
-                    <AlertTriangle className="h-5 w-5 shrink-0" />
-                    <span>{routeError}</span>
-                  </div>
-                )}
-
-                {routeInfo && !isRouting && (
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="flex border-b border-gray-100">
-                      <div className="flex-1 text-center py-2.5 border-r border-gray-100">
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide">Distance</p>
-                        <p className="text-sm font-bold text-gray-900">{(routeInfo.distance / 1000).toFixed(1)} km</p>
-                      </div>
-                      <div className="flex-1 text-center py-2.5">
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wide">Duration</p>
-                        <p className="text-sm font-bold text-gray-900">{formatDuration(routeInfo.duration)}</p>
-                      </div>
-                    </div>
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 text-xs font-medium",
-                        routeInfo.blocked ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"
-                      )}
-                    >
-                      {routeInfo.blocked ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                      <span>
-                        {routeInfo.blocked
-                          ? "May pass through flooded areas"
-                          : routeInfo.avoided_floods
-                            ? "Safe detour applied"
-                            : "Clear path — all safe"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Card>
-    </motion.div>
+        )}
+      </Panel>
     </>
   );
 }

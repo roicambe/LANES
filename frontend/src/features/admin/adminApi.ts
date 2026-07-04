@@ -5,12 +5,19 @@ export interface PointGeometry {
   coordinates: [number, number];
 }
 
+export interface LineStringGeometry {
+  type: "LineString";
+  coordinates: [number, number][];
+}
+
+export type ReportGeometry = PointGeometry | LineStringGeometry;
+
 export interface FloodReport {
   id: number;
   source: string;
   raw_text: string;
   severity: "low" | "medium" | "high" | "extreme";
-  geometry: PointGeometry | null;
+  geometry: ReportGeometry | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   updated_at: string;
