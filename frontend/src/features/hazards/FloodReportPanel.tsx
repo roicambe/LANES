@@ -143,7 +143,7 @@ function PointSelector({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-white transition-all overflow-hidden",
+        "rounded-xl border bg-white transition-all",
         isActive
           ? "shadow-md border-orange-200 ring-1 ring-orange-100"
           : colors.accent
@@ -152,7 +152,7 @@ function PointSelector({
       {/* Top accent stripe */}
       <div
         className={cn(
-          "h-[3px] w-full bg-gradient-to-r",
+          "h-[3px] w-full bg-gradient-to-r rounded-t-xl",
           isActive ? "from-orange-500 to-amber-400" : colors.stripe
         )}
       />

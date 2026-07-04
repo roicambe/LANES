@@ -8,6 +8,7 @@ import { CONSTANTS } from "./mapUtils";
 import { useMapContext } from "./MapContext";
 import { LoadingOverlay } from "@/shared/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { apiClient } from "@/lib/apiClient";
 
 const ROUTE_SOURCE_ID = "route-line";
 const ROUTE_LAYER_ID = "route-line-layer";
@@ -407,9 +408,8 @@ export default function MapCanvas() {
 
     const fetchAndDrawActiveZones = async () => {
       try {
-        const response = await fetch("/api/v1/reports/active-zones");
-        if (!response.ok) throw new Error("Failed to fetch active zones");
-        const zones = await response.json();
+        const zones = await apiClient.get<any[]>("/reports/active-zones");
+
         
         setActiveZones(zones);
 

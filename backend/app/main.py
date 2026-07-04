@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
                     username="admin",
                     email="admin@lanes.local",
                     password="admin",
-                    role="admin"
+                    role_id=1
                 )
                 create_user(db, user=admin_in)
                 print("Default admin user created (admin/admin).")

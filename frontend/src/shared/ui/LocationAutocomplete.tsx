@@ -122,7 +122,7 @@ export function LocationAutocomplete({
     
     debounceRef.current = setTimeout(() => {
       void fetchSuggestions(newValue);
-    }, 300);
+    }, 800);
   };
 
   useEffect(() => {

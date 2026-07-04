@@ -76,7 +76,7 @@ function DesktopPointSelector({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-white transition-all overflow-hidden",
+        "rounded-xl border bg-white transition-all",
         isActive
           ? "shadow-md border-blue-200 ring-1 ring-blue-100"
           : colors.accent
@@ -85,7 +85,7 @@ function DesktopPointSelector({
       {/* Top accent stripe */}
       <div
         className={cn(
-          "h-[3px] w-full bg-gradient-to-r",
+          "h-[3px] w-full bg-gradient-to-r rounded-t-xl",
           isActive ? "from-blue-500 to-indigo-400" : colors.stripe
         )}
       />

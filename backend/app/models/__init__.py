@@ -1,4 +1,5 @@
 # Domain models are imported here to allow convenient "from app.models import X"
+from app.models.role import Role
 from app.models.user import User
 from app.models.report import FloodReport, FloodAvoidanceZone, FloodReportLocation
 from app.models.audit import AuditLog

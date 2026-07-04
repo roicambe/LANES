@@ -6,6 +6,7 @@ import { getUsers, updateUserStatus, deleteUser, UserRecord } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { Modal } from "@/shared/ui/Modal";
 import { Input } from "@/shared/ui/Input";
+import { Select } from "@/shared/ui";
 import {
   Loader2,
   Users,
@@ -123,26 +124,26 @@ export default function UsersPage() {
       {/* Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex flex-1 gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search by username or email..."
-              value={search}
-              onChange={handleSearchChange}
-              className="pl-9 text-gray-900 placeholder:text-gray-400 bg-white"
-            />
-          </div>
+          <Input
+            containerClassName="flex-1 max-w-sm"
+            leftIcon={<Search className="w-4 h-4 text-gray-400" />}
+            type="text"
+            placeholder="Search by username or email..."
+            value={search}
+            onChange={handleSearchChange}
+            className="text-gray-900 bg-white"
+          />
 
-          <select
+          <Select
             value={role}
             onChange={handleRoleChange}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Administrators</option>
-            <option value="commuter">Commuters</option>
-          </select>
+            className="w-40 font-medium"
+            options={[
+              { label: "All Roles", value: "all" },
+              { label: "Administrators", value: "admin" },
+              { label: "Commuters", value: "commuter" }
+            ]}
+          />
         </div>
 
         <div className="text-xs font-semibold text-gray-400">
@@ -192,10 +193,10 @@ export default function UsersPage() {
                       {user.email}
                     </td>
                     <td className="px-6 py-4">
-                      {user.role === "admin" ? (
+                      {user.role?.name !== "Commuter" ? (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
                           <Shield className="w-3 h-3" />
-                          Admin
+                          {user.role?.name || "Admin"}
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">

@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { ToastProvider } from "@/shared/ui";
 import GlobalMap from "@/features/map/GlobalMap";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -21,8 +22,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GlobalMap />
-      {children}
+      <ToastProvider>
+        <GlobalMap />
+        {children}
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

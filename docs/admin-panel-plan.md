@@ -250,7 +250,7 @@ All implementations must comply with:
 > Converting `users.role` from a plain `VARCHAR` string to a FK on a `roles` table is a breaking schema change. Must be done via Alembic and coordinated carefully.
 
 **Backend Tasks**
-- [ ] Create Alembic migration for `roles` table:
+- [x] Create Alembic migration for `roles` table:
   ```
   id           INTEGER PK
   name         VARCHAR(50) UNIQUE
@@ -258,18 +258,18 @@ All implementations must comply with:
   is_template  BOOLEAN default false
   created_at   TIMESTAMP
   ```
-- [ ] Add `role_id INTEGER FK → roles.id` to `users` table (nullable initially for migration safety)
-- [ ] Create `Role` SQLAlchemy model and Pydantic schemas
-- [ ] CRUD endpoints: `GET/POST /api/v1/admin/roles`, `PUT/DELETE /api/v1/admin/roles/{id}`
-- [ ] Add `POST /api/v1/admin/roles/{id}/clone` endpoint
-- [ ] Seed 3 built-in read-only templates: Super Admin, DRRM Officer, Data Entry
+- [x] Add `role_id INTEGER FK → roles.id` to `users` table (nullable initially for migration safety)
+- [x] Create `Role` SQLAlchemy model and Pydantic schemas
+- [x] CRUD endpoints: `GET/POST /api/v1/admin/roles`, `PUT/DELETE /api/v1/admin/roles/{id}`
+- [x] Add `POST /api/v1/admin/roles/{id}/clone` endpoint
+- [x] Seed 3 built-in read-only templates: Super Admin, DRRM Officer, Data Entry
 
 **Frontend Tasks — `features/admin/RolesPage.tsx`**
-- [ ] Role card list with permission summary
-- [ ] Create Role modal with per-section permission dropdowns (None / View / Edit / Full)
-- [ ] Edit Role modal (pre-filled)
-- [ ] Clone Role button
-- [ ] Delete Role button (with `ConfirmDialog`, blocked for built-in templates)
+- [x] Role card list with permission summary
+- [x] Create Role modal with per-section permission dropdowns (None / View / Edit / Full)
+- [x] Edit Role modal (pre-filled)
+- [x] Clone Role button
+- [x] Delete Role button (with `ConfirmDialog`, blocked for built-in templates)
 
 ---
 

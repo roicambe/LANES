@@ -1,63 +1,64 @@
 import { CONSTANTS } from "@/features/map/mapUtils";
-import type { LocationSuggestion, NominatimResult } from "./types";
+import type { LocationSuggestion } from "./types";
 
-const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
-const PASIG_VIEWBOX = "121.05,14.52,121.12,14.60";
+const PHOTON_URL = "https://photon.komoot.io/api/";
 
-function scoreResult(result: NominatimResult, query: string): number {
+// Fallback scoring for relevance if needed
+function scorePhotonResult(feature: any, query: string): number {
   const normalizedQuery = query.toLowerCase().trim();
-  const displayName = result.display_name.toLowerCase();
-  let score = result.importance * 10;
+  const name = (feature.properties.name || "").toLowerCase();
+  let score = 0;
 
-  if (displayName.includes(normalizedQuery)) {
+  if (name.includes(normalizedQuery)) {
     score += 50;
   }
 
   const queryParts = normalizedQuery.split(/[\s,]+/).filter(Boolean);
   for (const part of queryParts) {
-    if (part.length >= 2 && displayName.includes(part)) {
+    if (part.length >= 2 && name.includes(part)) {
       score += 15;
     }
   }
 
-  const locality =
-    result.address?.city ??
-    result.address?.town ??
-    result.address?.municipality ??
-    result.address?.suburb ??
-    "";
-
+  const locality = feature.properties.city || feature.properties.locality || feature.properties.state || "";
   if (locality.toLowerCase().includes("pasig")) {
     score += 40;
-  } else if (displayName.includes("pasig")) {
+  } else if (name.includes("pasig")) {
     score += 30;
   }
 
-  if (displayName.includes("metro manila") || displayName.includes("national capital region")) {
+  if (name.includes("metro manila") || name.includes("national capital region")) {
     score += 10;
   }
 
   const [centerLng, centerLat] = CONSTANTS.DEFAULT_CENTER;
-  const lng = parseFloat(result.lon);
-  const lat = parseFloat(result.lat);
-  const distance =
-    Math.sqrt((lng - centerLng) ** 2 + (lat - centerLat) ** 2) * 111;
+  const lng = feature.geometry.coordinates[0];
+  const lat = feature.geometry.coordinates[1];
+  const distance = Math.sqrt((lng - centerLng) ** 2 + (lat - centerLat) ** 2) * 111; // approx km
   score += Math.max(0, 20 - distance);
 
   return score;
 }
 
-function toSuggestion(result: NominatimResult, query: string): LocationSuggestion {
-  const parts = result.display_name.split(",");
-  const label = parts.slice(0, 2).join(",").trim();
+function featureToSuggestion(feature: any, query: string): LocationSuggestion {
+  const props = feature.properties;
+  
+  // Construct a sensible display name
+  const parts = [props.name, props.street, props.locality, props.city, props.state]
+    .filter(Boolean)
+    // Remove duplicates
+    .filter((value, index, self) => self.indexOf(value) === index);
+    
+  const displayName = parts.join(", ");
+  const label = parts.slice(0, 2).join(", ");
 
   return {
-    id: String(result.place_id),
-    label,
-    displayName: result.display_name,
-    lng: parseFloat(result.lon),
-    lat: parseFloat(result.lat),
-    relevanceScore: scoreResult(result, query),
+    id: String(props.osm_id || Math.random()),
+    label: label || "Unknown Location",
+    displayName: displayName || "Unknown Location",
+    lng: feature.geometry.coordinates[0],
+    lat: feature.geometry.coordinates[1],
+    relevanceScore: scorePhotonResult(feature, query),
   };
 }
 
@@ -67,15 +68,13 @@ export async function searchLocations(query: string): Promise<LocationSuggestion
 
   const params = new URLSearchParams({
     q: trimmed,
-    format: "json",
-    addressdetails: "1",
-    limit: "10",
-    countrycodes: "ph",
-    viewbox: PASIG_VIEWBOX,
-    bounded: "0",
+    limit: "8",
+    // Bias results towards Pasig/Metro Manila
+    lon: CONSTANTS.DEFAULT_CENTER[0].toString(),
+    lat: CONSTANTS.DEFAULT_CENTER[1].toString()
   });
 
-  const response = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
+  const response = await fetch(`${PHOTON_URL}?${params.toString()}`, {
     headers: { Accept: "application/json" },
   });
 
@@ -83,11 +82,12 @@ export async function searchLocations(query: string): Promise<LocationSuggestion
     throw new Error("Location search failed");
   }
 
-  const results = (await response.json()) as NominatimResult[];
+  const data = await response.json();
+  const features = data.features || [];
 
-  return results
-    .map((result) => toSuggestion(result, trimmed))
-    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+  return features
+    .map((feature: any) => featureToSuggestion(feature, trimmed))
+    .sort((a: LocationSuggestion, b: LocationSuggestion) => b.relevanceScore - a.relevanceScore)
     .slice(0, 6);
 }
 
