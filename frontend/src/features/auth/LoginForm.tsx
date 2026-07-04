@@ -70,7 +70,7 @@ export default function LoginForm() {
       
       if (profileResponse.ok) {
         const profile = await profileResponse.json();
-        if (profile.role === "admin") {
+        if (profile.role?.name !== "Commuter") {
           router.push("/admin/reports");
           return;
         }
@@ -90,38 +90,35 @@ export default function LoginForm() {
           {errorMsg}
         </div>
       )}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email or Username</label>
-        <Input
-          type="text"
-          placeholder="admin"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-        <div className="relative">
-          <Input
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="pr-10 text-gray-900 bg-white"
-          />
+      <Input
+        label="Email or Username"
+        type="text"
+        placeholder="admin"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        required
+      />
+      <Input
+        label="Password"
+        type={showPassword ? "text" : "password"}
+        placeholder="••••••••"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        className="text-gray-900 bg-white"
+        rightIcon={
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1 rounded-md"
+            className="p-1 text-gray-400 hover:text-gray-600 focus:outline-none"
+            tabIndex={-1}
           >
-            {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
-        </div>
-        <div className="flex justify-end mt-1">
-          <a href="#" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline transition-colors">Forgot password?</a>
-        </div>
+        }
+      />
+      <div className="flex justify-end mt-1">
+        <a href="#" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline transition-colors">Forgot password?</a>
       </div>
       <div className="pt-2">
         <Button type="submit" className="w-full">

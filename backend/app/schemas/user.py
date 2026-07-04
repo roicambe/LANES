@@ -2,20 +2,24 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+from app.schemas.role import RoleResponse
+
 class UserBase(BaseModel):
     username: str
     email: str
-    role: str = "commuter"
 
 
 class UserCreate(UserBase):
     password: str
+    role_id: int = 4  # Default to Commuter (id=4)
 
 
 class UserResponse(UserBase):
     id: int
+    role_id: int
     is_active: bool
     created_at: datetime
+    role: RoleResponse
 
     model_config = ConfigDict(from_attributes=True)
 

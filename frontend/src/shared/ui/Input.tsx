@@ -1,19 +1,60 @@
-import { InputHTMLAttributes, forwardRef } from "react";
+import React, { InputHTMLAttributes, forwardRef, ReactNode } from "react";
 import { cn } from "../../lib/utils";
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, type = "text", ...props }, ref) => {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  containerClassName?: string;
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, containerClassName, label, error, leftIcon, rightIcon, type = "text", ...props }, ref) => {
     return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
-          className
+      <div className={cn("w-full flex flex-col gap-1", containerClassName)}>
+        {label && (
+          <label className="text-sm font-medium text-gray-700">
+            {label}
+          </label>
         )}
-        ref={ref}
-        {...props}
-      />
+        
+        <div className="relative w-full">
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none text-gray-500">
+              {leftIcon}
+            </div>
+          )}
+          
+          <input
+            type={type}
+            className={cn(
+              "flex w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900",
+              "placeholder:text-gray-400 shadow-sm outline-none transition-all duration-200",
+              "focus:border-blue-500 focus:ring-2 focus:ring-blue-100",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              error ? "border-red-500 focus:border-red-500 focus:ring-red-100 ring-red-100" : "border-gray-200 hover:border-gray-300",
+              leftIcon ? "pl-10" : "",
+              rightIcon ? "pr-10" : "",
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+          
+          {rightIcon && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-gray-500">
+              {rightIcon}
+            </div>
+          )}
+        </div>
+
+        {error && (
+          <p className="text-xs text-red-500 font-medium mt-0.5">{error}</p>
+        )}
+      </div>
     );
   }
 );
+
 Input.displayName = "Input";

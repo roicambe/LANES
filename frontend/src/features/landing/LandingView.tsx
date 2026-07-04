@@ -145,7 +145,7 @@ export default function LandingView() {
 
         <div className="flex-1 w-full max-w-md">
 
-          <Card className="w-full shadow-xl border-t-4 border-t-blue-600">
+          <Card className="w-full shadow-xl border-t-4 border-t-blue-600 overflow-visible">
 
             <CardHeader className="text-center pb-2">
 

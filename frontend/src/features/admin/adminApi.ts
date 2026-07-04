@@ -116,7 +116,8 @@ export interface UserRecord {
   id: number;
   username: string;
   email: string;
-  role: "admin" | "commuter";
+  role_id: number;
+  role: RoleRecord;
   is_active: boolean;
   created_at: string;
 }
@@ -190,4 +191,41 @@ export async function getAuditLogs(
   if (adminId) params.append("admin_id", adminId.toString());
 
   return apiClient.get<PaginatedAuditLogsResponse>(`/admin/audit-logs?${params.toString()}`);
+}
+export interface RoleRecord {
+  id: number;
+  name: string;
+  permissions: Record<string, string>;
+  is_template: boolean;
+  created_at: string;
+}
+
+export interface RoleCreate {
+  name: string;
+  permissions: Record<string, string>;
+}
+
+export interface RoleUpdate {
+  name?: string;
+  permissions?: Record<string, string>;
+}
+
+export async function getRoles(): Promise<RoleRecord[]> {
+  return apiClient.get<RoleRecord[]>('/admin/roles');
+}
+
+export async function createRole(data: RoleCreate): Promise<RoleRecord> {
+  return apiClient.post<RoleRecord>('/admin/roles', data);
+}
+
+export async function updateRole(id: number, data: RoleUpdate): Promise<RoleRecord> {
+  return apiClient.put<RoleRecord>(`/admin/roles/${id}`, data);
+}
+
+export async function deleteRole(id: number): Promise<void> {
+  return apiClient.delete(`/admin/roles/${id}`);
+}
+
+export async function cloneRole(id: number, new_name: string): Promise<RoleRecord> {
+  return apiClient.post<RoleRecord>(`/admin/roles/${id}/clone?new_name=${encodeURIComponent(new_name)}`);
 }

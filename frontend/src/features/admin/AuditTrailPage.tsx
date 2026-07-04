@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAuditLogs, AuditLogRecord } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { Modal } from "@/shared/ui/Modal";
+import { Select } from "@/shared/ui";
 import {
   Loader2,
   FileCode,
@@ -117,21 +118,22 @@ export default function AuditTrailPage() {
           <span className="text-sm font-semibold text-gray-700">Filter Activity:</span>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <select
+          <Select
             value={actionType}
             onChange={handleActionChange}
-            className="w-full sm:w-56 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-medium"
-          >
-            <option value="all">All Actions</option>
-            <option value="LOGIN_SUCCESS">Login Success</option>
-            <option value="LOGIN_FAILURE">Login Failure</option>
-            <option value="APPROVE_REPORT">Approve Report</option>
-            <option value="REJECT_REPORT">Reject Report</option>
-            <option value="DEACTIVATE_ZONE">Deactivate Zone</option>
-            <option value="DEACTIVATE_ZONES_BULK">Bulk Deactivate</option>
-            <option value="UPDATE_USER_STATUS">Update User Status</option>
-            <option value="DELETE_USER">Delete User</option>
-          </select>
+            className="w-full sm:w-56 font-medium"
+            options={[
+              { label: "All Actions", value: "all" },
+              { label: "Login Success", value: "LOGIN_SUCCESS" },
+              { label: "Login Failure", value: "LOGIN_FAILURE" },
+              { label: "Approve Report", value: "APPROVE_REPORT" },
+              { label: "Reject Report", value: "REJECT_REPORT" },
+              { label: "Deactivate Zone", value: "DEACTIVATE_ZONE" },
+              { label: "Bulk Deactivate", value: "DEACTIVATE_ZONES_BULK" },
+              { label: "Update User Status", value: "UPDATE_USER_STATUS" },
+              { label: "Delete User", value: "DELETE_USER" }
+            ]}
+          />
         </div>
       </div>
 

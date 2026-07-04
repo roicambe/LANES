@@ -11,30 +11,24 @@ export default function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-        <Input
-          type="text"
-          placeholder="juandelacruz"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <Input
-          type="email"
-          placeholder="you@example.com"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-        <Input
-          type="password"
-          placeholder="••••••••"
-          required
-        />
-      </div>
+      <Input
+        label="Username"
+        type="text"
+        placeholder="juandelacruz"
+        required
+      />
+      <Input
+        label="Email"
+        type="email"
+        placeholder="you@example.com"
+        required
+      />
+      <Input
+        label="Password"
+        type="password"
+        placeholder="••••••••"
+        required
+      />
       <Button type="submit" className="w-full">
         Create Account
       </Button>

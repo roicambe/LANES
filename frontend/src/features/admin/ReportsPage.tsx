@@ -10,6 +10,7 @@ import {
   ReportGeometry
 } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
+import { Select, Input } from "@/shared/ui";
 import { 
   Loader2, 
   CheckCircle, 
@@ -195,33 +196,32 @@ export default function ReportsPage() {
       {/* Filters Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         {/* Search */}
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search report feeds..."
-            value={search}
-            onChange={handleSearchChange}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-          />
-        </div>
+        <Input
+          containerClassName="w-full sm:max-w-xs"
+          leftIcon={<Search className="w-4 h-4 text-gray-400" />}
+          type="text"
+          placeholder="Search report feeds..."
+          value={search}
+          onChange={handleSearchChange}
+        />
 
         {/* Filters */}
         <div className="flex w-full sm:w-auto items-center gap-3 justify-end">
           {/* Severity Dropdown */}
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400 hidden md:block" />
-            <select
+            <Select
               value={severity}
               onChange={(e) => handleSeverityChange(e.target.value)}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="all" className="text-gray-900 bg-white">All Severities</option>
-              <option value="low" className="text-gray-900 bg-white">Passable (Low)</option>
-              <option value="medium" className="text-gray-900 bg-white">Moderate (Medium)</option>
-              <option value="high" className="text-gray-900 bg-white">Hazardous (High)</option>
-              <option value="extreme" className="text-gray-900 bg-white">Impassable (Extreme)</option>
-            </select>
+              className="w-48"
+              options={[
+                { label: "All Severities", value: "all" },
+                { label: "Passable (Low)", value: "low" },
+                { label: "Moderate (Medium)", value: "medium" },
+                { label: "Hazardous (High)", value: "high" },
+                { label: "Impassable (Extreme)", value: "extreme" }
+              ]}
+            />
           </div>
 
           {/* Sort Toggles */}

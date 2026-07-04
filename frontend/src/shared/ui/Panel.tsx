@@ -164,9 +164,9 @@ export function Panel({
         isRight ? "right-0" : "left-0"
       )}
     >
-      <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)]">
+      <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)] overflow-visible">
         {/* Desktop header */}
-        <CardHeader className="pb-3 pt-4">
+        <CardHeader className="pb-3 pt-4 rounded-t-xl">
           {headerRow}
 
           {/* Collapsed summary slot */}
@@ -191,7 +191,7 @@ export function Panel({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-y-auto flex-1"
+              className="overflow-visible flex-1"
             >
               <CardContent className="space-y-4 pb-4">
                 {children}

@@ -45,7 +45,7 @@ def get_current_active_admin(
     """
     Dependency that enforces the current user has the 'admin' role.
     """
-    if current_user.role != "admin":
+    if current_user.role.name == "Commuter":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges"
