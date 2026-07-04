@@ -10,14 +10,20 @@ This document serves as the official technical stack reference for the LANES pla
 
 ### **1\. Client / Frontend Tier (Responsive Web Interface)**
 
-* **Core UI Library:** **React (TypeScript)**  
-  * *Role:* Building modular, component-driven user interfaces for both the commuter navigation panel and the DRRM administrative dashboard.  
-* **Build Tool & Bundler:** **Vite**  
-  * *Role:* Managing the development environment and bundling frontend assets with high-speed compilation.  
+* **Core Framework:** **Next.js (App Router) & React (TypeScript)**  
+  * *Role:* Full-stack React framework providing SSR/SSG capabilities, file-based routing, and building modular, component-driven user interfaces.
+* **Styling & Design System:** **Tailwind CSS v4**  
+  * *Role:* Utility-first CSS framework for rapidly building premium, highly responsive, and dynamic user interfaces without writing custom CSS.
+* **State Management & Fetching:** **TanStack React Query**  
+  * *Role:* Asynchronous state management, caching, and background synchronization for interacting with the FastAPI backend.
+* **Animations & Micro-interactions:** **Framer Motion**  
+  * *Role:* Providing fluid, dynamic micro-animations (like expanding panels, fading modals, and dropdown transitions) to create a premium, responsive feel.
+* **Offline & PWA Support:** **Next-PWA & idb-keyval**  
+  * *Role:* Enabling Progressive Web App functionality and IndexedDB caching for offline resilience during poor network conditions.
 * **Geospatial Render Canvas:** **MapLibre GL JS**  
-  * *Role:* Open-source, WebGL-accelerated interactive 2D map renderer used to display vector basemaps, dynamic alternative routing polylines, and spatial flood avoidance zones without commercial licensing limitations.  
-* **Map Base Tiles:** **OpenStreetMap Tiles**  
-  * *Role:* Rendering completely free and public street-level basemap imagery with zero request caps.
+  * *Role:* Open-source, WebGL-accelerated interactive 2D map renderer used to display vector basemaps, dynamic alternative routing polylines, and spatial flood avoidance zones.  
+* **Map Base Tiles:** **OpenStreetMap Tiles & Photon API**  
+  * *Role:* Rendering completely free street-level basemap imagery and providing rate-limited geocoding autocomplete features with zero commercial licensing caps.
 
 ### **2\. Backend / Core Engine Tier (Application Server)**
 
