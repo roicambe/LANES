@@ -10,7 +10,7 @@ import {
   ReportGeometry
 } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
-import { Select, Input } from "@/shared/ui";
+import { Select, Pagination, Input } from "@/shared/ui";
 import { 
   Loader2, 
   CheckCircle, 
@@ -344,69 +344,11 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <Button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              variant="outline"
-              className="text-xs"
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              disabled={page === totalPages}
-              variant="outline"
-              className="text-xs"
-            >
-              Next
-            </Button>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs md:text-sm text-gray-600">
-                Showing <span className="font-semibold">{Math.min(total, (page - 1) * LIMIT + 1)}</span> to{" "}
-                <span className="font-semibold">{Math.min(total, page * LIMIT)}</span> of{" "}
-                <span className="font-semibold">{total}</span> reports
-              </p>
-            </div>
-            <div>
-              <nav className="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <button
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={page === 1}
-                  className="inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 ${
-                      page === p
-                        ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                        : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages}
-                  className="inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      )}
+      <Pagination 
+        page={page} 
+        totalPages={totalPages} 
+        onPageChange={setPage} 
+      />
     </div>
   );
 }

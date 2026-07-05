@@ -1,10 +1,5 @@
-import UnderDevelopment from "@/features/admin/UnderDevelopment";
+import SystemSettingsPage from "@/features/admin/SystemSettingsPage";
 
-export default function SystemSettingsPage() {
-  return (
-    <UnderDevelopment
-      sectionName="System Settings"
-      description="NLP confidence thresholds, flood zone expiry rules, and sub-admin restrictions will be configured here."
-    />
-  );
+export default function Page() {
+  return <SystemSettingsPage />;
 }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAuditLogs, AuditLogRecord } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { Modal } from "@/shared/ui/Modal";
-import { Select } from "@/shared/ui";
+import { Select, Pagination, DataTable, Column } from "@/shared/ui";
 import {
   Loader2,
   FileCode,
@@ -23,16 +23,20 @@ import {
 
 const LIMIT = 10;
 
-const ACTION_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  LOGIN_SUCCESS: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", label: "Login Success" },
-  LOGIN_FAILURE: { bg: "bg-rose-50 border-rose-200", text: "text-rose-700", label: "Login Failure" },
-  LOGOUT: { bg: "bg-slate-50 border-slate-200", text: "text-slate-700", label: "Logout" },
-  APPROVE_REPORT: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700", label: "Approve Report" },
-  REJECT_REPORT: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", label: "Reject Report" },
-  DEACTIVATE_ZONE: { bg: "bg-orange-50 border-orange-200", text: "text-orange-700", label: "Deactivate Zone" },
-  DEACTIVATE_ZONES_BULK: { bg: "bg-violet-50 border-violet-200", text: "text-violet-700", label: "Bulk Deactivate" },
-  UPDATE_USER_STATUS: { bg: "bg-sky-50 border-sky-200", text: "text-sky-700", label: "Update User" },
-  DELETE_USER: { bg: "bg-red-50 border-red-200", text: "text-red-700", label: "Delete User" },
+const ACTION_BADGES: Record<string, { bg: string; text: string; label: string; module: string }> = {
+  LOGIN_SUCCESS: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", label: "Login Success", module: "Authentication" },
+  LOGIN_FAILURE: { bg: "bg-rose-50 border-rose-200", text: "text-rose-700", label: "Login Failure", module: "Authentication" },
+  LOGOUT: { bg: "bg-slate-50 border-slate-200", text: "text-slate-700", label: "Logout", module: "Authentication" },
+  APPROVE_REPORT: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700", label: "Approve Report", module: "Flood Reports" },
+  REJECT_REPORT: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", label: "Reject Report", module: "Flood Reports" },
+  DEACTIVATE_ZONE: { bg: "bg-orange-50 border-orange-200", text: "text-orange-700", label: "Deactivate Zone", module: "Active Zones Map" },
+  DEACTIVATE_ZONES_BULK: { bg: "bg-violet-50 border-violet-200", text: "text-violet-700", label: "Bulk Deactivate", module: "Active Zones Map" },
+  UPDATE_USER_STATUS: { bg: "bg-sky-50 border-sky-200", text: "text-sky-700", label: "Update User", module: "Users Management" },
+  DELETE_USER: { bg: "bg-red-50 border-red-200", text: "text-red-700", label: "Delete User", module: "Users Management" },
+  CREATE_BACKUP: { bg: "bg-teal-50 border-teal-200", text: "text-teal-700", label: "Create Backup", module: "Data Management" },
+  DELETE_BACKUP: { bg: "bg-red-50 border-red-200", text: "text-red-700", label: "Delete Backup", module: "Data Management" },
+  RESTORE_BACKUP: { bg: "bg-indigo-50 border-indigo-200", text: "text-indigo-700", label: "Restore Backup", module: "Data Management" },
+  CLEANUP_DATABASE: { bg: "bg-purple-50 border-purple-200", text: "text-purple-700", label: "Clear Data", module: "Data Management" },
 };
 
 export default function AuditTrailPage() {
@@ -46,6 +50,11 @@ export default function AuditTrailPage() {
     placeholderData: (prev) => prev,
     refetchInterval: 30000, // Auto-refresh logs every 30 seconds (AJAX Polling)
   });
+
+  // Force a refetch whenever this page is visited/mounted
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const logs = data?.logs || [];
   const total = data?.total || 0;
@@ -80,6 +89,132 @@ export default function AuditTrailPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const auditColumns: Column<AuditLogRecord>[] = [
+    {
+      key: 'created_at',
+      title: 'Timestamp',
+      sortable: true,
+      render: (log) => (
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <Calendar className="w-4 h-4 text-gray-400" />
+          <span className="text-sm font-medium text-gray-700">
+            {new Date(log.created_at).toLocaleString()}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'operator',
+      title: 'Operator',
+      sortable: true,
+      sortFn: (a, b) => {
+        const aName = a.admin?.username || "";
+        const bName = b.admin?.username || "";
+        return aName.localeCompare(bName);
+      },
+      render: (log) => (
+        <div className="whitespace-nowrap">
+          {log.admin ? (
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{log.admin.username}</p>
+              <p className="text-xs text-gray-500 font-medium">{log.admin.email}</p>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400 italic">System / Anonymous</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'source_module',
+      title: 'Source Module',
+      sortable: true,
+      sortFn: (a, b) => {
+        const aModule = ACTION_BADGES[a.action_type]?.module || "System Component";
+        const bModule = ACTION_BADGES[b.action_type]?.module || "System Component";
+        return aModule.localeCompare(bModule);
+      },
+      render: (log) => {
+        const badge = ACTION_BADGES[log.action_type] || { module: "System Component" };
+        return (
+          <span className="whitespace-nowrap text-xs font-semibold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
+            {badge.module}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'action_type',
+      title: 'Action Type',
+      sortable: true,
+      render: (log) => {
+        const badge = ACTION_BADGES[log.action_type] || {
+          bg: "bg-gray-50 border-gray-200",
+          text: "text-gray-700",
+          label: log.action_type,
+        };
+        return (
+          <span className={`whitespace-nowrap inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${badge.bg} ${badge.text}`}>
+            {badge.label}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'target',
+      title: 'Target',
+      sortable: true,
+      sortFn: (a, b) => (a.target_table || "").localeCompare(b.target_table || ""),
+      render: (log) => (
+        <div className="whitespace-nowrap">
+          {log.target_id ? (
+            <div className="text-sm">
+              <span className="font-semibold text-gray-700">{log.target_table}</span>
+              <span className="text-gray-400 ml-1">#{log.target_id}</span>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400 font-medium">-</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'ip_address',
+      title: 'IP Address',
+      sortable: true,
+      render: (log) => (
+        <div className="whitespace-nowrap">
+          {log.ip_address ? (
+            <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
+              <Globe className="w-3.5 h-3.5 text-gray-400" />
+              {log.ip_address}
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400 font-medium">-</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'details',
+      title: 'Details',
+      sortable: false,
+      render: (log) => (
+        <div className="flex justify-end whitespace-nowrap">
+          <Button
+            onClick={() => setInspectLog(log)}
+            variant="outline"
+            size="sm"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 border border-gray-200 shadow-sm"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Inspect
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 text-gray-900">
@@ -138,146 +273,32 @@ export default function AuditTrailPage() {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <p className="text-sm text-gray-500 font-medium">Fetching audit logs...</p>
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-4">
-            <div className="p-3 bg-gray-50 rounded-full">
-              <Shield className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-gray-800 font-bold">No Audit Records Found</h3>
-            <p className="text-sm text-gray-500 max-w-sm">
-              We couldn't find any system audit trail events matching your current filter settings.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Timestamp</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Operator</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Action Type</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Target</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">IP Address</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-150">
-                {logs.map((log) => {
-                  const badge = ACTION_BADGES[log.action_type] || {
-                    bg: "bg-gray-50 border-gray-200",
-                    text: "text-gray-700",
-                    label: log.action_type,
-                  };
-                  return (
-                    <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                      {/* Timestamp */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {new Date(log.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Operator username */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {log.admin ? (
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{log.admin.username}</p>
-                            <p className="text-xs text-gray-500 font-medium">{log.admin.email}</p>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400 italic">System / Anonymous</span>
-                        )}
-                      </td>
-
-                      {/* Action Badge */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${badge.bg} ${badge.text}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-
-                      {/* Target resource */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {log.target_id ? (
-                          <div className="text-sm">
-                            <span className="font-semibold text-gray-700">{log.target_table}</span>
-                            <span className="text-gray-400 ml-1">#{log.target_id}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400 font-medium">-</span>
-                        )}
-                      </td>
-
-                      {/* IP address */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {log.ip_address ? (
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
-                            <Globe className="w-3.5 h-3.5 text-gray-400" />
-                            {log.ip_address}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400 font-medium">-</span>
-                        )}
-                      </td>
-
-                      {/* Details inspect button */}
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <Button
-                          onClick={() => setInspectLog(log)}
-                          variant="outline"
-                          size="sm"
-                          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 border border-gray-200 shadow-sm"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          Inspect
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination bar */}
-        {!isLoading && totalPages > 1 && (
-          <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
-              Showing {(page - 1) * LIMIT + 1} - {Math.min(page * LIMIT, total)} of {total} events
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                disabled={page === 1}
-                variant="outline"
-                className="p-1 px-2 flex items-center gap-1 text-xs hover:bg-gray-100"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                Prev
-              </Button>
-              <Button
-                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                disabled={page === totalPages || isPlaceholderData}
-                variant="outline"
-                className="p-1 px-2 flex items-center gap-1 text-xs hover:bg-gray-100"
-              >
-                Next
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="text-sm text-gray-500 font-medium">Fetching audit logs...</p>
+        </div>
+      ) : (
+        <div className={`transition-opacity duration-150 ${isPlaceholderData ? "opacity-60" : "opacity-100"}`}>
+          <DataTable
+            columns={auditColumns}
+            data={logs}
+            keyExtractor={(log) => log.id}
+            pagination={{ page, totalPages, onPageChange: setPage, disabled: isPlaceholderData }}
+            emptyState={
+              <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
+                <div className="p-3 bg-gray-50 rounded-full">
+                  <Shield className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-gray-800 font-bold text-lg">No Audit Records Found</h3>
+                <p className="text-sm text-gray-500 max-w-sm">
+                  We couldn't find any system audit trail events matching your current filter settings.
+                </p>
+              </div>
+            }
+          />
+        </div>
+      )}
 
       {/* Inspection Modal */}
       <Modal
@@ -302,6 +323,12 @@ export default function AuditTrailPage() {
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Operator</p>
                 <p className="font-semibold text-gray-800 mt-0.5">
                   {inspectLog.admin ? inspectLog.admin.username : "System / Scraper"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Source Module</p>
+                <p className="font-semibold text-gray-800 mt-0.5">
+                  {ACTION_BADGES[inspectLog.action_type]?.module || "System Component"}
                 </p>
               </div>
               <div>

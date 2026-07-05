@@ -7,3 +7,12 @@ export { LoadingOverlay } from "./LoadingOverlay";
 export { LocationAutocomplete } from "./LocationAutocomplete";
 export * from './Toast';
 export * from './Select';
+
+export * from './ConfirmDialog';
+
+export * from './DatePicker';
+
+export * from "./TableActions";
+export * from "./NumberInput";
+export * from "./DataTable";
+export * from './Pagination';
