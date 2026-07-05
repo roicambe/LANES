@@ -229,3 +229,45 @@ export async function deleteRole(id: number): Promise<void> {
 export async function cloneRole(id: number, new_name: string): Promise<RoleRecord> {
   return apiClient.post<RoleRecord>(`/admin/roles/${id}/clone?new_name=${encodeURIComponent(new_name)}`);
 }
+
+export interface BackupFile {
+  id: string;
+  name: string;
+  size_bytes: number;
+  created_at: string;
+  created_by: string | null;
+}
+
+export async function getBackups(): Promise<BackupFile[]> {
+  return apiClient.get<BackupFile[]>('/admin/data/backups');
+}
+
+export async function createBackup(): Promise<BackupFile> {
+  return apiClient.post<BackupFile>('/admin/data/backup', {});
+}
+
+export async function restoreBackup(backupId: string, confirm: boolean): Promise<{ detail: string }> {
+  return apiClient.post<{ detail: string }>(`/admin/data/restore/${backupId}`, { confirm });
+}
+
+export async function deleteBackup(backupId: string): Promise<{ detail: string }> {
+  return apiClient.request<{ detail: string }>(`/admin/data/backups/${backupId}`, { method: "DELETE" });
+}
+
+export async function cleanupData(dateFrom: string, dateTo: string, confirm: boolean): Promise<{ detail: string }> {
+  return apiClient.request<{ detail: string }>('/admin/data/cleanup', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date_from: dateFrom, date_to: dateTo, confirm }),
+  });
+}
+
+export type SystemSettings = Record<string, any>;
+
+export async function getSettings(): Promise<SystemSettings> {
+  return apiClient.get<SystemSettings>('/admin/settings');
+}
+
+export async function updateSettings(settings: SystemSettings): Promise<SystemSettings> {
+  return apiClient.put<SystemSettings>('/admin/settings', { settings });
+}

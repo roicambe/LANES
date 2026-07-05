@@ -110,5 +110,26 @@ export const apiClient = {
       }
       throw new Error("A network error occurred. Please try again later.");
     }
+  },
+
+  async download(endpoint: string, filename: string): Promise<void> {
+    let baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const url = `${baseUrl}${endpoint}`;
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('lanes_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(url, { method: 'GET', headers });
+    if (!response.ok) throw new Error('Download failed');
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(objectUrl);
   }
 };

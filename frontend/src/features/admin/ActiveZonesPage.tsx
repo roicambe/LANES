@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getZones, deactivateZone, deactivateZonesBulk, AvoidanceZone } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { Modal } from "@/shared/ui/Modal";
+import { TableActionGroup, TableActionButton, Pagination } from "@/shared/ui";
 import { 
   Loader2, 
   Map, 
@@ -229,13 +230,14 @@ export default function ActiveZonesPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {zone.is_active ? (
-                        <Button
-                          variant="outline"
-                          onClick={() => setConfirmId(zone.id)}
-                          className="text-xs text-red-600 border-red-100 hover:bg-red-50 hover:border-red-300 px-3 py-1 font-semibold"
-                        >
-                          Deactivate
-                        </Button>
+                        <TableActionGroup>
+                          <TableActionButton
+                            actionVariant="disable"
+                            onClick={() => setConfirmId(zone.id)}
+                          >
+                            Deactivate
+                          </TableActionButton>
+                        </TableActionGroup>
                       ) : (
                         <span className="text-xs text-gray-400 select-none">Archived</span>
                       )}
@@ -273,69 +275,11 @@ export default function ActiveZonesPage() {
         </div>
       )}
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <Button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              variant="outline"
-              className="text-xs"
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              disabled={page === totalPages}
-              variant="outline"
-              className="text-xs"
-            >
-              Next
-            </Button>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs md:text-sm text-gray-600">
-                Showing <span className="font-semibold">{Math.min(total, (page - 1) * LIMIT + 1)}</span> to{" "}
-                <span className="font-semibold">{Math.min(total, page * LIMIT)}</span> of{" "}
-                <span className="font-semibold">{total}</span> detour zones
-              </p>
-            </div>
-            <div>
-              <nav className="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <button
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={page === 1}
-                  className="inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 ${
-                      page === p
-                        ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                        : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages}
-                  className="inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <ChevronRight className="h-5 h-5" />
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      )}
+      <Pagination 
+        page={page} 
+        totalPages={totalPages} 
+        onPageChange={setPage} 
+      />
 
       {/* Confirmation Modals */}
       <Modal

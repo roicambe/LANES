@@ -15,6 +15,9 @@ def clear_dummy_data():
         # Truncate tables cascade (this clears flood_reports, flood_avoidance_zones, flood_report_locations, audit_logs)
         db.execute(text("TRUNCATE TABLE flood_avoidance_zones, flood_report_locations, flood_reports, audit_logs CASCADE;"))
         
+        # Optionally, we might want to reset system_settings but for now we leave them alone so the system stays configured
+        # db.execute(text("TRUNCATE TABLE system_settings;"))
+        
         # Delete all users except the default admin
         db.execute(text("DELETE FROM users WHERE username != 'admin';"))
         
@@ -26,6 +29,7 @@ def clear_dummy_data():
         reports_count = db.execute(text("SELECT COUNT(*) FROM flood_reports;")).scalar()
         zones_count = db.execute(text("SELECT COUNT(*) FROM flood_avoidance_zones;")).scalar()
         audit_count = db.execute(text("SELECT COUNT(*) FROM audit_logs;")).scalar()
+        settings_count = db.execute(text("SELECT COUNT(*) FROM system_settings;")).scalar()
         
         print(f"Remaining users in database: {users_count}")
         print(f"Remaining reports in database: {reports_count}")

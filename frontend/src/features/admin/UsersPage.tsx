@@ -6,7 +6,7 @@ import { getUsers, updateUserStatus, deleteUser, UserRecord } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { Modal } from "@/shared/ui/Modal";
 import { Input } from "@/shared/ui/Input";
-import { Select } from "@/shared/ui";
+import { Select, TableActionGroup, TableActionButton, Pagination, DataTable, Column } from "@/shared/ui";
 import {
   Loader2,
   Users,
@@ -84,6 +84,90 @@ export default function UsersPage() {
     setPage(1);
   };
 
+  const userColumns: Column<UserRecord>[] = [
+    {
+      key: 'id',
+      title: 'User ID',
+      sortable: true,
+      render: (user) => <span className="font-mono text-xs font-semibold">#{user.id}</span>
+    },
+    {
+      key: 'username',
+      title: 'Username',
+      sortable: true,
+      render: (user) => <span className="font-semibold text-gray-800">{user.username}</span>
+    },
+    {
+      key: 'email',
+      title: 'Email',
+      sortable: true,
+      render: (user) => <span className="text-gray-600 font-medium">{user.email}</span>
+    },
+    {
+      key: 'role',
+      title: 'Role',
+      sortable: true,
+      sortFn: (a, b) => (a.role?.name || "Admin").localeCompare(b.role?.name || "Admin"),
+      render: (user) => (
+        user.role?.name !== "Commuter" ? (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+            <Shield className="w-3 h-3" />
+            {user.role?.name || "Admin"}
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            Commuter
+          </span>
+        )
+      )
+    },
+    {
+      key: 'created_at',
+      title: 'Created At',
+      sortable: true,
+      render: (user) => <span className="text-xs">{new Date(user.created_at).toLocaleString()}</span>
+    },
+    {
+      key: 'is_active',
+      title: 'Status',
+      sortable: true,
+      render: (user) => (
+        user.is_active ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+            Active
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+            Disabled
+          </span>
+        )
+      )
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      sortable: false,
+      render: (user) => (
+        <div className="flex justify-end">
+          <TableActionGroup>
+            <TableActionButton
+              actionVariant={user.is_active ? "disable" : "enable"}
+              onClick={() => setStatusUser(user)}
+            >
+              {user.is_active ? "Disable" : "Enable"}
+            </TableActionButton>
+            <TableActionButton
+              actionVariant="delete"
+              onClick={() => setDeleteId(user.id)}
+            >
+              Delete
+            </TableActionButton>
+          </TableActionGroup>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 text-gray-900">
       {/* Header */}
@@ -157,158 +241,23 @@ export default function UsersPage() {
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
           <p className="text-sm text-gray-500">Loading user accounts...</p>
         </div>
-      ) : users.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-16 text-center shadow-sm">
-          <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900">No accounts matched</h3>
-          <p className="text-gray-500 mt-1 max-w-sm mx-auto text-sm">
-            Try adjusting your search filters or check your spelling.
-          </p>
-        </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-semibold tracking-wider">
-                <tr>
-                  <th className="px-6 py-4">User ID</th>
-                  <th className="px-6 py-4">Username</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Role</th>
-                  <th className="px-6 py-4">Created At</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y divide-gray-200 transition-opacity duration-150 ${isPlaceholderData ? "opacity-60" : "opacity-100"}`}>
-                {users.map((user: UserRecord) => (
-                  <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 font-mono text-xs font-semibold">
-                      #{user.id}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-800">
-                      {user.username}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600 font-medium">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4">
-                      {user.role?.name !== "Commuter" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                          <Shield className="w-3 h-3" />
-                          {user.role?.name || "Admin"}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                          Commuter
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-xs">
-                      {new Date(user.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      {user.is_active ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-                          Disabled
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setStatusUser(user)}
-                        className={`text-xs px-2.5 py-1 flex items-center gap-1 font-semibold ${
-                          user.is_active 
-                            ? "text-amber-600 border-amber-100 hover:bg-amber-50" 
-                            : "text-emerald-600 border-emerald-100 hover:bg-emerald-50"
-                        }`}
-                      >
-                        {user.is_active ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
-                        {user.is_active ? "Disable" : "Enable"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setDeleteId(user.id)}
-                        className="text-xs text-red-600 border-red-100 hover:bg-red-50 hover:border-red-300 px-2.5 py-1 font-semibold flex items-center gap-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <Button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              variant="outline"
-              className="text-xs"
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              disabled={page === totalPages}
-              variant="outline"
-              className="text-xs"
-            >
-              Next
-            </Button>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs md:text-sm text-gray-600">
-                Showing <span className="font-semibold">{Math.min(total, (page - 1) * LIMIT + 1)}</span> to{" "}
-                <span className="font-semibold">{Math.min(total, page * LIMIT)}</span> of{" "}
-                <span className="font-semibold">{total}</span> user accounts
-              </p>
-            </div>
-            <div>
-              <nav className="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <button
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={page === 1}
-                  className="inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 ${
-                      page === p
-                        ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                        : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages}
-                  className="inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </nav>
-            </div>
-          </div>
+        <div className={`transition-opacity duration-150 ${isPlaceholderData ? "opacity-60" : "opacity-100"}`}>
+          <DataTable
+            columns={userColumns}
+            data={users}
+            keyExtractor={(user) => user.id}
+            pagination={{ page, totalPages, onPageChange: setPage }}
+            emptyState={
+              <div className="py-16 text-center">
+                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900">No accounts matched</h3>
+                <p className="text-gray-500 mt-1 max-w-sm mx-auto text-sm">
+                  Try adjusting your search filters or check your spelling.
+                </p>
+              </div>
+            }
+          />
         </div>
       )}
 
