@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -15,14 +16,28 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
         print("Database tables created or already exist.")
         
-        # Seed default admin user
+        # Seed default roles and admin user
         from sqlalchemy.orm import Session
         from app.core.database import SessionLocal
         from app.crud.user import get_user_by_username, create_user
         from app.schemas.user import UserCreate
+        from app.models.role import Role
         
         db = SessionLocal()
         try:
+            # Seed Roles if missing
+            existing_roles = db.query(Role).count()
+            if existing_roles == 0:
+                default_roles = [
+                    Role(id=1, name="Super Admin", permissions={"reports": "full", "zones": "full", "users": "full", "roles": "full", "audit": "view", "data": "full", "settings": "full"}, is_template=True),
+                    Role(id=2, name="DRRM Officer", permissions={"reports": "full", "zones": "full", "users": "none", "roles": "none", "audit": "view", "data": "none", "settings": "none"}, is_template=True),
+                    Role(id=3, name="Moderator", permissions={"reports": "full", "zones": "none", "users": "none", "roles": "none", "audit": "none", "data": "none", "settings": "none"}, is_template=True),
+                    Role(id=4, name="Commuter", permissions={}, is_template=True)
+                ]
+                db.add_all(default_roles)
+                db.commit()
+                print("Default roles seeded.")
+
             admin_user = get_user_by_username(db, username="admin")
             if not admin_user:
                 admin_in = UserCreate(
@@ -104,4 +119,12 @@ def health_check():
             "database": database_status,
         }
     }
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """
+    Dummy favicon route to prevent 404 errors in the logs.
+    """
+    return Response(content=b"", media_type="image/x-icon")
 

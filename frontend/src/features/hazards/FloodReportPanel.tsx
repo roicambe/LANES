@@ -8,18 +8,19 @@ import {
   MapPin,
   Check,
   Loader2,
-  AlertTriangle,
-  CheckCircle,
   Navigation2,
 } from "lucide-react";
 import { Panel } from "@/shared/ui/Panel";
 import { Button } from "@/shared/ui/Button";
+import { useToast } from "@/shared/ui";
 import { LocationAutocomplete } from "@/shared/ui/LocationAutocomplete";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/apiClient";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { getCurrentLocation } from "@/features/geocoding/geocodingApi";
 import type { LocationSuggestion } from "@/features/geocoding/types";
+import { useMapContext, type ActivePoint } from "@/features/map/MapContext";
+import { getRoute } from "@/features/routing/routingApi";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -28,13 +29,7 @@ interface FloodReportPanelProps {
   onClose: () => void;
 }
 
-interface ReportPoint {
-  coords: [number, number];
-  label: string;
-}
-
 type Severity = "low" | "medium" | "extreme";
-type PickMode = "start" | "end" | null;
 
 // ── Severity config ────────────────────────────────────────────────────────────
 
@@ -77,23 +72,6 @@ const SEVERITY_OPTIONS: {
   },
 ];
 
-// ── Buffer polygon helper (100 m circular approximation) ──────────────────────
-
-function createBufferPolygon(
-  center: [number, number],
-  radiusInMeters: number = 100
-): number[][][] {
-  const [lng, lat] = center;
-  const n = 32;
-  const coords: number[][] = [];
-  const latDeg = radiusInMeters / 111320;
-  const lngDeg = radiusInMeters / (111320 * Math.cos((lat * Math.PI) / 180));
-  for (let i = 0; i <= n; i++) {
-    const angle = (i * 2 * Math.PI) / n;
-    coords.push([lng + lngDeg * Math.cos(angle), lat + latDeg * Math.sin(angle)]);
-  }
-  return [coords];
-}
 
 // ── Point selector sub-component ─────────────────────────────────────────────
 
@@ -220,19 +198,32 @@ function PointSelector({
 export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
 
+  // Map context
+  const {
+    floodStart,
+    floodEnd,
+    activePoint,
+    isPickingOnMap,
+    setActivePoint,
+    setIsPickingOnMap,
+    setFloodStart,
+    setFloodEnd,
+    setFloodStartLabel,
+    setFloodEndLabel,
+    activePanel,
+    setActivePanel,
+  } = useMapContext();
+
   // Form state
-  const [startPoint, setStartPoint] = useState<ReportPoint | null>(null);
-  const [endPoint, setEndPoint] = useState<ReportPoint | null>(null);
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
   const [severity, setSeverity] = useState<Severity>("medium");
   const [description, setDescription] = useState("");
-  const [pickMode, setPickMode] = useState<PickMode>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCollapsed = activePanel !== "flood";
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const { success, error } = useToast();
 
   // ── Map-pick: listen to the shared map-center-changed event ────────────────
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
@@ -245,29 +236,33 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
     return () => window.removeEventListener("map-center-changed", handleCenter);
   }, []);
 
-  const handlePickOnMap = (target: PickMode) => {
-    setPickMode(target);
-    // Signal MapCanvas to enter crosshair mode for this panel
-    window.dispatchEvent(
-      new CustomEvent("flood-report-pick-mode", { detail: target })
-    );
+  useEffect(() => {
+    if (floodStart?.label) setStartInput(floodStart.label);
+  }, [floodStart?.label]);
+
+  useEffect(() => {
+    if (floodEnd?.label) setEndInput(floodEnd.label);
+  }, [floodEnd?.label]);
+
+  const handlePickOnMap = (target: "flood_start" | "flood_end") => {
+    setActivePoint(target);
+    setIsPickingOnMap(true);
   };
 
   const confirmMapLocation = useCallback(() => {
-    if (!pickMode || !mapCenter) return;
+    if (!activePoint || !mapCenter) return;
     const label = `${mapCenter[0].toFixed(5)}, ${mapCenter[1].toFixed(5)}`;
-    if (pickMode === "start") {
-      setStartPoint({ coords: mapCenter, label });
+    if (activePoint === "flood_start") {
+      setFloodStart(mapCenter, label);
       setStartInput(label);
-      setPickMode("end");
-      window.dispatchEvent(new CustomEvent("flood-report-pick-mode", { detail: "end" }));
-    } else {
-      setEndPoint({ coords: mapCenter, label });
+      setActivePoint("flood_end");
+    } else if (activePoint === "flood_end") {
+      setFloodEnd(mapCenter, label);
       setEndInput(label);
-      setPickMode(null);
-      window.dispatchEvent(new CustomEvent("flood-report-pick-mode", { detail: null }));
+      setActivePoint(null);
     }
-  }, [pickMode, mapCenter]);
+    setIsPickingOnMap(false);
+  }, [activePoint, mapCenter, setFloodStart, setFloodEnd, setActivePoint, setIsPickingOnMap]);
 
   // ── Current location helper ────────────────────────────────────────────────
   const handleUseCurrent = async (target: "start" | "end") => {
@@ -275,84 +270,72 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       const coords = await getCurrentLocation();
       const label = "Current Location";
       if (target === "start") {
-        setStartPoint({ coords, label });
+        setFloodStart(coords, label);
         setStartInput(label);
       } else {
-        setEndPoint({ coords, label });
+        setFloodEnd(coords, label);
         setEndInput(label);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unable to retrieve your location";
-      setFeedback({ type: "error", message });
+      error("Location Error", message);
     }
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFeedback(null);
 
-    if (!startPoint || !endPoint) {
-      setFeedback({ type: "error", message: "Please set both the Flood Start and Flood End locations." });
+    if (!floodStart || !floodEnd) {
+      error("Missing Information", "Please set both the Flood Start and Flood End locations.");
       return;
     }
     if (!description.trim()) {
-      setFeedback({ type: "error", message: "Please add a description of the flood conditions." });
+      error("Missing Information", "Please add a description of the flood conditions.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Submit as LineString geometry representing the affected road segment
-      const dbReport = await apiClient.post<{ id: number }>("/reports/", {
+      // 1. Get the actual road geometry between the two points, ignoring any existing active floods
+      const routeResult = await getRoute(floodStart.coords, floodEnd.coords, true);
+      const roadGeometry = routeResult.geometry;
+
+      // 2. Submit as LineString geometry representing the affected road segment
+      await apiClient.post<{ id: number }>("/reports/", {
         raw_text: description.trim(),
         source: "direct_user",
         severity,
-        geometry: {
-          type: "LineString",
-          coordinates: [startPoint.coords, endPoint.coords],
-        },
-      });
-
-      // Create avoidance zone buffered around the midpoint of the segment
-      const midpoint: [number, number] = [
-        (startPoint.coords[0] + endPoint.coords[0]) / 2,
-        (startPoint.coords[1] + endPoint.coords[1]) / 2,
-      ];
-      const bufferPoly = createBufferPolygon(midpoint, 100);
-      await apiClient.post<unknown>("/reports/avoidance-zones", {
-        report_id: dbReport.id,
-        is_active: true,
-        geometry: { type: "Polygon", coordinates: bufferPoly },
+        geometry: roadGeometry,
       });
 
       // Reset form
-      setStartPoint(null);
-      setEndPoint(null);
+      setFloodStart(null);
+      setFloodEnd(null);
       setStartInput("");
       setEndInput("");
       setSeverity("medium");
       setDescription("");
-      setFeedback({ type: "success", message: "Flood report submitted successfully. It is now pending admin review." });
+      success("Report Submitted", "Flood report submitted successfully. It is now pending admin review.");
     } catch (err: unknown) {
       console.error("Error submitting flood report:", err);
-      setFeedback({ type: "error", message: "Failed to submit the report. Please try again." });
+      error("Submission Failed", "Failed to submit the report. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const canSubmit = !!startPoint && !!endPoint && description.trim().length > 0 && !isSubmitting;
+  const canSubmit = !!floodStart && !!floodEnd && description.trim().length > 0 && !isSubmitting;
 
   // ── Mobile map-pick overlay ────────────────────────────────────────────────
-  if (isMobile && pickMode) {
+  if (isMobile && isPickingOnMap && (activePoint === "flood_start" || activePoint === "flood_end")) {
     return (
       <div className="absolute inset-0 pointer-events-none z-40 flex flex-col justify-between">
         <div className="p-4 pointer-events-auto">
           <button
             onClick={() => {
-              setPickMode(null);
-              window.dispatchEvent(new CustomEvent("flood-report-pick-mode", { detail: null }));
+              setIsPickingOnMap(false);
+              if (!floodStart && !floodEnd) setActivePoint(null);
             }}
             className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md text-gray-900 hover:bg-gray-100 border border-gray-300"
           >
@@ -365,7 +348,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             className="flex items-center justify-center gap-2 bg-orange-500 text-white rounded-full px-6 py-3 shadow-lg font-bold text-base border border-orange-400 hover:bg-orange-600 transition-all min-w-[200px]"
           >
             <Check className="w-5 h-5" />
-            Set {pickMode === "start" ? "Flood Start" : "Flood End"}
+            Set {activePoint === "flood_start" ? "Flood Start" : "Flood End"}
           </button>
         </div>
       </div>
@@ -373,37 +356,57 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   }
 
   // ── Shared form body ───────────────────────────────────────────────────────
+  const clearButton =
+    floodStart || floodEnd || description.trim() !== "" ? (
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          setFloodStart(null);
+          setFloodEnd(null);
+          setStartInput("");
+          setEndInput("");
+          setSeverity("medium");
+          setDescription("");
+        }}
+        className="text-[11px] font-medium text-gray-500 hover:text-red-600 transition-colors px-2 py-1 mr-1"
+        title="Clear report form"
+      >
+        Clear
+      </button>
+    ) : undefined;
+
   const formBody = (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Point selectors */}
       <PointSelector
         point="start"
         label={startInput}
-        isActive={pickMode === "start"}
-        isSet={!!startPoint}
-        onActivate={() => handlePickOnMap("start")}
-        onLabelChange={(val) => setStartInput(val)}
+        isActive={activePoint === "flood_start"}
+        isSet={!!floodStart}
+        onActivate={() => handlePickOnMap("flood_start")}
+        onLabelChange={(val) => { setStartInput(val); setFloodStartLabel(val); }}
         onSelect={(s) => {
-          setStartPoint({ coords: [s.lng, s.lat], label: s.label });
+          setFloodStart([s.lng, s.lat], s.label);
           setStartInput(s.label);
+          setActivePoint("flood_end");
         }}
         onUseCurrent={() => handleUseCurrent("start")}
-        onClear={() => { setStartPoint(null); setStartInput(""); }}
+        onClear={() => { setFloodStart(null); setStartInput(""); setFloodStartLabel(""); }}
       />
 
       <PointSelector
         point="end"
         label={endInput}
-        isActive={pickMode === "end"}
-        isSet={!!endPoint}
-        onActivate={() => handlePickOnMap("end")}
-        onLabelChange={(val) => setEndInput(val)}
+        isActive={activePoint === "flood_end"}
+        isSet={!!floodEnd}
+        onActivate={() => handlePickOnMap("flood_end")}
+        onLabelChange={(val) => { setEndInput(val); setFloodEndLabel(val); }}
         onSelect={(s) => {
-          setEndPoint({ coords: [s.lng, s.lat], label: s.label });
+          setFloodEnd([s.lng, s.lat], s.label);
           setEndInput(s.label);
         }}
         onUseCurrent={() => handleUseCurrent("end")}
-        onClear={() => { setEndPoint(null); setEndInput(""); }}
+        onClear={() => { setFloodEnd(null); setEndInput(""); setFloodEndLabel(""); }}
       />
 
       {/* Severity selector */}
@@ -444,25 +447,6 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
         />
       </div>
 
-      {/* Inline feedback banner */}
-      {feedback && (
-        <div
-          className={cn(
-            "flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium",
-            feedback.type === "success"
-              ? "bg-green-50 border-green-200 text-green-700"
-              : "bg-red-50 border-red-200 text-red-700"
-          )}
-        >
-          {feedback.type === "success" ? (
-            <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" />
-          ) : (
-            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-          )}
-          <span>{feedback.message}</span>
-        </div>
-      )}
-
       {/* Submit */}
       <Button
         type="submit"
@@ -487,12 +471,13 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       icon={<Navigation2 className="h-4 w-4 text-orange-600 rotate-180" />}
       iconBgClassName="bg-orange-100"
       isCollapsed={isCollapsed}
-      onCollapseToggle={() => setIsCollapsed((c) => !c)}
+      onCollapseToggle={() => setActivePanel(isCollapsed ? "flood" : null)}
       isMobile={isMobile}
       isOpen={isOpen}
       onClose={onClose}
       anchor="right"
       initialPosition={{ x: 16, y: 80 }}
+      headerActions={clearButton}
     >
       {formBody}
     </Panel>

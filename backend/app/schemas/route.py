@@ -17,6 +17,7 @@ class RouteRequest(BaseModel):
     """
     start: List[float] = Field(..., min_items=2, max_items=2, description="Start coordinates [lng, lat]")
     end: List[float] = Field(..., min_items=2, max_items=2, description="End coordinates [lng, lat]")
+    ignore_floods: bool = Field(False, description="Bypass flood avoidance checks and return the raw shortest path")
 
 
 class RouteResponse(BaseModel):

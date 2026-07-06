@@ -69,6 +69,8 @@ export default function MapCanvas() {
   const mapRef = useRef<Map | null>(null);
   const startMarkerRef = useRef<Marker | null>(null);
   const endMarkerRef = useRef<Marker | null>(null);
+  const floodStartMarkerRef = useRef<Marker | null>(null);
+  const floodEndMarkerRef = useRef<Marker | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [mapStyle, setMapStyle] = useState<any>(
     "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU"
@@ -83,7 +85,7 @@ export default function MapCanvas() {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
 
-  const { start, end, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap } = useMapContext();
+  const { start, end, floodStart, floodEnd, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);
   setPointFromMapRef.current = setPointFromMap;
 
@@ -222,8 +224,12 @@ export default function MapCanvas() {
       clearTimeout(fallbackTimeout);
       startMarkerRef.current?.remove();
       endMarkerRef.current?.remove();
+      floodStartMarkerRef.current?.remove();
+      floodEndMarkerRef.current?.remove();
       startMarkerRef.current = null;
       endMarkerRef.current = null;
+      floodStartMarkerRef.current = null;
+      floodEndMarkerRef.current = null;
       mapInstance.remove();
       mapRef.current = null;
       setIsLoaded(false);
@@ -257,6 +263,34 @@ export default function MapCanvas() {
         .addTo(map);
     }
   }, [end, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    floodStartMarkerRef.current?.remove();
+    floodStartMarkerRef.current = null;
+
+    if (floodStart) {
+      floodStartMarkerRef.current = new maplibregl.Marker({ color: "#f97316" })
+        .setLngLat(floodStart.coords)
+        .addTo(map);
+    }
+  }, [floodStart, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    floodEndMarkerRef.current?.remove();
+    floodEndMarkerRef.current = null;
+
+    if (floodEnd) {
+      floodEndMarkerRef.current = new maplibregl.Marker({ color: "#991b1b" }) // darker red
+        .setLngLat(floodEnd.coords)
+        .addTo(map);
+    }
+  }, [floodEnd, isLoaded]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
@@ -579,7 +613,10 @@ export default function MapCanvas() {
       {isTouchDevice && isPickingOnMap && activePoint && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full mt-[1.5px] pointer-events-none z-10 drop-shadow-md">
           <svg width="32" height="32" viewBox="0 0 24 24" className="animate-bounce">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill={activePoint === "start" ? "#16a34a" : "#dc2626"} stroke={activePoint === "start" ? "#16a34a" : "#dc2626"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" 
+              fill={activePoint === "start" ? "#16a34a" : activePoint === "flood_start" ? "#f97316" : activePoint === "flood_end" ? "#991b1b" : "#dc2626"} 
+              stroke={activePoint === "start" ? "#16a34a" : activePoint === "flood_start" ? "#f97316" : activePoint === "flood_end" ? "#991b1b" : "#dc2626"} 
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             <circle cx="12" cy="10" r="3" fill="white" />
           </svg>
           <div className="absolute top-full left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-1 bg-black/25 rounded-full blur-[1px]"></div>

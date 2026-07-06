@@ -60,8 +60,12 @@ from app.services.routing import calculate_flood_safe_route
 @router.post("/route", response_model=schemas.RouteResponse)
 def get_safe_route(payload: schemas.RouteRequest, db: Session = Depends(get_db)):
     """
-    Calculate a driving route from start to end coordinates that avoids active flood zones.
-    Fallback to standard route if all options are blocked.
+    Calculates a safe route between start and end coordinates.
+    Avoids active flood zones.
     """
-    return calculate_flood_safe_route(db=db, start=payload.start, end=payload.end)
-
+    return calculate_flood_safe_route(
+        db=db, 
+        start=payload.start, 
+        end=payload.end,
+        ignore_floods=payload.ignore_floods
+    )

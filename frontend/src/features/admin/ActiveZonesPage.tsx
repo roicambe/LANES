@@ -164,6 +164,7 @@ export default function ActiveZonesPage() {
                       onChange={handleSelectAll}
                       checked={
                         zones.length > 0 &&
+                        zones.some((z) => z.is_active) &&
                         zones.filter((z) => z.is_active).every((z) => selectedIds.includes(z.id))
                       }
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
@@ -187,20 +188,17 @@ export default function ActiveZonesPage() {
                     }`}
                   >
                     <td className="px-6 py-4">
-                      {zone.is_active ? (
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(zone.id)}
-                          onChange={(e) => handleSelectRow(zone.id, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                        />
-                      ) : (
-                        <input
-                          type="checkbox"
-                          disabled
-                          className="rounded border-gray-200 bg-gray-100 w-4 h-4 cursor-not-allowed opacity-50"
-                        />
-                      )}
+                      <input
+                        type="checkbox"
+                        checked={zone.is_active ? selectedIds.includes(zone.id) : false}
+                        onChange={(e) => zone.is_active && handleSelectRow(zone.id, e.target.checked)}
+                        disabled={!zone.is_active}
+                        className={
+                          zone.is_active 
+                            ? "rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                            : "rounded border-gray-200 bg-gray-100 w-4 h-4 cursor-not-allowed opacity-50"
+                        }
+                      />
                     </td>
                     <td className="px-6 py-4 font-mono text-xs font-semibold">
                       #{zone.id}

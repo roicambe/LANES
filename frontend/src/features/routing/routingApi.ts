@@ -15,7 +15,8 @@ export interface RouteResult {
 
 export async function getRoute(
   start: [number, number],
-  end: [number, number]
+  end: [number, number],
+  ignoreFloods: boolean = false
 ): Promise<RouteResult> {
-  return apiClient.post<RouteResult>("/reports/route", { start, end });
+  return apiClient.post<RouteResult>("/reports/route", { start, end, ignore_floods: ignoreFloods });
 }

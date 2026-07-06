@@ -161,10 +161,12 @@ export default function RoutePanel() {
     resetAll,
     isPickingOnMap,
     setIsPickingOnMap,
+    activePanel,
+    setActivePanel,
   } = useMapContext();
 
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCollapsed = activePanel !== "route";
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
@@ -209,10 +211,10 @@ export default function RoutePanel() {
 
   useEffect(() => {
     if (isMobile && routeInfo) {
-      setIsCollapsed(true);
+      setActivePanel(null);
       setActivePoint(null); // Clear active selection to hide top buttons
     }
-  }, [routeInfo, isMobile, setActivePoint]);
+  }, [routeInfo, isMobile, setActivePoint, setActivePanel]);
 
   const handleUseCurrentLocation = async (target: ActivePoint) => {
     try {
@@ -246,7 +248,7 @@ export default function RoutePanel() {
   };
 
   if (isMobile) {
-    if (isPickingOnMap && activePoint) {
+    if (isPickingOnMap && (activePoint === "start" || activePoint === "end")) {
       return (
         <div className="absolute inset-0 pointer-events-none z-40 flex flex-col justify-between">
           <div className="p-4 pointer-events-auto">
@@ -272,6 +274,10 @@ export default function RoutePanel() {
           </div>
         </div>
       );
+    }
+    
+    if (isPickingOnMap && (activePoint === "flood_start" || activePoint === "flood_end")) {
+      return null;
     }
 
     const renderTopOptions = (target: ActivePoint) => (
@@ -375,8 +381,8 @@ export default function RoutePanel() {
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={0.2}
               onDragEnd={(e, { offset, velocity }) => {
-                if (offset.y > 50 || velocity.y > 200) setIsCollapsed(true);
-                else if (offset.y < -50 || velocity.y < -200) setIsCollapsed(false);
+                if (offset.y > 50 || velocity.y > 200) setActivePanel(null);
+                else if (offset.y < -50 || velocity.y < -200) setActivePanel("route");
               }}
               initial={{ y: "100%" }}
               animate={{ y: isCollapsed ? "calc(100% - 64px)" : "0%" }}
@@ -386,7 +392,7 @@ export default function RoutePanel() {
             >
               <div 
                 className="w-full flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={() => setActivePanel(isCollapsed ? "route" : null)}
               >
                 <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
               </div>
@@ -493,7 +499,7 @@ export default function RoutePanel() {
         icon={<Navigation className="h-4 w-4 text-blue-600" />}
         iconBgClassName="bg-blue-100"
         isCollapsed={isCollapsed}
-        onCollapseToggle={() => setIsCollapsed(!isCollapsed)}
+        onCollapseToggle={() => setActivePanel(isCollapsed ? "route" : null)}
         isMobile={false}
         initialPosition={{ x: 16, y: 80 }}
         headerActions={clearButton}
