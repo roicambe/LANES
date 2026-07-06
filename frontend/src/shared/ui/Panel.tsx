@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,8 @@ export function Panel({
   initialPosition = { x: 16, y: 80 },
   children,
 }: PanelProps) {
+  const dragControls = useDragControls();
+
   // ── Shared header markup ──────────────────────────────────────────────────
   const headerRow = (
     <div className="flex items-center justify-between">
@@ -89,7 +91,7 @@ export function Panel({
         <span>{title}</span>
       </CardTitle>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
         {headerActions}
 
         {isMobile ? (
@@ -149,24 +151,29 @@ export function Panel({
     );
   }
 
-  // ── Desktop: draggable floating card ──────────────────────────────────────
   const isRight = anchor === "right";
   return (
     <motion.div
       drag
+      dragControls={dragControls}
+      dragListener={false}
       dragMomentum={false}
       initial={{
         x: isRight ? -initialPosition.x : initialPosition.x,
         y: initialPosition.y,
       }}
       className={cn(
-        "absolute top-0 z-40 cursor-move",
+        "absolute top-0 z-40",
         isRight ? "right-0" : "left-0"
       )}
     >
       <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)] overflow-visible">
         {/* Desktop header */}
-        <CardHeader className="pb-3 pt-4 rounded-t-xl">
+        <CardHeader 
+          className="pb-3 pt-4 rounded-t-xl cursor-move touch-none select-none transition-colors hover:bg-gray-50/50"
+          onPointerDown={(e) => dragControls.start(e)}
+          onClick={onCollapseToggle}
+        >
           {headerRow}
 
           {/* Collapsed summary slot */}
@@ -176,6 +183,7 @@ export function Panel({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
                 className="pt-2 overflow-hidden"
               >
                 {collapsedSummary}
@@ -191,6 +199,7 @@ export function Panel({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
               className="overflow-visible flex-1"
             >
               <CardContent className="space-y-4 pb-4">

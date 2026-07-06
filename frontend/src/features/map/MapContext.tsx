@@ -13,7 +13,8 @@ import { useSearchParams } from "next/navigation";
 import { parseCoords } from "@/features/geocoding/geocodingApi";
 import { getRoute, type RouteGeometry, type RouteResult } from "@/features/routing/routingApi";
 
-export type ActivePoint = "start" | "end" | null;
+export type ActivePoint = "start" | "end" | "flood_start" | "flood_end" | null;
+export type ActivePanel = "route" | "flood" | null;
 
 export interface MapPoint {
   coords: [number, number];
@@ -24,6 +25,7 @@ interface MapContextValue {
   start: MapPoint | null;
   end: MapPoint | null;
   activePoint: ActivePoint;
+  activePanel: ActivePanel;
   routeGeometry: RouteGeometry | null;
   routeInfo: Omit<RouteResult, "geometry"> | null;
   isRouting: boolean;
@@ -31,11 +33,18 @@ interface MapContextValue {
   isPickingOnMap: boolean;
   setIsPickingOnMap: (value: boolean) => void;
   setActivePoint: (point: ActivePoint) => void;
+  setActivePanel: (panel: ActivePanel) => void;
   setStart: (coords: [number, number] | null, label?: string) => void;
   setEnd: (coords: [number, number] | null, label?: string) => void;
   setStartLabel: (label: string) => void;
   setEndLabel: (label: string) => void;
   setPointFromMap: (coords: [number, number]) => void;
+  floodStart: MapPoint | null;
+  floodEnd: MapPoint | null;
+  setFloodStart: (coords: [number, number] | null, label?: string) => void;
+  setFloodEnd: (coords: [number, number] | null, label?: string) => void;
+  setFloodStartLabel: (label: string) => void;
+  setFloodEndLabel: (label: string) => void;
   clearRoute: () => void;
   resetAll: () => void;
 }
@@ -55,11 +64,15 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [start, setStartState] = useState<MapPoint | null>(null);
   const [end, setEndState] = useState<MapPoint | null>(null);
   const [activePoint, setActivePoint] = useState<ActivePoint>(null);
+  const [activePanel, setActivePanel] = useState<ActivePanel>("route");
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null);
   const [routeInfo, setRouteInfo] = useState<Omit<RouteResult, "geometry"> | null>(null);
   const [isRouting, setIsRouting] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [isPickingOnMap, setIsPickingOnMap] = useState(false);
+
+  const [floodStart, setFloodStartState] = useState<MapPoint | null>(null);
+  const [floodEnd, setFloodEndState] = useState<MapPoint | null>(null);
 
   useEffect(() => {
     if (!locationParam) return;
@@ -109,17 +122,45 @@ export function MapProvider({ children }: { children: ReactNode }) {
     setEndState((prev) => (prev ? { ...prev, label } : null));
   }, []);
 
+  const setFloodStart = useCallback((coords: [number, number] | null, label?: string) => {
+    if (coords === null) {
+      setFloodStartState(null);
+    } else {
+      setFloodStartState({ coords, label: label ?? coordsLabel(coords) });
+    }
+  }, []);
+
+  const setFloodEnd = useCallback((coords: [number, number] | null, label?: string) => {
+    if (coords === null) {
+      setFloodEndState(null);
+    } else {
+      setFloodEndState({ coords, label: label ?? coordsLabel(coords) });
+    }
+  }, []);
+
+  const setFloodStartLabel = useCallback((label: string) => {
+    setFloodStartState((prev) => (prev ? { ...prev, label } : null));
+  }, []);
+
+  const setFloodEndLabel = useCallback((label: string) => {
+    setFloodEndState((prev) => (prev ? { ...prev, label } : null));
+  }, []);
+
   const setPointFromMap = useCallback(
     (coords: [number, number]) => {
       if (!activePoint) return;
       const label = coordsLabel(coords);
       if (activePoint === "start") {
         setStart(coords, label);
-      } else {
+      } else if (activePoint === "end") {
         setEnd(coords, label);
+      } else if (activePoint === "flood_start") {
+        setFloodStart(coords, label);
+      } else if (activePoint === "flood_end") {
+        setFloodEnd(coords, label);
       }
     },
-    [activePoint, setStart, setEnd]
+    [activePoint, setStart, setEnd, setFloodStart, setFloodEnd]
   );
 
   const clearRoute = useCallback(() => {
@@ -181,17 +222,25 @@ export function MapProvider({ children }: { children: ReactNode }) {
       start,
       end,
       activePoint,
+      activePanel,
       routeGeometry,
       routeInfo,
       isRouting,
       routeError,
       isPickingOnMap,
+      floodStart,
+      floodEnd,
       setIsPickingOnMap,
       setActivePoint,
+      setActivePanel,
       setStart,
       setEnd,
       setStartLabel,
       setEndLabel,
+      setFloodStart,
+      setFloodEnd,
+      setFloodStartLabel,
+      setFloodEndLabel,
       setPointFromMap,
       clearRoute,
       resetAll,
@@ -200,16 +249,25 @@ export function MapProvider({ children }: { children: ReactNode }) {
       start,
       end,
       activePoint,
+      activePanel,
       routeGeometry,
       routeInfo,
       isRouting,
       routeError,
       isPickingOnMap,
+      floodStart,
+      floodEnd,
       setIsPickingOnMap,
+      setActivePoint,
+      setActivePanel,
       setStart,
       setEnd,
       setStartLabel,
       setEndLabel,
+      setFloodStart,
+      setFloodEnd,
+      setFloodStartLabel,
+      setFloodEndLabel,
       setPointFromMap,
       clearRoute,
       resetAll,

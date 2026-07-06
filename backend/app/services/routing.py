@@ -51,11 +51,11 @@ def check_route_intersection(db: Session, route_geojson: str) -> bool:
     return intersection_count > 0
 
 
-def calculate_flood_safe_route(db: Session, start: List[float], end: List[float]) -> Dict[str, Any]:
+def calculate_flood_safe_route(db: Session, start: List[float], end: List[float], ignore_floods: bool = False) -> Dict[str, Any]:
     """
     Queries routes from OSRM and returns the first route alternative
     that does not cross any active flood avoidance zones.
-    If all options cross flooded zones, it falls back to the primary route.
+    If all options cross flooded zones, or if ignore_floods is True, it falls back to the primary route.
     """
     data = get_osrm_routes(start, end)
     
@@ -66,6 +66,16 @@ def calculate_flood_safe_route(db: Session, start: List[float], end: List[float]
         )
         
     routes = data["routes"]
+    
+    if ignore_floods:
+        primary_route = routes[0]
+        return {
+            "geometry": primary_route["geometry"],
+            "distance": primary_route["distance"],
+            "duration": primary_route["duration"],
+            "avoided_floods": False,
+            "blocked": False
+        }
     
     # Check each route alternative
     db_offline = False

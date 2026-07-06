@@ -34,7 +34,7 @@ export default function LoginForm() {
     },
     onSuccess: (data) => {
       localStorage.setItem("lanes_token", data.access_token);
-      router.push("/admin/reports");
+      router.push("/admin/dashboard");
     },
   });
 
@@ -71,7 +71,7 @@ export default function LoginForm() {
       if (profileResponse.ok) {
         const profile = await profileResponse.json();
         if (profile.role?.name !== "Commuter") {
-          router.push("/admin/reports");
+          router.push("/admin/dashboard");
           return;
         }
       }

@@ -112,7 +112,7 @@ export default function LandingView() {
 
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-8 lg:gap-12 max-w-7xl mx-auto w-full pt-8 sm:pt-24 lg:pt-24">
+      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-8 lg:gap-12 max-w-7xl mx-auto w-full pt-20 sm:pt-32 lg:pt-36">
 
         <div className="flex-1 space-y-6 text-center lg:text-left">
 
