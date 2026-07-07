@@ -79,7 +79,7 @@ export function Panel({
 
   const handlePointerDown = (e: React.PointerEvent) => {
     dragStartPos.current = { x: e.clientX, y: e.clientY };
-    dragControls.start(e);
+    dragControls.start(e.nativeEvent);
   };
 
   const handleHeaderClick = (e: React.MouseEvent) => {
@@ -109,16 +109,18 @@ export function Panel({
         {headerActions}
 
         {isMobile ? (
-          onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Close panel"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          )
+          <button
+            type="button"
+            onClick={onCollapseToggle}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label={isCollapsed ? "Expand panel" : "Minimize panel"}
+          >
+            {isCollapsed ? (
+              <ChevronUp className="w-6 h-6 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-6 h-6 text-gray-500" />
+            )}
+          </button>
         ) : (
           <button
             type="button"
@@ -137,21 +139,52 @@ export function Panel({
     </div>
   );
 
-  // ── Mobile: full-screen slide-up sheet ────────────────────────────────────
+  const handleMobileHeaderClick = (e: React.MouseEvent) => {
+    if (!isCollapsed) return;
+    const dx = e.clientX - dragStartPos.current.x;
+    const dy = e.clientY - dragStartPos.current.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > 5) return;
+    onCollapseToggle();
+  };
+
+  // ── Mobile: draggable bottom sheet ────────────────────────────────────────
   if (isMobile) {
     return (
       <AnimatePresence>
         {isOpen && (
           <motion.div
             key="panel-mobile"
-            initial={{ opacity: 0, y: "100%" }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 bg-white flex flex-col"
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 600 }}
+            dragElastic={0.2}
+            onDragEnd={(e, info) => {
+              if (info.offset.y > 60 && !isCollapsed) {
+                onCollapseToggle();
+              } else if (info.offset.y < -60 && isCollapsed) {
+                onCollapseToggle();
+              }
+            }}
+            initial={{ y: "100%" }}
+            animate={{ y: isCollapsed ? "calc(100% - 64px)" : 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col border-t border-gray-200 overflow-hidden h-[60vh] overscroll-y-none"
           >
+            {/* Drag Handle Bar */}
+            <div 
+              className="w-12 h-1 bg-gray-300 rounded-full mx-auto my-2.5 shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+              onPointerDown={handlePointerDown}
+            />
+
             {/* Mobile header */}
-            <div className="px-4 pt-4 pb-3 border-b border-gray-100 bg-gray-50/50 shrink-0">
+            <div 
+              className="px-4 pb-3 border-b border-gray-100 bg-gray-50/50 shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+              onPointerDown={handlePointerDown}
+              onClick={handleMobileHeaderClick}
+            >
               {headerRow}
             </div>
 

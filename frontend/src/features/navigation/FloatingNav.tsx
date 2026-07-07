@@ -19,7 +19,7 @@ export default function FloatingNav() {
   const isMapPage = pathname === "/map";
 
   return (
-    <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-20 hidden sm:block max-w-[calc(100vw-2rem)]">
+    <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-50 hidden sm:block max-w-[calc(100vw-2rem)]">
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 350, damping: 32 }}

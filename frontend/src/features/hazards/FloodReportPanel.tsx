@@ -220,7 +220,14 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   const [endInput, setEndInput] = useState("");
   const [severity, setSeverity] = useState<Severity>("medium");
   const [description, setDescription] = useState("");
+  const [isRouteConfirmed, setIsRouteConfirmed] = useState(false);
   const isCollapsed = activePanel !== "flood";
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsRouteConfirmed(false);
+    }
+  }, [isOpen]);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -317,6 +324,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       setEndInput("");
       setSeverity("medium");
       setDescription("");
+      setIsRouteConfirmed(false);
       success("Report Submitted", "Flood report submitted successfully. It is now pending admin review.");
     } catch (err: unknown) {
       console.error("Error submitting flood report:", err);
@@ -327,6 +335,45 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   };
 
   const canSubmit = !!floodStart && !!floodEnd && description.trim().length > 0 && !isSubmitting;
+
+  // ── Route confirmation overlay ─────────────────────────────────────────────
+  if (floodStart && floodEnd && !isRouteConfirmed) {
+    return (
+      <div className="absolute bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm px-4 pointer-events-none">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-200 p-4 space-y-3 flex flex-col items-center pointer-events-auto">
+          <div className="text-center space-y-1">
+            <h4 className="text-sm font-bold text-gray-900">Verify Detour Route</h4>
+            <p className="text-xs text-gray-500">
+              Check the orange dashed line on the map.
+            </p>
+          </div>
+          <div className="flex w-full gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs font-semibold"
+              onClick={() => {
+                setFloodStart(null);
+                setFloodEnd(null);
+                setStartInput("");
+                setEndInput("");
+                setIsRouteConfirmed(false);
+              }}
+            >
+              Reselect
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 text-xs bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+              onClick={() => setIsRouteConfirmed(true)}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Mobile map-pick overlay ────────────────────────────────────────────────
   if (isMobile && isPickingOnMap && (activePoint === "flood_start" || activePoint === "flood_end")) {
