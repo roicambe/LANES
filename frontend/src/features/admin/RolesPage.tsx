@@ -258,7 +258,7 @@ export default function RolesPage() {
                   <span className="text-sm font-medium capitalize text-gray-700 w-16">{sec}</span>
                   <Select
                     value={permissions[sec] || "none"}
-                    onChange={(e) => setPermissions({ ...permissions, [sec]: e.target.value })}
+                    onChange={(e) => setPermissions({ ...permissions, [sec]: String(e.target.value) })}
                     className="flex-1"
                     options={[
                       { label: "None", value: "none" },

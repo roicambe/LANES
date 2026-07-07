@@ -60,8 +60,8 @@ export default function AuditTrailPage() {
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / LIMIT);
 
-  const handleActionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setActionType(e.target.value);
+  const handleActionChange = (e: { target: { value: string | number } }) => {
+    setActionType(String(e.target.value));
     setPage(1);
   };
 

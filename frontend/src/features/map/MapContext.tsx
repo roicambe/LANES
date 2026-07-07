@@ -41,6 +41,7 @@ interface MapContextValue {
   setPointFromMap: (coords: [number, number]) => void;
   floodStart: MapPoint | null;
   floodEnd: MapPoint | null;
+  floodPreviewGeometry: RouteGeometry | null;
   setFloodStart: (coords: [number, number] | null, label?: string) => void;
   setFloodEnd: (coords: [number, number] | null, label?: string) => void;
   setFloodStartLabel: (label: string) => void;
@@ -73,6 +74,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   const [floodStart, setFloodStartState] = useState<MapPoint | null>(null);
   const [floodEnd, setFloodEndState] = useState<MapPoint | null>(null);
+  const [floodPreviewGeometry, setFloodPreviewGeometry] = useState<RouteGeometry | null>(null);
 
   useEffect(() => {
     if (!locationParam) return;
@@ -172,6 +174,9 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const resetAll = useCallback(() => {
     setStartState(null);
     setEndState(null);
+    setFloodStartState(null);
+    setFloodEndState(null);
+    setFloodPreviewGeometry(null);
     setActivePoint("start");
     clearRoute();
   }, [clearRoute]);
@@ -217,6 +222,33 @@ export function MapProvider({ children }: { children: ReactNode }) {
     };
   }, [start, end, clearRoute]);
 
+  useEffect(() => {
+    if (!floodStart || !floodEnd) {
+      setFloodPreviewGeometry(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchFloodPreview = async () => {
+      try {
+        const result = await getRoute(floodStart.coords, floodEnd.coords, true); // ignore_floods = true
+        if (cancelled) return;
+        setFloodPreviewGeometry(result.geometry);
+      } catch {
+        if (!cancelled) {
+          setFloodPreviewGeometry(null);
+        }
+      }
+    };
+
+    void fetchFloodPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [floodStart, floodEnd]);
+
   const value = useMemo<MapContextValue>(
     () => ({
       start,
@@ -230,6 +262,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       isPickingOnMap,
       floodStart,
       floodEnd,
+      floodPreviewGeometry,
       setIsPickingOnMap,
       setActivePoint,
       setActivePanel,
@@ -257,6 +290,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       isPickingOnMap,
       floodStart,
       floodEnd,
+      floodPreviewGeometry,
       setIsPickingOnMap,
       setActivePoint,
       setActivePanel,

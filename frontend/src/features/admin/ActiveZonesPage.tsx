@@ -36,6 +36,7 @@ export default function ActiveZonesPage() {
     queryKey: ["adminZones", page, activeOnly],
     queryFn: () => getZones(page, LIMIT, activeOnly),
     placeholderData: (prev) => prev,
+    refetchInterval: 15000, // 15s background polling fallback
   });
 
   const deactivateSingleMutation = useMutation({

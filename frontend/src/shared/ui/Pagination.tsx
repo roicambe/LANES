@@ -90,7 +90,7 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
               key={p}
               onClick={() => onPageChange(p)}
               disabled={disabled}
-              variant={page === p ? "default" : "ghost"}
+              variant={page === p ? "primary" : "ghost"}
               className={`px-3 py-1 text-sm font-medium ${
                 page === p
                   ? "bg-blue-600 text-white hover:bg-blue-700"

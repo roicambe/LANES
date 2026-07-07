@@ -6,6 +6,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { LoadingOverlay } from "@/shared/ui";
 import { RefreshCw, ShieldAlert, Layers } from "lucide-react";
 import { Button } from "@/shared/ui/Button";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/apiClient";
 
 // Constants matching MapCanvas.tsx
 const DEFAULT_CENTER: [number, number] = [121.0772, 14.5620]; // Pasig City Center
@@ -36,9 +38,9 @@ const OSM_FALLBACK_STYLE = {
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: "#10b981",      // Green
-  medium: "#f59e0b",   // Amber
-  high: "#f97316",     // Orange
+  low: "#f59e0b",      // Yellow/Amber
+  medium: "#f97316",   // Orange
+  high: "#f97316",     // Orange (compatibility)
   extreme: "#ef4444",  // Red
 };
 
@@ -50,19 +52,11 @@ export default function LiveMapPage() {
   const [mapStyle, setMapStyle] = useState<any>(
     "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU"
   );
-  const [refreshCount, setRefreshCount] = useState(0);
-
-  const fetchActiveZones = async () => {
-    try {
-      const response = await fetch("/api/v1/reports/active-zones");
-      if (!response.ok) throw new Error("Failed to fetch active zones");
-      const zones = await response.json();
-      return zones;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
-  };
+  const { data: activeZonesData, refetch } = useQuery({
+    queryKey: ["activeZones"],
+    queryFn: () => apiClient.get<any[]>("/reports/active-zones"),
+    refetchInterval: 15000, // 15s background polling fallback
+  });
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -114,36 +108,24 @@ export default function LiveMapPage() {
       clearTimeout(fallbackTimeout);
       mapRef.current = mapInstance;
       setIsLoaded(true);
-
-      // Load active avoidance zone polygons
-      updateZoneLayers(mapInstance);
     });
-
-    // Auto refresh active zones loop every 30 seconds
-    const interval = setInterval(() => {
-      if (mapRef.current && isLoaded) {
-        updateZoneLayers(mapRef.current);
-      }
-    }, 30000);
 
     return () => {
       clearTimeout(fallbackTimeout);
-      clearInterval(interval);
       mapInstance.remove();
       mapRef.current = null;
       setIsLoaded(false);
     };
   }, [mapStyle]);
 
-  // Re-run zone loading when refresh count changes manually
+  // Re-run zone loading when activeZonesData or map load state changes reactively
   useEffect(() => {
-    if (mapRef.current && isLoaded) {
-      updateZoneLayers(mapRef.current);
+    if (mapRef.current && isLoaded && activeZonesData) {
+      updateZoneLayers(mapRef.current, activeZonesData);
     }
-  }, [refreshCount]);
+  }, [activeZonesData, isLoaded]);
 
-  const updateZoneLayers = async (map: Map) => {
-    const zones = await fetchActiveZones();
+  const updateZoneLayers = (map: Map, zones: any[]) => {
 
     // Remove existing sources/layers if they exist
     if (map.getLayer("active-zones-layer")) map.removeLayer("active-zones-layer");
@@ -295,7 +277,7 @@ export default function LiveMapPage() {
           <p className="text-[11px] text-gray-500 font-medium">Polygons represent blocked driving paths.</p>
         </div>
         <Button
-          onClick={() => setRefreshCount((c) => c + 1)}
+          onClick={() => refetch()}
           variant="outline"
           className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0"
           title="Force Refresh"

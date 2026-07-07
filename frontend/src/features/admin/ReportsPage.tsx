@@ -54,12 +54,14 @@ export default function ReportsPage() {
     queryKey: ["adminReports", page, status, severity, search, sortBy],
     queryFn: () => getReports({ page, limit: LIMIT, status, severity, search, sortBy }),
     placeholderData: (prev) => prev,
+    refetchInterval: 15000, // 15s background polling fallback
   });
 
   const approveMutation = useMutation({
     mutationFn: (id: number) => approveReport(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      queryClient.invalidateQueries({ queryKey: ["adminDashboardStats"] });
     },
   });
 
@@ -67,6 +69,7 @@ export default function ReportsPage() {
     mutationFn: (id: number) => rejectReport(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      queryClient.invalidateQueries({ queryKey: ["adminDashboardStats"] });
     },
   });
 
@@ -212,7 +215,7 @@ export default function ReportsPage() {
             <Filter className="w-4 h-4 text-gray-400 hidden md:block" />
             <Select
               value={severity}
-              onChange={(e) => handleSeverityChange(e.target.value)}
+              onChange={(e) => handleSeverityChange(String(e.target.value))}
               className="w-48"
               options={[
                 { label: "All Severities", value: "all" },

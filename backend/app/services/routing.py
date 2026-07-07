@@ -9,14 +9,15 @@ from app import models
 from app.core.config import settings
 
 
-def get_osrm_routes(start: List[float], end: List[float]) -> Dict[str, Any]:
+def get_osrm_routes(start: List[float], end: List[float], alternatives: bool = True) -> Dict[str, Any]:
     """
     Queries the OSRM server for routes between start and end coordinates.
     Coordinates must be in format [longitude, latitude].
     Requests alternative routes by setting alternatives=true.
     """
     # OSRM expects coordinates in format {longitude},{latitude};{longitude},{latitude}
-    url = f"{settings.OSRM_URL}/route/v1/driving/{start[0]},{start[1]};{end[0]},{end[1]}?overview=full&geometries=geojson&alternatives=true"
+    alt_param = "true" if alternatives else "false"
+    url = f"{settings.OSRM_URL}/route/v1/driving/{start[0]},{start[1]};{end[0]},{end[1]}?overview=full&geometries=geojson&alternatives={alt_param}"
     
     try:
         response = httpx.get(url, timeout=10.0)
@@ -57,7 +58,10 @@ def calculate_flood_safe_route(db: Session, start: List[float], end: List[float]
     that does not cross any active flood avoidance zones.
     If all options cross flooded zones, or if ignore_floods is True, it falls back to the primary route.
     """
-    data = get_osrm_routes(start, end)
+    if ignore_floods:
+        data = get_osrm_routes(start, end, alternatives=False)
+    else:
+        data = get_osrm_routes(start, end, alternatives=True)
     
     if not data.get("routes"):
         raise HTTPException(

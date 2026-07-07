@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Download, Database, RefreshCw, Trash2, ShieldAlert } from "lucide-react";
 import toast from "react-hot-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
@@ -11,8 +12,7 @@ import { apiClient } from "@/lib/apiClient";
 import { getBackups, createBackup, restoreBackup, deleteBackup, cleanupData, BackupFile } from "./adminApi";
 
 export default function DataManagementPage() {
-  const [backups, setBackups] = useState<BackupFile[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   // Restore state
   const [restoreId, setRestoreId] = useState<string | null>(null);
@@ -27,81 +27,105 @@ export default function DataManagementPage() {
   const [cleanupTo, setCleanupTo] = useState("");
   const [isCleanupModalOpen, setIsCleanupModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchBackups();
-  }, []);
+  const { data: backups = [], isLoading: isBackupsLoading } = useQuery({
+    queryKey: ["adminBackups"],
+    queryFn: getBackups,
+  });
 
-  const fetchBackups = async () => {
-    try {
-      const data = await getBackups();
-      setBackups(data);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load backups");
-    }
-  };
-
-  const handleCreateBackup = async () => {
-    setIsLoading(true);
-    try {
-      await createBackup();
+  const createBackupMutation = useMutation({
+    mutationFn: createBackup,
+    onSuccess: () => {
       toast.success("Backup created successfully");
-      await fetchBackups();
-    } catch (error: any) {
+      queryClient.invalidateQueries({ queryKey: ["adminBackups"] });
+    },
+    onError: (error: any) => {
       toast.error(error.message || "Failed to create backup");
-    } finally {
-      setIsLoading(false);
     }
-  };
+  });
 
-  const handleRestore = async () => {
-    if (!restoreId) return;
-    setIsLoading(true);
-    try {
-      await restoreBackup(restoreId, true);
+  const restoreBackupMutation = useMutation({
+    mutationFn: ({ backupId, confirm }: { backupId: string; confirm: boolean }) => restoreBackup(backupId, confirm),
+    onSuccess: () => {
       toast.success("Database restored successfully");
-    } catch (error: any) {
+      queryClient.invalidateQueries({ queryKey: ["adminBackups"] });
+      // Invalidate everything to fetch clean restored data
+      queryClient.invalidateQueries();
+    },
+    onError: (error: any) => {
       toast.error(error.message || "Failed to restore database");
-    } finally {
-      setIsLoading(false);
-      setIsRestoreModalOpen(false);
-      setRestoreId(null);
     }
-  };
+  });
 
-  const handleDeleteBackup = async () => {
-    if (!deleteId) return;
-    setIsLoading(true);
-    try {
-      await deleteBackup(deleteId);
+  const deleteBackupMutation = useMutation({
+    mutationFn: (backupId: string) => deleteBackup(backupId),
+    onSuccess: () => {
       toast.success("Backup deleted successfully");
-      await fetchBackups();
-    } catch (error: any) {
+      queryClient.invalidateQueries({ queryKey: ["adminBackups"] });
+    },
+    onError: (error: any) => {
       toast.error(error.message || "Failed to delete backup");
-    } finally {
-      setIsLoading(false);
-      setIsDeleteModalOpen(false);
-      setDeleteId(null);
     }
+  });
+
+  const cleanupMutation = useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) => cleanupData(from, to, true),
+    onSuccess: (res) => {
+      toast.success(res.detail || "Data cleaned up successfully");
+      queryClient.invalidateQueries({ queryKey: ["adminBackups"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      queryClient.invalidateQueries({ queryKey: ["adminZones"] });
+      queryClient.invalidateQueries({ queryKey: ["activeZones"] });
+      queryClient.invalidateQueries({ queryKey: ["adminDashboardStats"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to cleanup data");
+    }
+  });
+
+  const isMutating = 
+    createBackupMutation.isPending || 
+    restoreBackupMutation.isPending || 
+    deleteBackupMutation.isPending || 
+    cleanupMutation.isPending;
+
+  const isLoading = isBackupsLoading || isMutating;
+
+  const handleCreateBackup = () => {
+    createBackupMutation.mutate();
   };
 
-  const handleCleanup = async () => {
+  const handleRestore = () => {
+    if (!restoreId) return;
+    restoreBackupMutation.mutate({ backupId: restoreId, confirm: true }, {
+      onSettled: () => {
+        setIsRestoreModalOpen(false);
+        setRestoreId(null);
+      }
+    });
+  };
+
+  const handleDeleteBackup = () => {
+    if (!deleteId) return;
+    deleteBackupMutation.mutate(deleteId, {
+      onSettled: () => {
+        setIsDeleteModalOpen(false);
+        setDeleteId(null);
+      }
+    });
+  };
+
+  const handleCleanup = () => {
     if (!cleanupFrom || !cleanupTo) return;
-    setIsLoading(true);
-    try {
-      const res = await cleanupData(
-        new Date(cleanupFrom).toISOString(),
-        new Date(cleanupTo).toISOString(),
-        true
-      );
-      toast.success(res.detail || "Data cleaned up successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to cleanup data");
-    } finally {
-      setIsLoading(false);
-      setIsCleanupModalOpen(false);
-      setCleanupFrom("");
-      setCleanupTo("");
-    }
+    cleanupMutation.mutate({
+      from: new Date(cleanupFrom).toISOString(),
+      to: new Date(cleanupTo).toISOString()
+    }, {
+      onSettled: () => {
+        setIsCleanupModalOpen(false);
+        setCleanupFrom("");
+        setCleanupTo("");
+      }
+    });
   };
 
   const downloadExport = async (type: "reports" | "zones", format: "csv" | "json") => {
@@ -187,7 +211,7 @@ export default function DataManagementPage() {
                 />
               </div>
               <Button
-                variant="destructive"
+                variant="danger"
                 className="w-full"
                 disabled={!cleanupFrom || !cleanupTo}
                 onClick={() => setIsCleanupModalOpen(true)}

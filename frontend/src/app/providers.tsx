@@ -4,6 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { ToastProvider } from "@/shared/ui";
 import GlobalMap from "@/features/map/GlobalMap";
+import { useWebSocket } from "@/hooks/useWebSocket";
+
+function WebSocketInitializer() {
+  useWebSocket();
+  return null;
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -12,7 +18,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             // Default settings for LANES
-            staleTime: 60 * 1000, // Data stays fresh for 1 minute before refetching
+            staleTime: 0, // Data is immediately considered stale so it refetches in the background on mount/navigation
             refetchOnWindowFocus: true, // Auto-refetch when user switches back to the app
             retry: 3, // Retry failed requests 3 times (good for bad network areas)
           },
@@ -22,6 +28,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <WebSocketInitializer />
       <ToastProvider>
         <GlobalMap />
         {children}
