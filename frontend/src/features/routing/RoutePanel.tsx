@@ -332,7 +332,6 @@ export default function RoutePanel() {
                 onClick={() => setActivePoint("start")}
               >
                 <LocationAutocomplete 
-                  key={`start-${activePoint}`}
                   value={startInput} 
                   onChange={(val) => { setStartInput(val); setStartLabel(val); }}
                   onSelect={(s) => { setStart([s.lng, s.lat], s.label); setStartInput(s.label); setActivePoint("end"); }}
@@ -347,7 +346,6 @@ export default function RoutePanel() {
                 onClick={() => setActivePoint("end")}
               >
                 <LocationAutocomplete 
-                  key={`end-${activePoint}`}
                   value={endInput} 
                   onChange={(val) => { setEndInput(val); setEndLabel(val); }}
                   onSelect={(s) => { setEnd([s.lng, s.lat], s.label); setEndInput(s.label); }}
@@ -378,7 +376,7 @@ export default function RoutePanel() {
           {routeInfo && (
             <motion.div
               drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
+              dragConstraints={{ top: 0, bottom: 300 }}
               dragElastic={0.2}
               onDragEnd={(e, { offset, velocity }) => {
                 if (offset.y > 50 || velocity.y > 200) setActivePanel(null);
@@ -388,10 +386,10 @@ export default function RoutePanel() {
               animate={{ y: isCollapsed ? "calc(100% - 64px)" : "0%" }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 z-40 rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pb-6"
+              className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] h-[185px] overflow-hidden overscroll-y-none"
             >
               <div 
-                className="w-full flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+                className="w-full flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none select-none"
                 onClick={() => setActivePanel(isCollapsed ? "route" : null)}
               >
                 <div className="w-12 h-1.5 bg-gray-300 rounded-full" />

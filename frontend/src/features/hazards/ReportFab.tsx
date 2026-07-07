@@ -1,20 +1,47 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { Button } from "@/shared/ui/Button";
+import { motion } from "framer-motion";
 
 interface ReportFabProps {
+  /** Whether the FAB action menu is currently expanded. */
+  isMenuOpen: boolean;
+  /** Whether the flood report panel is expanded (not collapsed). */
+  isPanelExpanded: boolean;
+  /** Callback when the FAB is clicked. */
   onClick: () => void;
 }
 
-export function ReportFab({ onClick }: ReportFabProps) {
+/**
+ * Floating Action Button for the map view.
+ *
+ * - Smoothly morphs between a "+" and "×" icon using a 45° rotation.
+ * - Dynamically adjusts its z-index based on panel state:
+ *     • Panel collapsed → FAB sits ABOVE the panel (z-[45]).
+ *     • Panel expanded  → FAB sits BELOW the panel (z-[35]).
+ */
+export function ReportFab({ isMenuOpen, isPanelExpanded, onClick }: ReportFabProps) {
+  // When the panel is fully expanded, the FAB drops below it (z-35 < panel z-40).
+  // When collapsed or closed, the FAB floats above (z-45 > panel z-40).
+  const zClass = isPanelExpanded ? "z-[35]" : "z-[45]";
+
   return (
-    <Button
+    <motion.button
       onClick={onClick}
-      className="absolute bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] left-4 sm:bottom-8 sm:right-16 sm:left-auto z-40 w-14 h-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-      title="Report Flood Hazard"
+      whileTap={{ scale: 0.9 }}
+      className={`fixed bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] left-4 ${zClass} w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer bg-blue-600 hover:bg-blue-700 transition-colors`}
+      title={isMenuOpen ? "Close menu" : "Report Flood Hazard"}
     >
-      <Plus className="w-7 h-7 text-white" />
-    </Button>
+      {/* Two crossing bars that rotate to morph between + and × */}
+      <motion.span
+        animate={{ rotate: isMenuOpen ? 45 : 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 22 }}
+        className="absolute w-6 h-0.5 bg-white rounded-full"
+      />
+      <motion.span
+        animate={{ rotate: isMenuOpen ? -45 : 90 }}
+        transition={{ type: "spring", stiffness: 400, damping: 22 }}
+        className="absolute w-6 h-0.5 bg-white rounded-full"
+      />
+    </motion.button>
   );
 }
