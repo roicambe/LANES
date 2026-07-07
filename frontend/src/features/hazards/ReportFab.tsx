@@ -28,7 +28,7 @@ export function ReportFab({ isMenuOpen, isPanelExpanded, onClick }: ReportFabPro
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.9 }}
-      className={`fixed bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] left-4 ${zClass} w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer bg-blue-600 hover:bg-blue-700 transition-colors`}
+      className={`fixed bottom-[calc(64px+env(safe-area-inset-bottom)+88px)] left-4 ${zClass} w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer bg-blue-600 hover:bg-blue-700 transition-colors`}
       title={isMenuOpen ? "Close menu" : "Report Flood Hazard"}
     >
       {/* Two crossing bars that rotate to morph between + and × */}

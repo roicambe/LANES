@@ -102,7 +102,7 @@ function MapOverlays({
             animate="visible"
             exit="exit"
             onClick={handleSelectFloodReport}
-            className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+84px)] left-4 z-[46] flex items-center gap-3 bg-white text-slate-800 font-semibold pl-3 pr-5 py-2.5 rounded-full shadow-2xl border border-gray-200/60 hover:bg-gray-50 active:scale-95 cursor-pointer select-none"
+            className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+160px)] left-4 z-[46] flex items-center gap-3 bg-white text-slate-800 font-semibold pl-3 pr-5 py-2.5 rounded-full shadow-2xl border border-gray-200/60 hover:bg-gray-50 active:scale-95 cursor-pointer select-none"
           >
             <div className="bg-orange-100 p-2 rounded-full text-orange-600 shrink-0">
               <AlertTriangle className="w-4 h-4" />
