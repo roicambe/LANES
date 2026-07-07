@@ -41,6 +41,7 @@ export default function UsersPage() {
     queryKey: ["adminUsers", page, search, role],
     queryFn: () => getUsers(page, LIMIT, search, role),
     placeholderData: (prev) => prev,
+    refetchInterval: 30000, // 30s background polling fallback
   });
 
   const toggleStatusMutation = useMutation({
@@ -79,8 +80,8 @@ export default function UsersPage() {
     setPage(1);
   };
 
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRole(e.target.value);
+  const handleRoleChange = (e: { target: { value: string | number } }) => {
+    setRole(String(e.target.value));
     setPage(1);
   };
 

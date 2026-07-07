@@ -15,7 +15,9 @@ This document serves as the official technical stack reference for the LANES pla
 * **Styling & Design System:** **Tailwind CSS v4**  
   * *Role:* Utility-first CSS framework for rapidly building premium, highly responsive, and dynamic user interfaces without writing custom CSS.
 * **State Management & Fetching:** **TanStack React Query**  
-  * *Role:* Asynchronous state management, caching, and background synchronization for interacting with the FastAPI backend.
+  * *Role:* Asynchronous state management, caching, background synchronization, and automatic revalidation (configured with staleTime: 0 for instant revalidation on mount/navigation).
+* **Real-time Event Signaling:** **WebSockets (Native Client)**  
+  * *Role:* Maintaining a persistent connection to the backend to receive instant cache invalidation signals and trigger reactive refetching.
 * **Animations & Micro-interactions:** **Framer Motion**  
   * *Role:* Providing fluid, dynamic micro-animations (like expanding panels, fading modals, and dropdown transitions) to create a premium, responsive feel.
 * **Offline & PWA Support:** **Next-PWA & idb-keyval**  
@@ -29,8 +31,8 @@ This document serves as the official technical stack reference for the LANES pla
 
 * **Programming Language:** **Python 3.11+**  
   * *Role:* Handling data collection scripts, natural language parsing, database queries, and routing logic under a unified, high-performance execution environment.  
-* **Web Framework:** **FastAPI (with Uvicorn)**  
-  * *Role:* Serving as the asynchronous application server to handle high-throughput client API requests, manage database transactions, and automatically generate interactive API documentation (/docs).  
+* **Web Framework & Real-time Server:** **FastAPI (with Uvicorn & WebSockets)**  
+  * *Role:* Serving as the asynchronous web server handling high-throughput client API requests, managing database transactions, hosting WebSocket connections, and broadcasting data modification events.
 * **NLP & Information Extraction:** **spaCy**  
   * *Role:* Managing the custom, locally executed Bilingual Named Entity Recognition (NER) pipeline to isolate street-level locations and severity parameters from Taglish text feeds.
 

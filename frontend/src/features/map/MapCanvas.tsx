@@ -9,6 +9,7 @@ import { useMapContext } from "./MapContext";
 import { LoadingOverlay } from "@/shared/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { apiClient } from "@/lib/apiClient";
+import { useQuery } from "@tanstack/react-query";
 
 const ROUTE_SOURCE_ID = "route-line";
 const ROUTE_LAYER_ID = "route-line-layer";
@@ -39,9 +40,9 @@ const OSM_FALLBACK_STYLE = {
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: "#10b981",      // Green
-  medium: "#f59e0b",   // Amber
-  high: "#f97316",     // Orange
+  low: "#f59e0b",      // Yellow/Amber
+  medium: "#f97316",   // Orange
+  high: "#f97316",     // Orange (compatibility)
   extreme: "#ef4444",  // Red
 };
 
@@ -76,7 +77,12 @@ export default function MapCanvas() {
     "https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU"
   );
   const [usingFallback, setUsingFallback] = useState(false);
-  const [activeZones, setActiveZones] = useState<any[]>([]);
+
+  const { data: activeZonesData } = useQuery({
+    queryKey: ["activeZones"],
+    queryFn: () => apiClient.get<any[]>("/reports/active-zones"),
+    refetchInterval: 15000, // 15s background polling fallback
+  });
 
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
@@ -85,7 +91,7 @@ export default function MapCanvas() {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
 
-  const { start, end, floodStart, floodEnd, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap } = useMapContext();
+  const { start, end, floodStart, floodEnd, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap, floodPreviewGeometry } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);
   setPointFromMapRef.current = setPointFromMap;
 
@@ -332,7 +338,7 @@ export default function MapCanvas() {
       let lastIntersectIdx = -1;
       for (let i = 0; i < coords.length; i++) {
         const pt = coords[i] as [number, number];
-        const isFlooded = activeZones.some(zone => isPointInPolygon(pt, zone.geometry));
+        const isFlooded = (activeZonesData || []).some(zone => isPointInPolygon(pt, zone.geometry));
         if (isFlooded) {
           if (firstIntersectIdx === -1) {
             firstIntersectIdx = i;
@@ -428,129 +434,111 @@ export default function MapCanvas() {
       },
     });
 
-  }, [routeGeometry, routeInfo, activeZones, isLoaded]);
+  }, [routeGeometry, routeInfo, activeZonesData, isLoaded]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
     mapRef.current.getCanvas().style.cursor = "crosshair";
   }, [isLoaded]);
 
-  // Poll and render active flood avoidance zone polygons on the commuter map
+  // Render active flood avoidance zone polygons on the commuter map reactively
   useEffect(() => {
-    if (!isLoaded || !mapRef.current) return;
+    if (!isLoaded || !mapRef.current || !activeZonesData) return;
     const map = mapRef.current;
 
-    const fetchAndDrawActiveZones = async () => {
-      try {
-        const zones = await apiClient.get<any[]>("/reports/active-zones");
+    // Remove existing sources/layers if they exist
+    if (map.getLayer("active-zones-layer")) map.removeLayer("active-zones-layer");
+    if (map.getLayer("active-zones-outline")) map.removeLayer("active-zones-outline");
+    if (map.getLayer("active-zones-road-layer")) map.removeLayer("active-zones-road-layer");
+    if (map.getSource("active-zones-source")) map.removeSource("active-zones-source");
 
-        
-        setActiveZones(zones);
+    const features: any[] = [];
+    activeZonesData.forEach((zone: any) => {
+      const severity = zone.severity || "medium";
+      const color = SEVERITY_COLORS[severity] || "#f59e0b";
+      const isRoadBased = zone.report_geometry && zone.report_geometry.type === "LineString";
 
-        // Remove existing sources/layers if they exist
-        if (map.getLayer("active-zones-layer")) map.removeLayer("active-zones-layer");
-        if (map.getLayer("active-zones-outline")) map.removeLayer("active-zones-outline");
-        if (map.getLayer("active-zones-road-layer")) map.removeLayer("active-zones-road-layer");
-        if (map.getSource("active-zones-source")) map.removeSource("active-zones-source");
-
-        const features: any[] = [];
-        zones.forEach((zone: any) => {
-          const severity = zone.severity || "medium";
-          const color = SEVERITY_COLORS[severity] || "#f59e0b";
-          const isRoadBased = zone.report_geometry && zone.report_geometry.type === "LineString";
-
-          if (isRoadBased) {
-            // Add LineString feature for highlighted road segment
-            features.push({
-              type: "Feature",
-              properties: {
-                id: zone.id,
-                report_id: zone.report_id,
-                severity: severity.toUpperCase(),
-                color: color,
-                is_road_line: true,
-                is_road_based: true,
-              },
-              geometry: zone.report_geometry
-            });
-          }
-
-          // Add Polygon feature (avoidance zone buffer)
-          features.push({
-            type: "Feature",
-            properties: {
-              id: zone.id,
-              report_id: zone.report_id,
-              severity: severity.toUpperCase(),
-              color: color,
-              is_road_line: false,
-              is_road_based: isRoadBased,
-            },
-            geometry: zone.geometry
-          });
-        });
-
-        map.addSource("active-zones-source", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: features
-          }
-        });
-
-        // 1. Polygon Fill Layer (only for point-based/non-road-based zones)
-        map.addLayer({
-          id: "active-zones-layer",
-          type: "fill",
-          source: "active-zones-source",
-          paint: {
-            "fill-color": ["get", "color"],
-            "fill-opacity": 0.4,
+      if (isRoadBased) {
+        // Add LineString feature for highlighted road segment
+        features.push({
+          type: "Feature",
+          properties: {
+            id: zone.id,
+            report_id: zone.report_id,
+            severity: severity.toUpperCase(),
+            color: color,
+            is_road_line: true,
+            is_road_based: true,
           },
-          filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
+          geometry: zone.report_geometry
         });
-
-        // 2. Polygon Outline Layer (only for point-based/non-road-based zones)
-        map.addLayer({
-          id: "active-zones-outline",
-          type: "line",
-          source: "active-zones-source",
-          paint: {
-            "line-color": ["get", "color"],
-            "line-width": 2
-          },
-          filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
-        });
-
-        // 3. Highlighted Road Line Layer (only for road segment LineStrings)
-        // Set width to 10 and opacity to 0.45 to form a soft background glow around the street
-        map.addLayer({
-          id: "active-zones-road-layer",
-          type: "line",
-          source: "active-zones-source",
-          layout: {
-            "line-join": "round",
-            "line-cap": "round"
-          },
-          paint: {
-            "line-color": ["get", "color"],
-            "line-width": 22,
-            "line-opacity": 0.6
-          },
-          filter: ["==", ["geometry-type"], "LineString"]
-        }, map.getLayer(ROUTE_LAYER_ID) ? ROUTE_LAYER_ID : undefined);
-      } catch (err) {
-        console.error("Failed to load active zones on commuter map:", err);
       }
-    };
 
-    fetchAndDrawActiveZones();
-    const interval = setInterval(fetchAndDrawActiveZones, 30000);
+      // Add Polygon feature (avoidance zone buffer)
+      features.push({
+        type: "Feature",
+        properties: {
+          id: zone.id,
+          report_id: zone.report_id,
+          severity: severity.toUpperCase(),
+          color: color,
+          is_road_line: false,
+          is_road_based: isRoadBased,
+        },
+        geometry: zone.geometry
+      });
+    });
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isLoaded]);
+    map.addSource("active-zones-source", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: features
+      }
+    });
+
+    // 1. Polygon Fill Layer (only for point-based/non-road-based zones)
+    map.addLayer({
+      id: "active-zones-layer",
+      type: "fill",
+      source: "active-zones-source",
+      paint: {
+        "fill-color": ["get", "color"],
+        "fill-opacity": 0.4,
+      },
+      filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
+    });
+
+    // 2. Polygon Outline Layer (only for point-based/non-road-based zones)
+    map.addLayer({
+      id: "active-zones-outline",
+      type: "line",
+      source: "active-zones-source",
+      paint: {
+        "line-color": ["get", "color"],
+        "line-width": 2
+      },
+      filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "is_road_based"], false]]
+    });
+
+    // 3. Highlighted Road Line Layer (only for road segment LineStrings)
+    // Set width to 10 and opacity to 0.45 to form a soft background glow around the street
+    map.addLayer({
+      id: "active-zones-road-layer",
+      type: "line",
+      source: "active-zones-source",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": ["get", "color"],
+        "line-width": 22,
+        "line-opacity": 0.6
+      },
+      filter: ["==", ["geometry-type"], "LineString"]
+    }, map.getLayer(ROUTE_LAYER_ID) ? ROUTE_LAYER_ID : undefined);
+  }, [isLoaded, activeZonesData]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current || !start) return;
@@ -591,6 +579,40 @@ export default function MapCanvas() {
     const center = map.getCenter();
     window.dispatchEvent(new CustomEvent("map-center-changed", { detail: [center.lng, center.lat] }));
   }, [isPickingOnMap, isLoaded]);
+
+  // Draw the preview of the flood report road segment (only when road-aligned geometry is ready)
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    // Remove existing preview source/layers if they exist
+    if (map.getLayer("flood-preview-layer")) map.removeLayer("flood-preview-layer");
+    if (map.getSource("flood-preview-source")) map.removeSource("flood-preview-source");
+
+    if (!floodPreviewGeometry) return;
+
+    map.addSource("flood-preview-source", {
+      type: "geojson",
+      data: {
+        type: "Feature",
+        properties: {},
+        geometry: floodPreviewGeometry,
+      },
+    });
+
+    map.addLayer({
+      id: "flood-preview-layer",
+      type: "line",
+      source: "flood-preview-source",
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: {
+        "line-color": "#f97316", // Orange preview color matching markers
+        "line-width": 6,
+        "line-dasharray": [2, 2], // Dashed line for visual distinction
+        "line-opacity": 0.85,
+      },
+    });
+  }, [floodPreviewGeometry, isLoaded]);
 
   return (
     <div className="relative w-full h-full">

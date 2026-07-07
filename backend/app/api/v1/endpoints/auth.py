@@ -75,7 +75,7 @@ def login_access_token(
         )
         raise HTTPException(status_code=400, detail="Inactive user")
     
-    if user.role == "admin":
+    if user.role.name != "Commuter":
         crud.create_audit_log(
             db,
             audit_in=schemas.AuditLogCreate(
@@ -85,7 +85,7 @@ def login_access_token(
                 target_id=user.id,
                 metadata_json={
                     "username": user.username,
-                    "role": user.role
+                    "role": user.role.name
                 },
                 ip_address=client_ip
             )

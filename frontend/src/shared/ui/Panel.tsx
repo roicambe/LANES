@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
@@ -75,6 +75,20 @@ export function Panel({
   children,
 }: PanelProps) {
   const dragControls = useDragControls();
+  const dragStartPos = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    dragControls.start(e);
+  };
+
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    const dx = e.clientX - dragStartPos.current.x;
+    const dy = e.clientY - dragStartPos.current.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > 5) return;
+    onCollapseToggle();
+  };
 
   // ── Shared header markup ──────────────────────────────────────────────────
   const headerRow = (
@@ -167,12 +181,12 @@ export function Panel({
         isRight ? "right-0" : "left-0"
       )}
     >
-      <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-2rem)] overflow-visible">
+      <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-7.5rem)] overflow-hidden">
         {/* Desktop header */}
         <CardHeader 
           className="pb-3 pt-4 rounded-t-xl cursor-move touch-none select-none transition-colors hover:bg-gray-50/50"
-          onPointerDown={(e) => dragControls.start(e)}
-          onClick={onCollapseToggle}
+          onPointerDown={handlePointerDown}
+          onClick={handleHeaderClick}
         >
           {headerRow}
 
@@ -200,7 +214,7 @@ export function Panel({
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="overflow-visible flex-1"
+              className="overflow-y-auto flex-1 min-h-0"
             >
               <CardContent className="space-y-4 pb-4">
                 {children}

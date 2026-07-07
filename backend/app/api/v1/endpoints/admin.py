@@ -24,7 +24,7 @@ def get_pending_reports(
 
 
 @router.post("/reports/{report_id}/approve", response_model=schemas.FloodReportResponse)
-def approve_report(
+async def approve_report(
     report_id: int,
     request: Request,
     db: Session = Depends(get_db),
@@ -89,11 +89,18 @@ def approve_report(
         )
     )
 
+    # Broadcast real-time signal
+    from app.core.websocket import manager
+    await manager.broadcast({
+        "event": "report_approved",
+        "data": {"report_id": report.id}
+    })
+
     return report
 
 
 @router.post("/reports/{report_id}/reject", response_model=schemas.FloodReportResponse)
-def reject_report(
+async def reject_report(
     report_id: int,
     request: Request,
     db: Session = Depends(get_db),
@@ -120,6 +127,14 @@ def reject_report(
             ip_address=client_ip
         )
     )
+
+    # Broadcast real-time signal
+    from app.core.websocket import manager
+    await manager.broadcast({
+        "event": "report_rejected",
+        "data": {"report_id": report_id}
+    })
+
     return updated_report
 
 
@@ -184,7 +199,7 @@ def get_all_zones(
 
 
 @router.patch("/zones/{zone_id}/deactivate", response_model=schemas.FloodAvoidanceZoneResponse)
-def deactivate_zone(
+async def deactivate_zone(
     zone_id: int,
     request: Request,
     db: Session = Depends(get_db),
@@ -210,11 +225,19 @@ def deactivate_zone(
             ip_address=client_ip
         )
     )
+
+    # Broadcast real-time signal
+    from app.core.websocket import manager
+    await manager.broadcast({
+        "event": "zone_deactivated",
+        "data": {"zone_id": zone_id}
+    })
+
     return zone
 
 
 @router.post("/zones/deactivate-bulk")
-def deactivate_zones_bulk(
+async def deactivate_zones_bulk(
     payload: schemas.AvoidanceZoneDeactivateBulkRequest,
     request: Request,
     db: Session = Depends(get_db),
@@ -237,6 +260,14 @@ def deactivate_zones_bulk(
             ip_address=client_ip
         )
     )
+
+    # Broadcast real-time signal
+    from app.core.websocket import manager
+    await manager.broadcast({
+        "event": "zone_deactivated",
+        "data": {"zone_ids": payload.zone_ids}
+    })
+
     return {"message": f"Successfully deactivated {count} avoidance zones", "count": count}
 
 

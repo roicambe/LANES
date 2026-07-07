@@ -9,6 +9,7 @@ import {
   Check,
   Loader2,
   Navigation2,
+  HelpCircle,
 } from "lucide-react";
 import { Panel } from "@/shared/ui/Panel";
 import { Button } from "@/shared/ui/Button";
@@ -408,6 +409,20 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
         onUseCurrent={() => handleUseCurrent("end")}
         onClear={() => { setFloodEnd(null); setEndInput(""); setFloodEndLabel(""); }}
       />
+
+      {/* Info Card */}
+      <div className="bg-orange-50/70 border border-orange-100/50 rounded-xl p-3 text-[11px] leading-relaxed text-orange-950 space-y-1 shadow-sm">
+        <div className="flex items-center gap-1.5 font-bold text-orange-800 mb-0.5">
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span>Detour & Routing Tips</span>
+        </div>
+        <p>
+          🚦 <strong>Road Rules:</strong> Snaps to streets (respects one-ways & divided lanes).
+        </p>
+        <p>
+          🟠 <strong>Orange Line:</strong> Shows the segment that will be blocked in the system.
+        </p>
+      </div>
 
       {/* Severity selector */}
       <div className="space-y-2">
