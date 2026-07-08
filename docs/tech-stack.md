@@ -20,6 +20,8 @@ This document serves as the official technical stack reference for the LANES pla
   * *Role:* Maintaining a persistent connection to the backend to receive instant cache invalidation signals and trigger reactive refetching.
 * **Animations & Micro-interactions:** **Framer Motion**  
   * *Role:* Providing fluid, dynamic micro-animations (like expanding panels, fading modals, and dropdown transitions) to create a premium, responsive feel.
+* **UI Utility Libraries:** **Lucide React, React Hot Toast, & React Day Picker**
+  * *Role:* Providing consistent premium iconography, interactive non-blocking toast notifications, and accessible date selection components.
 * **Offline & PWA Support:** **Next-PWA & idb-keyval**  
   * *Role:* Enabling Progressive Web App functionality and IndexedDB caching for offline resilience during poor network conditions.
 * **Geospatial Render Canvas:** **MapLibre GL JS**  
@@ -33,6 +35,8 @@ This document serves as the official technical stack reference for the LANES pla
   * *Role:* Handling data collection scripts, natural language parsing, database queries, and routing logic under a unified, high-performance execution environment.  
 * **Web Framework & Real-time Server:** **FastAPI (with Uvicorn & WebSockets)**  
   * *Role:* Serving as the asynchronous web server handling high-throughput client API requests, managing database transactions, hosting WebSocket connections, and broadcasting data modification events.
+* **Authentication Stack:** **JWT, python-jose, & bcrypt**  
+  * *Role:* Securing API endpoints via JSON Web Tokens, cryptographically signing tokens, and securely hashing user passwords for role-based access control.
 * **NLP & Information Extraction:** **spaCy**  
   * *Role:* Managing the custom, locally executed Bilingual Named Entity Recognition (NER) pipeline to isolate street-level locations and severity parameters from Taglish text feeds.
 
@@ -44,13 +48,15 @@ This document serves as the official technical stack reference for the LANES pla
   * *Role:* Extending PostgreSQL to support native spatial geometry types (Points and Polygons), executing real-time spatial calculations (such as generating 50-meter buffer areas around coordinates), and building spatial indexes for fast intersection queries.  
 * **Object-Relational Mapper (ORM):** **SQLAlchemy with GeoAlchemy2**  
   * *Role:* Binding database tables and spatial geography columns directly to Python schemas.
+* **Database Migrations:** **Alembic**  
+  * *Role:* Tracking and applying incremental schema changes and maintaining database state synchronization across environments.
 
 ### **4\. Pathfinding Engine (Routing Graph Optimization)**
 
 * **Engine Core:** **Open Source Routing Machine (OSRM)**  
-  * *Role:* Running high-performance C++ routing calculations locally over the city road network. It processes dynamic detour requests by adjusting edge-weight cost matrices to bypass active flood barriers.  
-* **Source Graph Data:** **OpenStreetMap Metro Manila Dataset (.osm.pbf)**  
-  * *Role:* Providing the raw baseline network structure (nodes and edges representing physical streets) of the target municipalities.
+  * *Role:* Handling high-performance routing calculations. Currently configured to use the public OSRM demo server (`router.project-osrm.org`) for API routing, with architecture designed to support a local container for dynamic edge-weight matrices.
+* **Source Graph Data:** **OpenStreetMap Data**  
+  * *Role:* Providing the raw baseline network structure (nodes and edges representing physical streets) utilized by the routing engine.
 
 ### **5\. Evaluation & Testing Tier (Quality Assurance)**
 

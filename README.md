@@ -33,23 +33,33 @@ Developed in partial fulfillment of the requirements for the degree of **Bachelo
 
 ---
 
-### 1. Database Setup (PostGIS)
-Spin up the pre-configured PostgreSQL + PostGIS instance:
-```bash
-docker compose up -d
-```
-This starts the database on port `5432` with credentials `postgres` / `postgres` and database name `lanes`.
-
-*(If Docker is not installed, the backend operates in a database-offline fallback mode. Rerouting will succeed but will default to the standard path since flood zones cannot be queried).*
+### 1. Map Data & Routing Engine Setup (One-time only)
+LANES uses a local Open Source Routing Machine (OSRM) engine to calculate flood-adaptive routes. You need to download the map data and compile the routing graph first.
+1. Open a PowerShell terminal at the root of the project.
+2. Run the automated setup script to download the Philippines OpenStreetMap data and build the MLD routing graph:
+   ```powershell
+   .\setup_osrm.ps1
+   ```
+   *(Note: This downloads ~200MB of data and may take a few minutes. Wait for it to say "OSRM Graph successfully built!" before proceeding).*
 
 ---
 
-### 2. Backend Setup & Run (FastAPI)
-1. Navigate to the `backend` folder:
+### 2. Start Background Services (Database & Router)
+Spin up the pre-configured PostgreSQL + PostGIS database and the local OSRM routing engine using Docker:
+```bash
+docker-compose up -d
+```
+*This starts the database on port `5432` and the OSRM engine on port `5000`.*
+*(Note: Docker Desktop must be open and running).*
+
+---
+
+### 3. Backend Setup & Run (FastAPI)
+1. Open a new terminal and navigate to the `backend` folder:
    ```bash
    cd backend
    ```
-2. Set up the virtual environment:
+2. Set up and activate the virtual environment:
    ```bash
    # On Windows
    py -3.12 -m venv venv
@@ -59,40 +69,39 @@ This starts the database on port `5432` with credentials `postgres` / `postgres`
    python3.12 -m venv venv
    source venv/bin/activate
    ```
-3. Install dependencies:
+3. Install dependencies and download the NLP package:
    ```bash
    pip install -r requirements.txt
-   ```
-4. Download the spaCy NLP package:
-   ```bash
    python -m spacy download en_core_web_sm
    ```
-5. Copy environment variables and set values:
-   ```bash
-   cp .env.example .env
-   ```
-6. Start the development server:
+4. Ensure you have your `.env` file set up (copy from `.env.example`).
+5. Start the development server:
    ```bash
    uvicorn app.main:app --reload
    ```
-   The backend server runs at `http://localhost:8000`.
+   *The backend server runs at `http://localhost:8000`.*
 
 ---
 
-### 3. Frontend Setup & Run (Next.js)
-1. Open a new terminal window and navigate to the `frontend` folder:
+### 4. Frontend Setup & Run (Next.js)
+1. Open a third terminal window and navigate to the `frontend` folder:
    ```bash
    cd frontend
    ```
-2. Install dependencies:
+2. Install dependencies (if you haven't yet) and start the dev server:
    ```bash
    npm install
-   ```
-3. Start the dev server:
-   ```bash
    npm run dev
    ```
-   The interactive dashboard will be available at `http://localhost:3000`.
+   *The interactive dashboard will be available at `http://localhost:3000`.*
+
+---
+
+### 📅 Your Daily Workflow
+Since Step 1 is a one-time setup, your daily development routine is just:
+1. Turn on background services: `docker-compose up -d`
+2. Start the backend: `cd backend` -> Activate `venv` -> `uvicorn app.main:app --reload`
+3. Start the frontend: `cd frontend` -> `npm run dev`
 
 ---
 

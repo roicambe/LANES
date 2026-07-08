@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     # Defaults to PostgreSQL with psycopg (v3) driver
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/lanes"
 
-    # OSRM Server URL (defaults to public demo server)
-    OSRM_URL: str = "https://router.project-osrm.org"
+    # OSRM Server URL (defaults to local docker container)
+    OSRM_URL: str = "http://localhost:5000"
 
     # Security
     SECRET_KEY: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
