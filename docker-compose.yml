@@ -12,5 +12,15 @@ services:
     volumes:
       - lanes_db_data:/var/lib/postgresql/data
 
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    container_name: lanes_osrm
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data/osrm:/data
+    command: "osrm-routed --algorithm mld /data/philippines-latest.osrm"
+
 volumes:
   lanes_db_data:

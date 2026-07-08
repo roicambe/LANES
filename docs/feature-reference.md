@@ -1,0 +1,219 @@
+# LANES Feature Reference Document
+
+This document serves as the central technical reference for all currently implemented and future planned functionality of the **LANES (Localised Alternative Navigation for Environs under Submersion)** platform. It maps high-level feature behaviors directly to the underlying frontend components, backend routers, databases, and algorithms.
+
+---
+
+## 🛠️ Current Features
+
+### 1. Bilingual Taglish NLP Ingestion & Named Entity Recognition (NER)
+*   **Purpose:** Bypasses the need for expensive physical IoT sensors by converting raw, informal text reports from public channels into structured geospatial hazards.
+*   **What it does:** Extracts location tokens (street names, landmarks) and classifies flood depth indicators from conversational, bilingual Taglish text feeds (e.g., *"Baha sa may Caruncho Ave, lagpas tuhod"*).
+*   **How it works:** 
+    1. Normalizes raw text inputs (lowercasing, punctuation stripping).
+    2. Runs a custom-trained **spaCy Named Entity Recognition (NER)** sequence-labeling pipeline to identify geographic tokens.
+    3. Matches extracted depth entities (e.g., *tuhod*, *dibdib*) against a rule-based dictionary to map Taglish colloquialisms to standardized severity metrics (Low, Moderate, High, Extreme).
+    4. Automatically scores the parsing reliability with two metrics: `location_confidence` and `severity_confidence`.
+*   **Access & Roles:** Public users can submit reports; DRRM officers review and validate the outputs.
+*   **Related Components:**
+    *   **Frontend:** [FloodReportPanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/hazards/FloodReportPanel.tsx) (for manual text submission and incident reporting).
+    *   **Backend:** [reports.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/reports.py) endpoint (`POST /api/v1/reports`), `app.services.spacy` pipelines.
+
+---
+
+### 2. Flood-Adaptive Route Calculation & Rerouting
+*   **Purpose:** Ensures commuter safety by dynamically routing vehicles around active flood hazards.
+*   **What it does:** Calculates optimal navigation paths between origin and destination coordinates, ensuring that any road segments intersecting active flood zones are bypassed.
+*   **How it works:**
+    1. When a user requests a route, the backend fetches all active avoidance polygons from the PostGIS database.
+    2. The routing service queries the local **OSRM (Open Source Routing Machine)** engine using a road network graph topology.
+    3. If any road segment (edge) intersects an active flood avoidance polygon, its travel cost weight is dynamically modified in the routing cost matrix to infinity ($\infty$).
+    4. The routing algorithm treats the segment as an impassable barrier, generating a safe alternative detour route.
+    5. The commuter can toggle "Ignore Floods" to compare the safe path against the default flooded route.
+*   **Access & Roles:** Open to all public commuters.
+*   **Related Components:**
+    *   **Frontend:** [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx) (input panels, turn-by-turn lists, flood toggle), [MapCanvas.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/map/MapCanvas.tsx).
+    *   **Backend:** [reports.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/reports.py) router (`POST /api/v1/reports/route`), [routing.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/services/routing.py) service (`calculate_flood_safe_route`).
+
+---
+
+### 3. Queue-Based Admin Moderation & Approval Workflow
+*   **Purpose:** Implements a "human-in-the-loop" validation workflow to prevent automated NLP ingestion errors or mapping hallucinations from misdirecting drivers.
+*   **What it does:** Queues all raw NLP-parsed flood reports into a staging feed, allowing authorized local disaster risk managers to inspect, adjust, approve, or discard reports before public broadcast.
+*   **How it works:**
+    1. Newly parsed reports are inserted with a status of `pending`.
+    2. DRRM operators review the reports, verify the geolocations, and click "Approve".
+    3. Upon approval, PostGIS automatically calculates a spatial buffer (using `ST_Buffer` with a 50m to 200m radius depending on whether the asset is a Point or LineString) around the coordinate.
+    4. This buffer is saved to the `flood_avoidance_zones` table as an active polygon, which immediately updates OSRM edge weights.
+    5. Discarded reports are marked as `rejected`.
+*   **Access & Roles:** Restricted to `admin` / `drrm` roles.
+*   **Related Components:**
+    *   **Frontend:** [ReportsPage.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/admin/ReportsPage.tsx) (interactive queue cards, map coordinates auditor).
+    *   **Backend:** [admin.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/admin.py) endpoints (`/reports/pending`, `/reports/{report_id}/approve`, `/reports/{report_id}/reject`).
+
+---
+
+### 4. Interactive Spatial Map Visualization (WebGL Tiles & Autocomplete)
+*   **Purpose:** Renders real-time hazard layers, detour vectors, and geocoding on a performant mobile canvas.
+*   **What it does:** Displays an interactive street map overlaying color-coded pins (White, Yellow, Orange, Red) for flood heights, outlines avoidance zone shapes, and handles address geocoding search.
+*   **How it works:**
+    1. Utilizes **MapLibre GL JS** to render vector maps on the client side using WebGL.
+    2. Feeds OpenStreetMap tiles for zero-cost, self-hosted base imagery.
+    3. Integrates the **Komoot Photon API** (`photon.komoot.io`) for geocoding search, localized and scored specifically for Pasig City bounds to provide relevant location autocomplete results.
+    4. Renders geo-coordinates as visual icons and polygon vectors in real time.
+*   **Access & Roles:** Public commuters and system administrators.
+*   **Related Components:**
+    *   **Frontend:** [MapCanvas.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/map/MapCanvas.tsx), [MapContext.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/map/MapContext.tsx), [geocodingApi.ts](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/geocoding/geocodingApi.ts).
+
+---
+
+### 5. Real-Time Event Signaling (WebSockets Integration)
+*   **Purpose:** Ensures instant, reactive visual updates across commuter and admin maps without forcing manual browser refreshes.
+*   **What it does:** Signals active database events (approvals, deactivations, database cleans) from the backend directly to active frontend sessions.
+*   **How it works:**
+    1. The React app opens a native `WebSocket` connection to the FastAPI server at `/api/v1/ws`.
+    2. The backend maintains an active connection manager mapping open client sockets.
+    3. When an admin approves a report or deactivates a zone, the server broadcasts an event (e.g. `report_approved`).
+    4. The frontend intercepts the payload and automatically invalidates the React Query cache, triggering a silent background refetch of map layers.
+*   **Access & Roles:** Public clients and administrative dashboards.
+*   **Related Components:**
+    *   **Frontend:** [useWebSocket.ts](file:///e:/Files/Documents/GitHub/LANES/frontend/src/hooks/useWebSocket.ts), `providers.tsx`.
+    *   **Backend:** [websocket.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/websocket.py), `app.core.websocket`.
+
+---
+
+### 6. Role-Based Access Control (RBAC) & JWT Security
+*   **Purpose:** Secures sensitive admin interfaces, settings, and database endpoints from public modifications.
+*   **What it does:** Separates authorization levels between `commuters` and `admin` / `drrm` profiles, enforcing login parameters and auditing.
+*   **How it works:**
+    1. Hashes passwords using **bcrypt** with adaptive salt rounds before database storage.
+    2. Issues signed **JSON Web Tokens (JWT)** via `python-jose` containing the user ID and role during login.
+    3. FastAPI route handlers intercept calls using dependency injection (`get_current_active_admin`) to validate JWT signatures and enforce permissions.
+*   **Access & Roles:** Registration is open to all; admin pages require role-checks.
+*   **Related Components:**
+    *   **Frontend:** [LoginForm.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/auth/LoginForm.tsx), [SignupForm.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/auth/SignupForm.tsx).
+    *   **Backend:** [auth.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/auth.py), [users.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/users.py), [deps.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/deps.py).
+
+---
+
+### 7. Offline Resiliency & PWA Capabilities
+*   **Purpose:** Ensures mobility tool usability when mobile cellular networks degrade during severe weather.
+*   **What it does:** Caches static assets, intercepts network failures, and alerts commuters when they go offline.
+*   **How it works:**
+    1. Operates as a Progressive Web App using `@ducanh2912/next-pwa` service workers.
+    2. Caches maps, styles, and dashboard templates locally in browser storage.
+    3. Uses `idb-keyval` (IndexedDB utility) to store basic state configuration variables.
+    4. Triggers an offline banner warning when the browser's `navigator.onLine` state toggles off.
+*   **Access & Roles:** Public commuters.
+*   **Related Components:**
+    *   **Frontend:** [OfflineBanner.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/offline/OfflineBanner.tsx), `frontend/package.json`.
+
+---
+
+### 8. System Audit Logging & Trail
+*   **Purpose:** Maintains organizational transparency and logs all administrative updates to prevent accidental or malicious map changes.
+*   **What it does:** Logs admin actions (report approval, rejection, user deletion, backups, data clears, configurations) to a central ledger.
+*   **How it works:**
+    1. Every admin-restricted route wraps its database transaction with an `audit_log` write operation.
+    2. Saves details including `admin_id`, `action_type`, `target_table`, `metadata_json` (containing changes details), `ip_address`, and a UTC timestamp.
+*   **Access & Roles:** Admins can view this ledger.
+*   **Related Components:**
+    *   **Frontend:** [AuditTrailPage.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/admin/AuditTrailPage.tsx).
+    *   **Backend:** [admin.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/admin.py) (`/audit-logs`), [audit.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/models/audit.py) schema & models.
+
+---
+
+### 9. Database Backup, Exports & Cleanup Management
+*   **Purpose:** Protects database integrity, enables archival, and exports research data.
+*   **What it does:** Creates and restores SQL dumps of the PostgreSQL/PostGIS database, exports reports/avoidance zones as CSV or JSON, and implements records cleaning.
+*   **How it works:**
+    1. Exports query database tables using standard Python `csv` and `json` libraries.
+    2. Backup calls trigger shell processes (`docker exec` executing `pg_dump` and `pg_restore`) to compress or import dump files.
+    3. Cleanup sweeps database tables, purging old flood incident logs and zones older than user-specified date ranges.
+*   **Access & Roles:** Limited to admins.
+*   **Related Components:**
+    *   **Frontend:** [DataManagementPage.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/admin/DataManagementPage.tsx).
+    *   **Backend:** [data.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/data.py), [data_service.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/services/data_service.py).
+
+---
+
+## 🔮 Future Features
+
+### 1. Height-Aware Rerouting (Dynamic Vehicle Profiles)
+*   **Purpose:** Customizes detour calculations based on vehicle clearance constraints.
+*   **Why it is needed:** Currently, any high severity flood blocks routes for all commuters. However, a high-clearance SUV or truck can safely cross knee-deep water (Yellow/Orange) that would stall a standard sedan or motorcycle. 
+*   **Expected functionality:**
+    *   Commuters select their vehicle profile (e.g., Motorcycle, Sedan, SUV, Truck).
+    *   The backend retrieves specific clearance thresholds (e.g., 20cm for Sedan, 45cm for SUV).
+    *   When checking flood polygons, OSRM will only apply the infinity ($\infty$) edge cost if the flood depth exceeds the vehicle's clearing height.
+*   **How it will integrate:**
+    *   Update [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx) with a vehicle selector dropdown.
+    *   Update OSRM backend configurations to load multiple routing profiles or pass dynamic weight multipliers in OSRM matrix calculations.
+*   **Dependencies:** Database must store exact numeric flood depths (in cm) instead of only textual categories.
+
+---
+
+### 2. User-Submitted Image Depth Classifier (Computer Vision AI)
+*   **Purpose:** Automates flood severity validation via crowdsourced visual proof.
+*   **Why it is needed:** Text descriptions are often subjective or exaggerated. Image validation provides objective, verifiable physical evidence of street conditions (e.g., water reaching a tire, a wall, or a sign).
+*   **Expected functionality:**
+    *   Commuters take a photo of the road flood and upload it.
+    *   A deep learning model (e.g., CNN or YOLO) analyzes the image.
+    *   It detects key anchor references (submerged wheels, fire hydrants, doors) to classify water height.
+    *   Populates the moderation queue with the visual estimation of severity.
+*   **How it will integrate:**
+    *   Add an image file input to [FloodReportPanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/hazards/FloodReportPanel.tsx).
+    *   Establish a secondary Python ML worker (or use FastAPI background tasks) running a PyTorch pipeline to process image data.
+*   **Dependencies:** Host machine GPU acceleration, a trained reference dataset of street-level urban flooding photos.
+
+---
+
+### 3. Automated Social Media Scraper Service (X/Twitter and Facebook APIs)
+*   **Purpose:** Dramatically speeds up data ingestion by eliminating reliance on manual reports.
+*   **Why it is needed:** During typhoons, emergency data updates are shared at high velocity across social media platforms like X (Twitter) and Facebook. An automated crawler will capture these inputs in real time.
+*   **Expected functionality:**
+    *   A celery-based background worker continuously queries X and Facebook search endpoints for keyword patterns (e.g., "baha Pasig", "Caruncho Ave baha").
+    *   Parsed matches are run through the spaCy NER pipeline and loaded directly into the admin moderation queue.
+*   **How it will integrate:**
+    *   Add a new scraper microservice to the project stack.
+    *   Pipes scraped JSON outputs into the backend `/api/v1/reports` API.
+*   **Dependencies:** Developer API keys from Twitter/X and Meta Platforms.
+
+---
+
+### 4. Bilingual Speech-to-Text Voice Reporting
+*   **Purpose:** Enables motorists in transit to report active hazards hands-free.
+*   **Why it is needed:** Typist reporting is dangerous for active drivers. Letting users dictate short reports keeps eyes on the road during severe storms.
+*   **Expected functionality:**
+    *   Commuters tap a microphone button, record a Taglish description (e.g., *"Baha rito sa San Joaquin, lagpas bewang na"*), and submit.
+    *   The system transcribes the speech and pipes the raw text into spaCy.
+*   **How it will integrate:**
+    *   Integrate browser MediaRecorder APIs in [FloodReportPanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/hazards/FloodReportPanel.tsx).
+    *   Create a backend utility using a bilingual transcription framework (e.g., OpenAI Whisper).
+*   **Dependencies:** Speech-to-Text model pipeline, micro-permissions access in browser clients.
+
+---
+
+### 5. Turn-by-Turn Voice Navigation (Text-to-Speech)
+*   **Purpose:** Prevents driver distractions by dictating detour directions audibly.
+*   **Why it is needed:** Drivers cannot safely read map paths or turn-by-turn lists while navigating heavy rain and storm conditions.
+*   **Expected functionality:**
+    *   The PWA speaks directions aloud (e.g., *"In 200 meters, turn left to bypass the flooded street ahead"*).
+*   **How it will integrate:**
+    *   Hook into the HTML5 **Web Speech API (`SpeechSynthesis`)** inside [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx).
+    *   Trigger directions audio prompts based on geolocation tracking updates relative to the OSRM path coordinate array.
+*   **Dependencies:** Secure HTTPS deployment (for geolocation sensor permissions).
+
+---
+
+### 6. IoT Telemetric Sensor Nodes Integration
+*   **Purpose:** Automatically registers baseline hazard metrics at high-risk municipal points.
+*   **Why it is needed:** Certain low-lying streets (e.g., Pasig Mega Market perimeter) flood during every minor rainfall event. Real-time telemetry ensures instant database updates.
+*   **Expected functionality:**
+    *   Ultrasonic water-level sensors measure current road water levels.
+    *   The sensor microcontrollers transmit depth values directly to the spatial database.
+    *   Avoidance zones are automatically updated without manual administrator intervention.
+*   **How it will integrate:**
+    *   Build a dedicated backend route handler `POST /api/v1/telemetry/report` restricted to authenticated IoT gateway tokens.
+    *   Pipes telemetric depth metrics directly into the PostGIS database.
+*   **Dependencies:** Physical ESP32 microcontrollers, ultrasonic sensors, and cellular/LoRa transmitters.
