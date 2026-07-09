@@ -21,6 +21,22 @@ This document serves as the central technical reference for all currently implem
 
 ---
 
+### 2. Citizen Account Registration & Onboarding
+*   **Purpose:** Allows users to create a verified account for accurate reporting, profile management, and personalization while keeping bad actors out.
+*   **What it does:** Provides a multi-step registration wizard encompassing personal information, demographic geography via PSGC API, complex password requirements, and One-Time Password (OTP) email verification.
+*   **How it works:**
+    1. The frontend guides users through a modern 3-step React wizard (`Personal Info`, `Address`, `Account Details`).
+    2. Real-time geographical lookup is performed using the public PSGC API, allowing accurate Province -> City -> Barangay filtering.
+    3. The backend validates and serializes complex data payloads, separating profile relationships (e.g. `birthdate`) using Pydantic models.
+    4. Upon database insertion, an OTP is generated via a native `bcrypt` hashing process and dispatched via the Brevo SMTP API (`httpx`) to the user's email.
+    5. The user's account remains `is_active=False` until the OTP is successfully validated.
+*   **Access & Roles:** Public users.
+*   **Related Components:**
+    *   **Frontend:** [RegisterForm.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/auth/components/RegisterForm.tsx), [DatePicker.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/shared/ui/DatePicker.tsx).
+    *   **Backend:** [auth.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/auth.py), [auth_service.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/services/auth_service.py).
+
+---
+
 ### 2. Flood-Adaptive Route Calculation & Rerouting
 *   **Purpose:** Ensures commuter safety by dynamically routing vehicles around active flood hazards.
 *   **What it does:** Calculates optimal navigation paths between origin and destination coordinates, ensuring that any road segments intersecting active flood zones are bypassed.
