@@ -15,7 +15,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className={cn("w-full flex flex-col gap-1", containerClassName)}>
         {label && (
           <label className="text-sm font-medium text-gray-700">
-            {label}
+            {label.includes("(Optional)") ? (
+              <>
+                {label.replace("(Optional)", "").trim()}
+                <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+              </>
+            ) : (
+              label
+            )}
+            {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         

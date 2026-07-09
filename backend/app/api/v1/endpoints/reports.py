@@ -1,19 +1,46 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File
 from sqlalchemy.orm import Session
+import json
 
 from app import crud, schemas
 from app.core.database import get_db
+from app.services.cloudinary_service import upload_image
 
 router = APIRouter()
 
 
 @router.post("", response_model=schemas.FloodReportResponse, status_code=status.HTTP_201_CREATED)
-def create_report(report: schemas.FloodReportCreate, db: Session = Depends(get_db)):
+def create_report(
+    raw_text: str = Form(...),
+    source: str = Form(...),
+    severity: str = Form("medium"),
+    geometry: str = Form(None),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
     """
-    Submit a new flood report (raw Taglish text and optional coordinates).
+    Submit a new flood report (raw Taglish text and optional coordinates/image).
     """
-    return crud.create_flood_report(db=db, report=report)
+    image_url = None
+    if image:
+        image_url = upload_image(image)
+
+    geom_obj = None
+    if geometry:
+        try:
+            geom_obj = json.loads(geometry)
+        except Exception:
+            pass
+
+    report_create = schemas.FloodReportCreate(
+        raw_text=raw_text,
+        source=source,
+        severity=severity,
+        geometry=geom_obj,
+        image_url=image_url
+    )
+    return crud.create_flood_report(db=db, report=report_create)
 
 
 @router.get("", response_model=List[schemas.FloodReportResponse])

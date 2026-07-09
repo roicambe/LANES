@@ -37,6 +37,8 @@ This document serves as the official technical stack reference for the LANES pla
   * *Role:* Serving as the asynchronous web server handling high-throughput client API requests, managing database transactions, hosting WebSocket connections, and broadcasting data modification events.
 * **Authentication Stack:** **JWT, python-jose, & bcrypt**  
   * *Role:* Securing API endpoints via JSON Web Tokens, cryptographically signing tokens, and securely hashing user passwords for role-based access control.
+* **Image Processing & Storage:** **Cloudinary Python SDK**  
+  * *Role:* Managing direct upload, scaling (down to 1024px), and WebP format compression of user-submitted flood evidence photos to a dedicated cloud CDN, ensuring lightweight database records and fast frontend loading.
 * **NLP & Information Extraction:** **spaCy**  
   * *Role:* Managing the custom, locally executed Bilingual Named Entity Recognition (NER) pipeline to isolate street-level locations and severity parameters from Taglish text feeds.
 

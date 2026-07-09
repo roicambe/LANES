@@ -26,11 +26,48 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
         username=user.username,
         email=user.email,
         hashed_password=hashed_pass,
-        role=user.role
+        role_id=user.role_id,
+        is_active=getattr(user, 'is_active', True)
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    return db_user
+
+
+def create_user_with_profile(
+    db: Session, 
+    user_data: schemas.UserCreate, 
+    profile_data: schemas.ProfileCreate, 
+    address_data: schemas.AddressCreate
+) -> models.User:
+    hashed_pass = get_password_hash(user_data.password)
+    
+    db_user = models.User(
+        username=user_data.username,
+        email=user_data.email,
+        hashed_password=hashed_pass,
+        role_id=user_data.role_id,
+        is_active=getattr(user_data, 'is_active', False)  # Start inactive for OTP flow
+    )
+    db.add(db_user)
+    db.flush()  # To get db_user.id
+    
+    db_profile = models.Profile(
+        user_id=db_user.id,
+        **profile_data.model_dump()
+    )
+    db.add(db_profile)
+    db.flush()
+    
+    db_address = models.Address(
+        profile_id=db_profile.id,
+        **address_data.model_dump()
+    )
+    db.add(db_address)
+    db.commit()
+    db.refresh(db_user)
+    
     return db_user
 
 

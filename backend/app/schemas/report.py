@@ -22,6 +22,7 @@ class FloodReportBase(BaseModel):
 
 class FloodReportCreate(FloodReportBase):
     geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
+    image_url: Optional[str] = None
 
 
 class FloodReportResponse(FloodReportBase):
@@ -29,6 +30,7 @@ class FloodReportResponse(FloodReportBase):
     extracted_locations: Optional[Any] = None
     status: str
     geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
+    image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

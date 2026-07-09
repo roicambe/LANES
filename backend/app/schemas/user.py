@@ -12,6 +12,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     role_id: int = 4  # Default to Commuter (id=4)
+    is_active: bool = True
 
 
 class UserResponse(UserBase):

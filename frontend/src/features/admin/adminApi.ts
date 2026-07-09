@@ -18,6 +18,7 @@ export interface FloodReport {
   raw_text: string;
   severity: "low" | "medium" | "high" | "extreme";
   geometry: ReportGeometry | null;
+  image_url?: string;
   status: "pending" | "approved" | "rejected";
   created_at: string;
   updated_at: string;

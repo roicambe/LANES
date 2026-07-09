@@ -12,6 +12,16 @@ class Settings(BaseSettings):
     # OSRM Server URL (defaults to local docker container)
     OSRM_URL: str = "http://localhost:5000"
 
+    # Cloudinary
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+    
+    # Brevo SMTP Configuration
+    BREVO_SMTP_SERVER: str = "smtp-relay.brevo.com"
+    BREVO_SMTP_PORT: int = 587
+    BREVO_SMTP_KEY: str = ""
+
     # Security
     SECRET_KEY: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
     ALGORITHM: str = "HS256"

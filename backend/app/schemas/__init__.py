@@ -13,3 +13,6 @@ from app.schemas.audit import AuditLogCreate, AuditLogResponse, AuditLogsPaginat
 from app.schemas.role import RoleBase, RoleCreate, RoleUpdate, RoleResponse
 
 from app.schemas.data import BackupFile, RestoreRequest, CleanupRequest, ExportResponse
+from app.schemas.profile import ProfileBase, ProfileCreate, ProfileResponse, ProfileUpdate
+from app.schemas.address import AddressBase, AddressCreate, AddressResponse, AddressUpdate
+from app.schemas.otp import OTPVerificationBase, OTPVerificationCreate, OTPVerificationResponse

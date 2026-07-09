@@ -91,7 +91,7 @@ export default function MapCanvas() {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
 
-  const { start, end, floodStart, floodEnd, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap, floodPreviewGeometry } = useMapContext();
+  const { start, end, floodStart, floodEnd, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap, floodPreviewGeometry, activePanel, hasBottomOffset } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);
   setPointFromMapRef.current = setPointFromMap;
 
@@ -615,7 +615,7 @@ export default function MapCanvas() {
   }, [floodPreviewGeometry, isLoaded]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className={`relative w-full h-full ${hasBottomOffset ? "flood-panel-open" : ""}`}>
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full bg-neutral-200" />
 
       {usingFallback && (
@@ -649,11 +649,20 @@ export default function MapCanvas() {
       <style>{`
         .mapboxgl-ctrl-bottom-right,
         .maplibregl-ctrl-bottom-right {
-          bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+          bottom: calc(64px + env(safe-area-inset-bottom) + 16px) !important;
+          transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .flood-panel-open .mapboxgl-ctrl-bottom-right,
+        .flood-panel-open .maplibregl-ctrl-bottom-right {
+          bottom: calc(64px + env(safe-area-inset-bottom) + 80px) !important;
         }
         @media (min-width: 641px) {
           .mapboxgl-ctrl-bottom-right,
           .maplibregl-ctrl-bottom-right {
+            bottom: 16px !important;
+          }
+          .flood-panel-open .mapboxgl-ctrl-bottom-right,
+          .flood-panel-open .maplibregl-ctrl-bottom-right {
             bottom: 16px !important;
           }
         }

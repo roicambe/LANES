@@ -25,6 +25,7 @@ class FloodReport(Base):
     extracted_locations: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)  # List of locations
     severity: Mapped[str] = mapped_column(String(20))  # 'low', 'medium', 'extreme'
     status: Mapped[str] = mapped_column(String(20), default="pending")  # 'pending', 'approved', 'rejected'
+    image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     # PostGIS Geometry column for generic geometry (Point or LineString) (SRID 4326 = WGS 84 coordinate system)
     geometry: Mapped[Any] = mapped_column(
