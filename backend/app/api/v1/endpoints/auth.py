@@ -106,3 +106,97 @@ def test_token(current_user: models.User = Depends(deps.get_current_user)) -> An
     Test access token
     """
     return current_user
+
+
+from app.schemas.auth import RegistrationRequest, OTPVerificationRequest, OTPResendRequest
+from app.services.auth_service import generate_and_send_otp, validate_otp
+from app.crud.user import create_user_with_profile
+from app.crud import otp as crud_otp
+
+@router.post("/register", response_model=schemas.UserResponse)
+async def register(
+    request: RegistrationRequest,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Registers a new user, creates profile and address, and sends OTP.
+    """
+    if crud.get_user_by_username(db, username=request.user.username):
+        raise HTTPException(status_code=400, detail="Username already registered")
+    if crud.get_user_by_email(db, email=request.user.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    request.user.is_active = False
+    
+    try:
+        new_user = create_user_with_profile(
+            db, 
+            user_data=request.user, 
+            profile_data=request.profile, 
+            address_data=request.address
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database transaction failed")
+
+    # Eagerly load the role relationship so UserResponse serialization works
+    db.refresh(new_user)
+    _ = new_user.role  # Force-load lazy relationship within the session
+
+    try:
+        await generate_and_send_otp(db, email=new_user.email)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"OTP generation failed: {str(e)}")
+
+    return new_user
+
+@router.post("/verify-otp")
+def verify_otp(
+    request: OTPVerificationRequest,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Verifies the OTP code. Activates user and returns JWT token if successful.
+    """
+    user = crud.get_user_by_email(db, email=request.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.is_active:
+        raise HTTPException(status_code=400, detail="User is already verified")
+        
+    is_valid = validate_otp(db, email=request.email, plain_otp=request.otp_code)
+    
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+        
+    crud.update_user_status(db, user_id=user.id, is_active=True)
+    
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return {
+        "access_token": security.create_access_token(
+            {"sub": str(user.id)}, expires_delta=access_token_expires
+        ),
+        "token_type": "bearer",
+    }
+
+
+@router.post("/resend-otp")
+async def resend_otp(
+    request: OTPResendRequest,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Resends an OTP to the given email if the user exists and is not active.
+    """
+    user = crud.get_user_by_email(db, email=request.email)
+    if not user:
+        return {"msg": "If the email is registered, an OTP has been sent."}
+        
+    if user.is_active:
+        return {"msg": "User is already verified"}
+        
+    await generate_and_send_otp(db, email=request.email)
+    return {"msg": "OTP resent successfully"}

@@ -16,3 +16,4 @@ export * from "./TableActions";
 export * from "./NumberInput";
 export * from "./DataTable";
 export * from './Pagination';
+export * from './PasswordStrength';

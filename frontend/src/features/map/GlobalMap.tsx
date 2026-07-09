@@ -39,32 +39,31 @@ const actionPillVariants = {
   },
 };
 
-// ── MapOverlays ────────────────────────────────────────────────────────────────
+// ── MapLayout ──────────────────────────────────────────────────────────────────
 
 /**
- * Sub-component that lives _inside_ MapProvider to consume map context.
- *
- * Renders:
- * 1. A full-screen backdrop blur overlay (z-[45]) that covers everything
- *    except the navigation bars (z-50).
- * 2. The "Flood Report" action pill that springs upward from the FAB.
- * 3. The FAB button itself, with dynamic z-index:
- *    - above collapsed panels (z-[45])
- *    - below expanded panels (z-[35])
+ * Inner layout component that wraps all UI over the map.
+ * Because it is rendered inside MapProvider, it can fully access layout state.
  */
-function MapOverlays({
-  isReportPanelOpen,
-  setIsReportPanelOpen,
-}: {
-  isReportPanelOpen: boolean;
-  setIsReportPanelOpen: (open: boolean) => void;
-}) {
+function MapLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
-  const { activePanel, setActivePanel } = useMapContext();
+  
+  const { 
+    activePanel, 
+    setActivePanel, 
+    isPickingOnMap, 
+    isReportPanelOpen, 
+    setIsReportPanelOpen,
+    hasBottomOffset
+  } = useMapContext();
 
   // The panel is expanded when it is both open and actively selected.
   const isPanelExpanded = isReportPanelOpen && activePanel === "flood";
+  
+  const pillBottomClass = hasBottomOffset 
+    ? "bottom-[calc(64px+env(safe-area-inset-bottom)+160px)]" 
+    : "bottom-[calc(64px+env(safe-area-inset-bottom)+88px)]";
 
   const handleSelectFloodReport = () => {
     setIsReportPanelOpen(true);
@@ -76,8 +75,9 @@ function MapOverlays({
 
   return (
     <>
+      <MapCanvas />
+
       {/* ── 1. Backdrop blur overlay ──────────────────────────────────────── */}
-      {/*  z-[45] sits above panels (z-40) but below navigation bars (z-50). */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -102,7 +102,7 @@ function MapOverlays({
             animate="visible"
             exit="exit"
             onClick={handleSelectFloodReport}
-            className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+160px)] left-4 z-[46] flex items-center gap-3 bg-white text-slate-800 font-semibold pl-3 pr-5 py-2.5 rounded-full shadow-2xl border border-gray-200/60 hover:bg-gray-50 active:scale-95 cursor-pointer select-none"
+            className={`fixed ${pillBottomClass} left-4 z-[46] flex items-center gap-3 bg-white text-slate-800 font-semibold pl-3 pr-5 py-2.5 rounded-full shadow-2xl border border-gray-200/60 hover:bg-gray-50 active:scale-95 cursor-pointer select-none`}
           >
             <div className="bg-orange-100 p-2 rounded-full text-orange-600 shrink-0">
               <AlertTriangle className="w-4 h-4" />
@@ -113,13 +113,20 @@ function MapOverlays({
       </AnimatePresence>
 
       {/* ── 3. FAB Button ─────────────────────────────────────────────────── */}
-      {isMobile && (
+      {isMobile && !isPickingOnMap && (
         <ReportFab
           isMenuOpen={isMenuOpen}
           isPanelExpanded={isPanelExpanded}
           onClick={() => setIsMenuOpen((prev) => !prev)}
         />
       )}
+
+      {/* ── 4. Panels ─────────────────────────────────────────────────────── */}
+      <FloodReportPanel
+        isOpen={isMobile ? isReportPanelOpen : true}
+        onClose={() => setIsReportPanelOpen(false)}
+      />
+      <RoutePanel />
     </>
   );
 }
@@ -129,8 +136,6 @@ function MapOverlays({
 export default function GlobalMap() {
   const pathname = usePathname();
   const isMapPage = pathname === "/map";
-  const [isReportPanelOpen, setIsReportPanelOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
 
   return (
     <div
@@ -140,16 +145,7 @@ export default function GlobalMap() {
     >
       <Suspense fallback={null}>
         <MapProvider>
-          <MapCanvas />
-          <MapOverlays
-            isReportPanelOpen={isReportPanelOpen}
-            setIsReportPanelOpen={setIsReportPanelOpen}
-          />
-          <FloodReportPanel
-            isOpen={isMobile ? isReportPanelOpen : true}
-            onClose={() => setIsReportPanelOpen(false)}
-          />
-          <RoutePanel />
+          <MapLayout />
         </MapProvider>
       </Suspense>
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
 import { apiClient } from "@/lib/apiClient";
@@ -128,9 +129,9 @@ export default function LoginForm() {
       <div className="text-center pt-2">
         <p className="text-sm text-gray-600">
           Don't have an account?{" "}
-          <a href="#" className="text-blue-600 font-medium hover:text-blue-500 hover:underline transition-colors">
+          <Link href="/register" className="text-blue-600 font-medium hover:text-blue-500 hover:underline transition-colors">
             Sign up
-          </a>
+          </Link>
         </p>
       </div>
     </form>

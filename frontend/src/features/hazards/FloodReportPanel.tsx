@@ -10,6 +10,8 @@ import {
   Loader2,
   Navigation2,
   HelpCircle,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { Panel } from "@/shared/ui/Panel";
 import { Button } from "@/shared/ui/Button";
@@ -220,6 +222,8 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   const [endInput, setEndInput] = useState("");
   const [severity, setSeverity] = useState<Severity>("medium");
   const [description, setDescription] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
   const isCollapsed = activePanel !== "flood";
 
   // Submission state
@@ -303,12 +307,19 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       const routeResult = await getRoute(floodStart.coords, floodEnd.coords, true);
       const roadGeometry = routeResult.geometry;
 
-      // 2. Submit as LineString geometry representing the affected road segment
-      await apiClient.post<{ id: number }>("/reports/", {
-        raw_text: description.trim(),
-        source: "direct_user",
-        severity,
-        geometry: roadGeometry,
+      // 2. Submit as multipart/form-data
+      const formData = new FormData();
+      formData.append("raw_text", description.trim());
+      formData.append("source", "direct_user");
+      formData.append("severity", severity);
+      formData.append("geometry", JSON.stringify(roadGeometry));
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      await apiClient.post<{ id: number }>("/reports/", formData, {
+        // We override the default content-type so the browser sets the correct multipart boundary
+        headers: { "Content-Type": "multipart/form-data" }
       });
 
       // Reset form
@@ -318,6 +329,8 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       setEndInput("");
       setSeverity("medium");
       setDescription("");
+      setImageFile(null);
+      setStep(1);
       success("Report Submitted", "Flood report submitted successfully. It is now pending admin review.");
     } catch (err: unknown) {
       console.error("Error submitting flood report:", err);
@@ -358,126 +371,201 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   }
 
   // ── Shared form body ───────────────────────────────────────────────────────
+  const showClear = step === 1 
+    ? (floodStart || floodEnd) 
+    : (description.trim() !== "" || imageFile !== null || severity !== "medium");
+
   const clearButton =
-    floodStart || floodEnd || description.trim() !== "" ? (
+    showClear ? (
       <button
         onClick={(e) => {
           e.preventDefault();
-          setFloodStart(null);
-          setFloodEnd(null);
-          setStartInput("");
-          setEndInput("");
-          setSeverity("medium");
-          setDescription("");
+          if (step === 1) {
+            setFloodStart(null);
+            setFloodEnd(null);
+            setStartInput("");
+            setEndInput("");
+            setFloodStartLabel("");
+            setFloodEndLabel("");
+          } else {
+            setSeverity("medium");
+            setDescription("");
+            setImageFile(null);
+          }
         }}
         className="text-[11px] font-medium text-gray-500 hover:text-red-600 transition-colors px-2 py-1 mr-1"
-        title="Clear report form"
+        title={step === 1 ? "Clear locations" : "Clear details"}
       >
         Clear
       </button>
     ) : undefined;
 
   const formBody = (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Point selectors */}
-      <PointSelector
-        point="start"
-        label={startInput}
-        isActive={activePoint === "flood_start"}
-        isSet={!!floodStart}
-        onActivate={() => handlePickOnMap("flood_start")}
-        onLabelChange={(val) => { setStartInput(val); setFloodStartLabel(val); }}
-        onSelect={(s) => {
-          setFloodStart([s.lng, s.lat], s.label);
-          setStartInput(s.label);
-          setActivePoint("flood_end");
-        }}
-        onUseCurrent={() => handleUseCurrent("start")}
-        onClear={() => { setFloodStart(null); setStartInput(""); setFloodStartLabel(""); }}
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      {step === 1 && (
+        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+          {/* Point selectors */}
+          <PointSelector
+            point="start"
+            label={startInput}
+            isActive={activePoint === "flood_start"}
+            isSet={!!floodStart}
+            onActivate={() => handlePickOnMap("flood_start")}
+            onLabelChange={(val) => { setStartInput(val); setFloodStartLabel(val); }}
+            onSelect={(s) => {
+              setFloodStart([s.lng, s.lat], s.label);
+              setStartInput(s.label);
+              setActivePoint("flood_end");
+            }}
+            onUseCurrent={() => handleUseCurrent("start")}
+            onClear={() => { setFloodStart(null); setStartInput(""); setFloodStartLabel(""); }}
+          />
 
-      <PointSelector
-        point="end"
-        label={endInput}
-        isActive={activePoint === "flood_end"}
-        isSet={!!floodEnd}
-        onActivate={() => handlePickOnMap("flood_end")}
-        onLabelChange={(val) => { setEndInput(val); setFloodEndLabel(val); }}
-        onSelect={(s) => {
-          setFloodEnd([s.lng, s.lat], s.label);
-          setEndInput(s.label);
-        }}
-        onUseCurrent={() => handleUseCurrent("end")}
-        onClear={() => { setFloodEnd(null); setEndInput(""); setFloodEndLabel(""); }}
-      />
+          <PointSelector
+            point="end"
+            label={endInput}
+            isActive={activePoint === "flood_end"}
+            isSet={!!floodEnd}
+            onActivate={() => handlePickOnMap("flood_end")}
+            onLabelChange={(val) => { setEndInput(val); setFloodEndLabel(val); }}
+            onSelect={(s) => {
+              setFloodEnd([s.lng, s.lat], s.label);
+              setEndInput(s.label);
+            }}
+            onUseCurrent={() => handleUseCurrent("end")}
+            onClear={() => { setFloodEnd(null); setEndInput(""); setFloodEndLabel(""); }}
+          />
 
-      {/* Info Card */}
-      <div className="bg-orange-50/70 border border-orange-100/50 rounded-xl p-3 text-[11px] leading-relaxed text-orange-950 space-y-1 shadow-sm">
-        <div className="flex items-center gap-1.5 font-bold text-orange-800 mb-0.5">
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>Detour & Routing Tips</span>
-        </div>
-        <p>
-          🚦 <strong>Road Rules:</strong> Snaps to streets (respects one-ways & divided lanes).
-        </p>
-        <p>
-          🟠 <strong>Orange Line:</strong> Shows the segment that will be blocked in the system.
-        </p>
-      </div>
+          {/* Info Card */}
+          <div className="bg-orange-50/70 border border-orange-100/50 rounded-xl p-3 text-[11px] leading-relaxed text-orange-950 space-y-1 shadow-sm">
+            <div className="flex items-center gap-1.5 font-bold text-orange-800 mb-0.5">
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Detour & Routing Tips</span>
+            </div>
+            <p>
+              🚦 <strong>Road Rules:</strong> Snaps to streets (respects one-ways & divided lanes).
+            </p>
+            <p>
+              🟠 <strong>Orange Line:</strong> Shows the segment that will be blocked in the system.
+            </p>
+          </div>
 
-      {/* Severity selector */}
-      <div className="space-y-2">
-        <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Flood Severity
-        </label>
-        <div className="grid grid-cols-3 gap-2">
-          {SEVERITY_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
+          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto">
+            <Button
               type="button"
-              onClick={() => setSeverity(opt.value)}
-              className={cn(
-                "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
-                severity === opt.value ? opt.colors.active : opt.colors.pill
-              )}
+              disabled={!floodStart || !floodEnd}
+              onClick={() => setStep(2)}
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-sm"
             >
-              <span className="text-base">{opt.emoji}</span>
-              <span>{opt.label}</span>
-              <span className="font-normal text-[10px] opacity-75">{opt.description}</span>
-            </button>
-          ))}
+              Next Step
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Description */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Description
-        </label>
-        <textarea
-          placeholder="Describe the flood conditions (e.g., impassable to motorcycles, water is moving fast)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400 resize-none"
-        />
-      </div>
+      {step === 2 && (
+        <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
+          {/* Severity selector */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Flood Severity
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {SEVERITY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSeverity(opt.value)}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
+                    severity === opt.value ? opt.colors.active : opt.colors.pill
+                  )}
+                >
+                  <span className="text-base">{opt.emoji}</span>
+                  <span>{opt.label}</span>
+                  <span className="font-normal text-[10px] opacity-75">{opt.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Submit */}
-      <Button
-        type="submit"
-        disabled={!canSubmit}
-        className="w-full bg-orange-500 hover:bg-orange-600 focus:ring-orange-400 text-white font-semibold"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Submitting...
-          </>
-        ) : (
-          "Submit Flood Report"
-        )}
-      </Button>
+          {/* Image Upload */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Photo Evidence (Optional)
+            </label>
+            {imageFile ? (
+              <div className="relative rounded-md border border-gray-200 bg-gray-50 p-2 flex items-center justify-between">
+                <span className="text-xs text-gray-600 truncate max-w-[200px]">{imageFile.name}</span>
+                <button 
+                  type="button" 
+                  onClick={() => setImageFile(null)}
+                  className="p-1 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center w-full rounded-md border border-dashed border-gray-300 px-3 py-4 bg-gray-50 hover:bg-orange-50 hover:border-orange-300 transition-colors cursor-pointer select-none text-sm text-gray-500">
+                <div className="flex flex-col items-center gap-1">
+                  <ImagePlus className="w-5 h-5 text-gray-400 mb-1" />
+                  <span className="font-medium text-gray-600">Click to upload an image</span>
+                  <span className="text-[10px] text-gray-400">JPEG, PNG up to 5MB</span>
+                </div>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setImageFile(e.target.files[0]);
+                    }
+                  }}
+                />
+              </label>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Description
+            </label>
+            <textarea
+              placeholder="Describe the flood conditions (e.g., impassable to motorcycles, water is moving fast)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400 resize-none"
+            />
+          </div>
+
+          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(1)}
+              className="flex-1"
+            >
+              Back
+            </Button>
+            <Button
+              type="submit"
+              disabled={!canSubmit}
+              className="flex-[2] bg-orange-500 hover:bg-orange-600 focus:ring-orange-400 text-white font-semibold shadow-sm"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Report"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </form>
   );
 

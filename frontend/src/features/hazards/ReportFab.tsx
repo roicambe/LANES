@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 
+import { useMapContext } from "@/features/map/MapContext";
+
 interface ReportFabProps {
   /** Whether the FAB action menu is currently expanded. */
   isMenuOpen: boolean;
@@ -20,15 +22,20 @@ interface ReportFabProps {
  *     • Panel expanded  → FAB sits BELOW the panel (z-[35]).
  */
 export function ReportFab({ isMenuOpen, isPanelExpanded, onClick }: ReportFabProps) {
+  const { hasBottomOffset } = useMapContext();
+
   // When the panel is fully expanded, the FAB drops below it (z-35 < panel z-40).
   // When collapsed or closed, the FAB floats above (z-45 > panel z-40).
   const zClass = isPanelExpanded ? "z-[35]" : "z-[45]";
+  const bottomClass = hasBottomOffset 
+    ? "bottom-[calc(64px+env(safe-area-inset-bottom)+88px)]" 
+    : "bottom-[calc(64px+env(safe-area-inset-bottom)+16px)]";
 
   return (
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.9 }}
-      className={`fixed bottom-[calc(64px+env(safe-area-inset-bottom)+88px)] left-4 ${zClass} w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer bg-blue-600 hover:bg-blue-700 transition-colors`}
+      className={`fixed ${bottomClass} left-4 ${zClass} w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer bg-blue-600 hover:bg-blue-700 transition-all duration-300`}
       title={isMenuOpen ? "Close menu" : "Report Flood Hazard"}
     >
       {/* Two crossing bars that rotate to morph between + and × */}

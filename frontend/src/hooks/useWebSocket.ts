@@ -18,7 +18,7 @@ const getWsUrl = (): string => {
   // Our backend runs at port 8000 by default (http://localhost:8000), while Next.js runs at port 3000.
   // So if window.location.hostname is localhost, the backend is likely at localhost:8000.
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return `${protocol}//localhost:8000/api/v1/ws`;
+    return `${protocol}//127.0.0.1:8000/api/v1/ws`;
   }
   
   return `${protocol}//${window.location.host}/api/v1/ws`;

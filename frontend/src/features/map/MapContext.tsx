@@ -31,7 +31,10 @@ interface MapContextValue {
   isRouting: boolean;
   routeError: string | null;
   isPickingOnMap: boolean;
+  isReportPanelOpen: boolean;
+  hasBottomOffset: boolean;
   setIsPickingOnMap: (value: boolean) => void;
+  setIsReportPanelOpen: (value: boolean) => void;
   setActivePoint: (point: ActivePoint) => void;
   setActivePanel: (panel: ActivePanel) => void;
   setStart: (coords: [number, number] | null, label?: string) => void;
@@ -71,6 +74,9 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [isRouting, setIsRouting] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [isPickingOnMap, setIsPickingOnMap] = useState(false);
+  const [isReportPanelOpen, setIsReportPanelOpen] = useState(false);
+  
+  const hasBottomOffset = isReportPanelOpen && !isPickingOnMap;
 
   const [floodStart, setFloodStartState] = useState<MapPoint | null>(null);
   const [floodEnd, setFloodEndState] = useState<MapPoint | null>(null);
@@ -260,10 +266,13 @@ export function MapProvider({ children }: { children: ReactNode }) {
       isRouting,
       routeError,
       isPickingOnMap,
+      isReportPanelOpen,
+      hasBottomOffset,
       floodStart,
       floodEnd,
       floodPreviewGeometry,
       setIsPickingOnMap,
+      setIsReportPanelOpen,
       setActivePoint,
       setActivePanel,
       setStart,
@@ -288,10 +297,13 @@ export function MapProvider({ children }: { children: ReactNode }) {
       isRouting,
       routeError,
       isPickingOnMap,
+      isReportPanelOpen,
+      hasBottomOffset,
       floodStart,
       floodEnd,
       floodPreviewGeometry,
       setIsPickingOnMap,
+      setIsReportPanelOpen,
       setActivePoint,
       setActivePanel,
       setStart,

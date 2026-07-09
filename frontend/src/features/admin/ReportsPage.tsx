@@ -278,37 +278,50 @@ export default function ReportsPage() {
                 isPlaceholderData ? "opacity-60" : "opacity-100"
               }`}
             >
-              <div className="p-6 flex-1 space-y-4 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wider">
-                        {report.source}
-                      </span>
-                      {getStatusBadge(report.status)}
-                    </div>
-                    <span className="text-xs text-gray-400 font-medium">
-                      {new Date(report.created_at).toLocaleString()}
-                    </span>
+              <div className="p-6 flex-1 flex flex-col sm:flex-row gap-6">
+                {/* Optional Image Thumbnail */}
+                {report.image_url && (
+                  <div className="shrink-0 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img 
+                      src={report.image_url} 
+                      alt="Flood evidence" 
+                      className="w-full sm:w-32 h-32 object-cover"
+                    />
                   </div>
-                  
-                  <p className="text-gray-900 font-medium text-sm leading-relaxed">
-                    "{report.raw_text}"
-                  </p>
-                </div>
+                )}
+                
+                <div className="flex-1 space-y-4 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 uppercase tracking-wider">
+                          {report.source}
+                        </span>
+                        {getStatusBadge(report.status)}
+                      </div>
+                      <span className="text-xs text-gray-400 font-medium">
+                        {new Date(report.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    
+                    <p className="text-gray-900 font-medium text-sm leading-relaxed">
+                      "{report.raw_text}"
+                    </p>
+                  </div>
 
-                <div className="flex flex-wrap gap-3 pt-2">
-                  {getSeverityBadge(report.severity)}
-                  {report.geometry ? (
-                    <div className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
-                      <MapPin className="w-3.5 h-3.5 mr-1" />
-                      {getGeometryLabel(report.geometry)}
-                    </div>
-                  ) : (
-                    <div className="flex items-center text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
-                      No coordinates mapped
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    {getSeverityBadge(report.severity)}
+                    {report.geometry ? (
+                      <div className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
+                        <MapPin className="w-3.5 h-3.5 mr-1" />
+                        {getGeometryLabel(report.geometry)}
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-full">
+                        No coordinates mapped
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -28,6 +28,8 @@ This document serves as the official technical stack reference for the LANES pla
   * *Role:* Open-source, WebGL-accelerated interactive 2D map renderer used to display vector basemaps, dynamic alternative routing polylines, and spatial flood avoidance zones.  
 * **Map Base Tiles:** **OpenStreetMap Tiles & Photon API**  
   * *Role:* Rendering completely free street-level basemap imagery and providing rate-limited geocoding autocomplete features with zero commercial licensing caps.
+* **Geographic Demographics:** **PSGC API (Gitlab Pages)**
+  * *Role:* Providing a unified and accurate list of Philippine Provinces, Cities/Municipalities, and Barangays for user registration and demographic validation.
 
 ### **2\. Backend / Core Engine Tier (Application Server)**
 
@@ -37,6 +39,10 @@ This document serves as the official technical stack reference for the LANES pla
   * *Role:* Serving as the asynchronous web server handling high-throughput client API requests, managing database transactions, hosting WebSocket connections, and broadcasting data modification events.
 * **Authentication Stack:** **JWT, python-jose, & bcrypt**  
   * *Role:* Securing API endpoints via JSON Web Tokens, cryptographically signing tokens, and securely hashing user passwords for role-based access control.
+* **Transactional Email & OTP:** **Brevo REST API & httpx**
+  * *Role:* Generating async HTTP requests to the Brevo API to securely dispatch 6-digit One-Time Password verification codes to user emails during account onboarding.
+* **Image Processing & Storage:** **Cloudinary Python SDK**  
+  * *Role:* Managing direct upload, scaling (down to 1024px), and WebP format compression of user-submitted flood evidence photos to a dedicated cloud CDN, ensuring lightweight database records and fast frontend loading.
 * **NLP & Information Extraction:** **spaCy**  
   * *Role:* Managing the custom, locally executed Bilingual Named Entity Recognition (NER) pipeline to isolate street-level locations and severity parameters from Taglish text feeds.
 
