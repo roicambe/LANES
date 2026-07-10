@@ -6,7 +6,7 @@ from app import models, schemas
 
 
 def get_flood_report(db: Session, report_id: int) -> Optional[models.FloodReport]:
-    return db.query(models.FloodReport).filter(models.FloodReport.id == report_id).first()
+    return db.query(models.FloodReport).filter(models.FloodReport.id == report_id, models.FloodReport.deleted_at.is_(None)).first()
 
 
 def get_flood_reports(db: Session, skip: int = 0, limit: int = 100) -> List[models.FloodReport]:
@@ -14,7 +14,10 @@ def get_flood_reports(db: Session, skip: int = 0, limit: int = 100) -> List[mode
 
 
 def get_pending_flood_reports(db: Session, skip: int = 0, limit: int = 100) -> List[models.FloodReport]:
-    return db.query(models.FloodReport).filter(models.FloodReport.status == "pending").offset(skip).limit(limit).all()
+    return db.query(models.FloodReport).filter(
+        models.FloodReport.status == "pending",
+        models.FloodReport.deleted_at.is_(None)
+    ).offset(skip).limit(limit).all()
 
 
 def update_flood_report_status(db: Session, report_id: int, status: str) -> Optional[models.FloodReport]:
@@ -81,12 +84,16 @@ def get_all_flood_reports_filtered(
     severity: Optional[str] = None,
     search: Optional[str] = None,
     sort_by: str = "newest",
+    archived: bool = False
 ) -> tuple[List[models.FloodReport], int]:
     """
     Retrieve all flood reports matching filter criteria, with pagination and search.
     Returns a tuple of (reports, total_count).
     """
-    query = db.query(models.FloodReport)
+    if archived:
+        query = db.query(models.FloodReport).filter(models.FloodReport.deleted_at.is_not(None))
+    else:
+        query = db.query(models.FloodReport).filter(models.FloodReport.deleted_at.is_(None))
 
     if status and status != "all":
         query = query.filter(models.FloodReport.status == status)
@@ -113,7 +120,10 @@ def get_admin_dashboard_stats(db: Session) -> dict:
     now = datetime.utcnow()
     start_of_today = datetime.combine(now.date(), time.min)
 
-    total_pending = db.query(models.FloodReport).filter(models.FloodReport.status == "pending").count()
+    total_pending = db.query(models.FloodReport).filter(
+        models.FloodReport.status == "pending",
+        models.FloodReport.deleted_at.is_(None)
+    ).count()
     
     total_active_zones = db.query(models.FloodAvoidanceZone).filter(
         models.FloodAvoidanceZone.is_active == True,
@@ -122,12 +132,14 @@ def get_admin_dashboard_stats(db: Session) -> dict:
 
     total_approved_today = db.query(models.FloodReport).filter(
         models.FloodReport.status == "approved",
-        models.FloodReport.updated_at >= start_of_today
+        models.FloodReport.updated_at >= start_of_today,
+        models.FloodReport.deleted_at.is_(None)
     ).count()
 
     total_rejected_today = db.query(models.FloodReport).filter(
         models.FloodReport.status == "rejected",
-        models.FloodReport.updated_at >= start_of_today
+        models.FloodReport.updated_at >= start_of_today,
+        models.FloodReport.deleted_at.is_(None)
     ).count()
 
     total_users = db.query(models.User).count()

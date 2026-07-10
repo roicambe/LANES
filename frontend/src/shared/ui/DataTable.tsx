@@ -6,7 +6,7 @@ export type SortDirection = 'asc' | 'desc' | null;
 
 export interface Column<T> {
   key: string;
-  title: string;
+  title: React.ReactNode;
   sortable?: boolean;
   render?: (row: T) => React.ReactNode;
   // Optional custom sort function

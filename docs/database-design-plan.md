@@ -57,10 +57,20 @@ erDiagram
         datetime created_at "UTC action timestamp"
     }
 
+    post_interactions {
+        int id PK "Unique interaction identifier"
+        int user_id FK "Reference to users"
+        int report_id FK "Reference to flood_reports"
+        string interaction_type "upvote, downvote"
+        datetime created_at "UTC action timestamp"
+    }
+
     users ||--o{ audit_logs : "creates"
     users ||--o{ flood_reports : "submits (nullable)"
+    users ||--o{ post_interactions : "interacts"
     flood_reports ||--o{ flood_report_locations : "maps to"
     flood_reports ||--o{ flood_avoidance_zones : "generates"
+    flood_reports ||--o{ post_interactions : "receives"
 ```
 
 ---
@@ -79,6 +89,7 @@ erDiagram
 | `hashed_password` | `VARCHAR(255)` | NOT NULL | A secure one-way hash of the user's password generated using the **bcrypt** algorithm. | **Critical Security:** Never store plain text. Bcrypt adds a random salt and runs stretching loops to neutralize brute-force attacks. |
 | `role` | `VARCHAR(20)` | NOT NULL, Default: `'commuter'`, CHECK constraint | Defines access boundaries. Valid entries are strictly limited to `'admin'` or `'commuter'`. | Enforces Role-Based Access Control (RBAC) directly inside the database layer. |
 | `is_active` | `BOOLEAN` | Default: `TRUE` | Soft-deactivation toggle. Set to `FALSE` to suspend an account instead of deleting it. | Deactivated users are blocked from logging in, preserving historical records without losing referential integrity. |
+| `deleted_at` | `TIMESTAMP` | Nullable | Soft-delete marker for the Archive Center. | Keeps the account structurally intact for historical audit logs, but fully removes access and visibility. |
 | `created_at` | `TIMESTAMP` | Default: UTC Now | Record of when the account was initially created. | Used for registration auditing and chronological user reports. |
 
 ---
@@ -97,6 +108,7 @@ erDiagram
 | `severity` | `VARCHAR(20)` | NOT NULL | Classified risk level of the flood. Allowed: `'low'`, `'medium'`, `'high'`, `'extreme'`. | Directly determines detour routing weights and map visual color-coding. |
 | `status` | `VARCHAR(20)` | Default: `'pending'` | Moderation queue status. Allowed: `'pending'`, `'approved'`, `'rejected'`. | Approved reports automatically generate detours; rejected reports are archived. |
 | `geometry` | `GEOMETRY(Point, 4326)` | Spatial Index (GIST) | Latitude and longitude GPS point of the reported flood location (WGS 84). | **Performance:** Uses a GIST index. Essential for finding nearby flood reports quickly without doing expensive math on every record. |
+| `deleted_at` | `TIMESTAMP` | Nullable | Soft-delete marker for the Archive Center. | If set, the report is moved to the Archive Center and hidden from the public feed. |
 | `created_at` | `TIMESTAMP` | Default: UTC Now | Timestamp of when the report was ingested. | Used to determine report freshness (old reports are automatically archived). |
 | `updated_at` | `TIMESTAMP` | Default: UTC Now | Timestamp of the latest state modification (e.g., approval time). | Tracks modification latency and moderation response speeds. |
 
@@ -143,6 +155,20 @@ erDiagram
 | `metadata_json` | `JSONB` | Nullable | Detailed data representation (e.g., old values vs new values) stored in binary JSON. | **JSONB vs JSON:** Binary compressed JSONB allows fast parsing, filtering, and GIN indexing on specific metadata keys. |
 | `ip_address` | `VARCHAR(45)` | Nullable | Client IP address of the admin (accommodates IPv4 and longer IPv6 strings). | Identifies origin network vectors in case of suspicious behavior. |
 | `created_at` | `TIMESTAMP` | Default: UTC Now, Index | UTC timestamp of when the action occurred. | Chronologically indexed for loading activity feeds. |
+
+---
+
+### Table F: `post_interactions` (New Schema)
+**Description:** Records user interactions (upvotes/downvotes) on community feed reports.
+**Security Level:** Low (Public interactions).
+
+| Attribute | Data Type | Constraints | Description & How it Works | Security / Performance Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | Primary Key, Auto-increment | Unique identifier for each interaction. | Basic primary key. |
+| `user_id` | `INTEGER` | Foreign Key, Index | References `users.id` of the interacting user. | Tracks who voted to prevent duplicate votes per user. |
+| `report_id` | `INTEGER` | Foreign Key (cascade delete), Index | References `flood_reports.id`. | Ties the vote to a specific post. Cascade deletes if post is purged. |
+| `interaction_type` | `VARCHAR(20)` | NOT NULL | Type of interaction (e.g., `'upvote'`, `'downvote'`). | Used to calculate total score (Upvotes - Downvotes). |
+| `created_at` | `TIMESTAMP` | Default: UTC Now | Timestamp of the interaction. | Used to track interaction trends. |
 
 ---
 

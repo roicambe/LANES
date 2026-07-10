@@ -148,6 +148,7 @@ def get_all_reports(
     severity: Optional[str] = None,
     search: Optional[str] = None,
     sort_by: str = "newest",
+    archived: bool = False,
 ) -> Any:
     """
     Retrieve all flood reports with pagination, filtering, and search.
@@ -160,7 +161,8 @@ def get_all_reports(
         status=status,
         severity=severity,
         search=search,
-        sort_by=sort_by
+        sort_by=sort_by,
+        archived=archived
     )
     return {"reports": reports, "total": total}
 
@@ -279,6 +281,7 @@ def get_admin_users(
     limit: int = 10,
     search: Optional[str] = None,
     role: Optional[str] = None,
+    archived: bool = False,
 ) -> Any:
     """
     Retrieve all users with filtering, search, and pagination.
@@ -289,7 +292,8 @@ def get_admin_users(
         skip=skip,
         limit=limit,
         search=search,
-        role=role
+        role=role,
+        archived=archived
     )
     return {"users": users, "total": total}
 

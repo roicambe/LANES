@@ -11,6 +11,7 @@ import {
   Users,
   ShieldCheck,
   ClipboardList,
+  Archive,
   Database,
   Settings,
   LogOut,
@@ -25,6 +26,7 @@ const navItems = [
   { name: "User Registry",  href: "/admin/users",     icon: Users },
   { name: "Roles",          href: "/admin/roles",     icon: ShieldCheck },
   { name: "Audit Trail",    href: "/admin/audit",     icon: ClipboardList },
+  { name: "Archive Center", href: "/admin/archive",   icon: Archive },
   { name: "Data Management",href: "/admin/data",      icon: Database },
   { name: "System Settings",href: "/admin/settings",  icon: Settings },
 ];

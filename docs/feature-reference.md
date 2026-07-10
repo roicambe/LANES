@@ -168,6 +168,32 @@ This document serves as the central technical reference for all currently implem
 
 ---
 
+### 11. Archive Center (Soft Deletes)
+*   **Purpose:** Centralizes the management of suspended user accounts, rejected flood reports, and deactivated zones without destroying relational data integrity.
+*   **What it does:** Uses `deleted_at` timestamps to hide records from active queries while retaining them for historical analytics and administrative audit trails.
+*   **How it works:**
+    1. Instead of a SQL `DELETE`, a record is updated with `deleted_at = NOW()`.
+    2. Active database queries filter with `WHERE deleted_at IS NULL`.
+    3. The Archive Center provides a dual-pane or vertical sidebar interface to browse these hidden records.
+*   **Access & Roles:** Restricted to `admin` / `drrm` roles.
+*   **Related Components:**
+    *   **Frontend:** `src/features/archive/` (Components), `src/app/(admin)/archive/page.tsx`.
+
+---
+
+### 12. Community Feed & Social Validation
+*   **Purpose:** Provides commuters with localized, real-time crowdsourced updates and enables peer validation of flood reports.
+*   **What it does:** Displays a 3-column feed of public flood reports with a "Nearby" (distance-based) and "Recent" (time-based) tab. Allows users to upvote or downvote reports.
+*   **How it works:**
+    1. Fetches reports using PostGIS `<->` operators based on the user's GPS coordinates.
+    2. Renders reports with severity badges and distance indicators.
+    3. Users interact via upvote/downvote, which updates the `post_interactions` table.
+*   **Access & Roles:** Public users.
+*   **Related Components:**
+    *   **Frontend:** `src/features/feed/` (Feed components, PostCard, tabs), `src/app/feed/page.tsx`.
+
+---
+
 ## 🔮 Future Features
 
 ### 1. Height-Aware Rerouting (Dynamic Vehicle Profiles)
