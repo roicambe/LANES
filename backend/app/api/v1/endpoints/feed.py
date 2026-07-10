@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user_optional, get_current_active_user
+from app.api.deps import get_current_user_optional, get_current_user
 from app.models.user import User
 from app.schemas.feed import FeedPaginatedResponse
 from app.schemas.interaction import PostInteractionCreate, PostInteraction
@@ -53,7 +53,7 @@ def vote_post(
     report_id: int,
     interaction_in: PostInteractionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Upvote or downvote a feed post.
