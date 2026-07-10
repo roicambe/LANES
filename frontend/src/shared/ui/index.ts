@@ -17,3 +17,4 @@ export * from "./NumberInput";
 export * from "./DataTable";
 export * from './Pagination';
 export * from './PasswordStrength';
+export * from './Logo';

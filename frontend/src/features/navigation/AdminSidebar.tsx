@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/shared/ui/Logo";
 import {
   LayoutDashboard,
   Map,
@@ -41,22 +41,13 @@ export default function AdminSidebar() {
   return (
     <aside 
       className="group flex flex-col h-full bg-white border-r border-gray-200 
-                 w-14 hover:w-56 transition-all duration-150 ease-in-out shrink-0 z-20 shadow-sm"
+                 w-14 hover:w-56 transition-all duration-150 ease-in-out shrink-0 z-20 shadow-sm select-none"
     >
       {/* Brand Header */}
       <div className="h-[92px] py-4 flex flex-col items-center justify-between border-b border-gray-200 overflow-hidden shrink-0 w-full">
         {/* Logo Row */}
         <div className="flex items-center justify-center w-full">
-          <Image 
-            src="/lanes-logo/lanes-logo.svg" 
-            alt="LANES Logo" 
-            width={26} 
-            height={26} 
-            className="shrink-0" 
-          />
-          <span className="font-extrabold text-lg text-slate-800 tracking-tight mt-[3px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 hidden group-hover:block">
-            ANES
-          </span>
+          <Logo size="xs" textClassName="mt-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 hidden group-hover:block" />
         </div>
         
         {/* Admin Panel Row */}

@@ -7,14 +7,15 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   containerClassName?: string;
+  labelClassName?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, containerClassName, label, error, leftIcon, rightIcon, type = "text", ...props }, ref) => {
+  ({ className, containerClassName, labelClassName, label, error, leftIcon, rightIcon, type = "text", ...props }, ref) => {
     return (
       <div className={cn("w-full flex flex-col gap-1", containerClassName)}>
         {label && (
-          <label className="text-sm font-medium text-gray-700">
+          <label className={cn("text-sm font-medium text-gray-700", labelClassName)}>
             {label.includes("(Optional)") ? (
               <>
                 {label.replace("(Optional)", "").trim()}

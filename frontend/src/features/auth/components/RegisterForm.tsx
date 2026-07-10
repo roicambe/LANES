@@ -216,10 +216,6 @@ export function RegisterForm() {
         showError("Validation Error", "Barangay is required.");
         return false;
       }
-      if (!formData.address.postal_code) {
-        showError("Validation Error", "Postal Code is required.");
-        return false;
-      }
     } else if (currentStep === 3) {
       if (!formData.user.username) {
         showError("Validation Error", "Username is required.");
@@ -297,10 +293,10 @@ export function RegisterForm() {
 
   return (
     <>
-      <div className="w-full max-w-xl mx-auto bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100">
+      <div className="w-full max-w-xl mx-auto bg-white/20 backdrop-blur-2xl lg:bg-white rounded-2xl shadow-2xl lg:shadow-xl lg:shadow-slate-200/50 border border-white/40 lg:border-slate-100">
         {/* Stepper Header */}
-        <div className="bg-slate-50 px-8 py-6 border-b border-slate-100 rounded-t-2xl">
-          <h2 className="text-xl font-bold text-slate-900 mb-6 text-center">Create your Citizen Account</h2>
+        <div className="bg-transparent lg:bg-slate-50 px-8 py-6 border-b border-slate-200/50 lg:border-slate-100 rounded-t-2xl select-none">
+          <h2 className="text-xl font-bold text-white lg:text-slate-900 mb-6 text-center">Create your Citizen Account</h2>
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-slate-200 z-0"></div>
             <div 
@@ -322,7 +318,7 @@ export function RegisterForm() {
                   {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
                 </div>
                 <span className={`absolute top-10 text-xs font-medium whitespace-nowrap transition-colors duration-300 ${
-                  currentStep >= step.id ? "text-slate-900" : "text-slate-400"
+                  currentStep >= step.id ? "text-white lg:text-slate-900" : "text-white/50 lg:text-slate-400"
                 }`}>
                   {step.name}
                 </span>
@@ -335,7 +331,7 @@ export function RegisterForm() {
         <div className="p-8 pt-10">
           <form 
             onSubmit={(e) => e.preventDefault()}
-            className="relative min-h-[350px]"
+            className="relative flex flex-col h-auto min-h-[320px] sm:h-[320px]"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'BUTTON') {
                 e.preventDefault();
@@ -347,7 +343,8 @@ export function RegisterForm() {
               }
             }}
           >
-            <AnimatePresence mode="wait">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-1 -m-1">
+              <AnimatePresence mode="wait">
               {currentStep === 1 && (
                 <motion.div
                   key="step1"
@@ -357,11 +354,11 @@ export function RegisterForm() {
                   transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1">
                       <Input 
                         label="First Name"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="Juan" 
                         required
                         value={formData.profile.first_name} 
@@ -371,7 +368,7 @@ export function RegisterForm() {
                     <div className="flex-1">
                       <Input 
                         label="Last Name"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="Dela Cruz" 
                         required
                         value={formData.profile.last_name} 
@@ -379,11 +376,11 @@ export function RegisterForm() {
                       />
                     </div>
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1">
                       <Input 
                         label="M.I. (Optional)"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="A" 
                         maxLength={2}
                         value={formData.profile.middle_initial} 
@@ -393,7 +390,7 @@ export function RegisterForm() {
                     <div className="flex-1">
                       <Input 
                         label="Suffix (Optional)"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="Jr."
                         list="suffix-options"
                         value={formData.profile.suffix} 
@@ -408,19 +405,20 @@ export function RegisterForm() {
                       </datalist>
                     </div>
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1">
                       <Input 
                         label="Contact Number (Optional)"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="09123456789"
                         value={formData.profile.contact_number} 
                         onChange={e => handleChange("profile", "contact_number", e.target.value)}
                       />
                     </div>
-                    <div className="w-40">
+                    <div className="w-full sm:w-40">
                       <DatePicker 
                         label="Birthdate"
+                        labelClassName="text-white lg:text-gray-700"
                         required
                         value={formData.profile.birthdate} 
                         onChange={e => handleChange("profile", "birthdate", e.target.value)}
@@ -439,52 +437,65 @@ export function RegisterForm() {
                   transition={{ duration: 0.3 }}
                   className="space-y-4"
                 >
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Province / Region <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <button 
-                      type="button" 
-                      onClick={() => setActivePicker("province")}
-                      className="w-full p-2.5 text-left text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 transition-all hover:bg-slate-100"
-                    >
-                      {formData.address.province || "Select Province"}
-                    </button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1 space-y-1">
+                      <label className="block text-sm font-medium text-white lg:text-slate-700">
+                        Province / Region <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <button 
+                        type="button" 
+                        onClick={() => setActivePicker("province")}
+                        className="w-full p-2.5 text-left text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 transition-all hover:bg-slate-100 truncate"
+                      >
+                        {formData.address.province || "Select Province"}
+                      </button>
+                    </div>
+
+                    <div className="flex-1 space-y-1">
+                      <label className="block text-sm font-medium text-white lg:text-slate-700">
+                        City / Municipality <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <button 
+                        type="button" 
+                        onClick={() => setActivePicker("city")}
+                        disabled={!formData.address.province}
+                        className="w-full p-2.5 text-left text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 disabled:opacity-50 transition-all hover:bg-slate-100 truncate"
+                      >
+                        {formData.address.city_municipality || "Select City"}
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-slate-700">
-                      City / Municipality <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <button 
-                      type="button" 
-                      onClick={() => setActivePicker("city")}
-                      disabled={!formData.address.province}
-                      className="w-full p-2.5 text-left text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 disabled:opacity-50 transition-all hover:bg-slate-100"
-                    >
-                      {formData.address.city_municipality || "Select City/Municipality"}
-                    </button>
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div className="flex-1 space-y-1">
+                      <label className="block text-sm font-medium text-white lg:text-slate-700">
+                        Barangay <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <button 
+                        type="button" 
+                        onClick={() => setActivePicker("barangay")}
+                        disabled={!formData.address.city_municipality}
+                        className="w-full p-2.5 text-left text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 disabled:opacity-50 transition-all hover:bg-slate-100 truncate"
+                      >
+                        {formData.address.barangay || "Select Barangay"}
+                      </button>
+                    </div>
+                    <div className="w-full sm:w-1/3">
+                      <Input 
+                        label="Postal Code (Optional)"
+                        labelClassName="text-white lg:text-gray-700" 
+                        placeholder="1210" 
+                        value={formData.address.postal_code} 
+                        onChange={e => handleChange("address", "postal_code", e.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Barangay <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <button 
-                      type="button" 
-                      onClick={() => setActivePicker("barangay")}
-                      disabled={!formData.address.city_municipality}
-                      className="w-full p-2.5 text-left text-sm rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 disabled:opacity-50 transition-all hover:bg-slate-100"
-                    >
-                      {formData.address.barangay || "Select Barangay"}
-                    </button>
-                  </div>
-
-                  <div className="flex gap-3 items-end">
-                    <div className="w-40">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div className="w-full sm:w-1/3">
                       <Input 
                         label="House No. (Optional)"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="123"
                         value={formData.address.house_number} 
                         onChange={e => handleChange("address", "house_number", e.target.value)}
@@ -493,21 +504,13 @@ export function RegisterForm() {
                     <div className="flex-1">
                       <Input 
                         label="Street (Optional)"
-                        type="text" 
+                        labelClassName="text-white lg:text-gray-700" 
                         placeholder="Main St"
                         value={formData.address.street} 
                         onChange={e => handleChange("address", "street", e.target.value)}
                       />
                     </div>
                   </div>
-                  <Input 
-                    label="Postal Code"
-                    type="text" 
-                    placeholder="1210" 
-                    required
-                    value={formData.address.postal_code} 
-                    onChange={e => handleChange("address", "postal_code", e.target.value)}
-                  />
                 </motion.div>
               )}
 
@@ -522,7 +525,7 @@ export function RegisterForm() {
                 >
                   <Input 
                     label="Username"
-                    type="text" 
+                    labelClassName="text-white lg:text-gray-700" 
                     placeholder="juandelacruz" 
                     required
                     value={formData.user.username} 
@@ -539,6 +542,7 @@ export function RegisterForm() {
                   <div>
                     <Input 
                       label="Password"
+                      labelClassName="text-white lg:text-gray-700"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••" 
                       required
@@ -561,9 +565,10 @@ export function RegisterForm() {
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
 
             {/* Bottom Navigation */}
-            <div className="mt-8 flex items-center justify-between pt-6 border-t border-slate-100">
+            <div className="mt-4 flex items-center justify-between pt-6 border-t border-slate-100 shrink-0">
               {currentStep > 1 ? (
                 <button
                   type="button"

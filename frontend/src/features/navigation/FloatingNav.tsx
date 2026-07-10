@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
+import { Logo } from "@/shared/ui/Logo";
 import { motion } from "framer-motion";
 import { Home, Map as MapIcon, User, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,15 +19,14 @@ export default function FloatingNav() {
   const isMapPage = pathname === "/map";
 
   return (
-    <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-50 hidden sm:block max-w-[calc(100vw-2rem)]">
+    <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-50 hidden sm:block max-w-[calc(100vw-2rem)] select-none">
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 350, damping: 32 }}
         className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-2 py-1.5 w-max max-w-full"
       >
-        <Link href="/" className="flex items-center gap-1 pl-3 pr-2 hidden sm:flex transition-opacity hover:opacity-80 shrink-0" title="Go to Landing Page">
-          <Image src="/lanes-logo/lanes-logo.svg" alt="LANES Logo" width={20} height={20} className="h-5 w-auto shrink-0" />
-          <span className="font-extrabold text-sm text-slate-800 tracking-tight mt-0.5 hidden md:block shrink-0">ANES</span>
+        <Link href="/" className="flex items-center pl-3 pr-2 hidden sm:flex transition-opacity hover:opacity-80 shrink-0" title="Go to Landing Page">
+          <Logo size="xs" textClassName="mt-0.5 hidden md:block shrink-0" />
         </Link>
         <span className="w-px h-5 bg-gray-200 hidden sm:block mr-2 shrink-0" />
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
