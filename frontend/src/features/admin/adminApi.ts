@@ -45,6 +45,7 @@ export interface GetReportsOptions {
   severity?: string;
   search?: string;
   sortBy?: string;
+  archived?: boolean;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -68,6 +69,9 @@ export async function getReports(options: GetReportsOptions): Promise<PaginatedR
   }
   if (options.sortBy) {
     params.append("sort_by", options.sortBy);
+  }
+  if (options.archived) {
+    params.append("archived", "true");
   }
 
   return apiClient.get<PaginatedReportsResponse>(`/admin/reports/all?${params.toString()}`);
@@ -132,7 +136,8 @@ export async function getUsers(
   page: number,
   limit: number,
   search?: string,
-  role?: string
+  role?: string,
+  archived?: boolean
 ): Promise<PaginatedUsersResponse> {
   const skip = (page - 1) * limit;
   const params = new URLSearchParams();
@@ -140,6 +145,7 @@ export async function getUsers(
   params.append("limit", limit.toString());
   if (search) params.append("search", search);
   if (role && role !== "all") params.append("role", role);
+  if (archived) params.append("archived", "true");
   
   return apiClient.get<PaginatedUsersResponse>(`/admin/users?${params.toString()}`);
 }

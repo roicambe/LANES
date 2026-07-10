@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getZones, deactivateZone, deactivateZonesBulk, AvoidanceZone } from "./adminApi";
 import { Button } from "@/shared/ui/Button";
 import { Modal } from "@/shared/ui/Modal";
-import { TableActionGroup, TableActionButton, Pagination } from "@/shared/ui";
+import { TableActionGroup, TableActionButton, Pagination, DataTable, Column } from "@/shared/ui";
 import { 
   Loader2, 
   Map, 
@@ -81,13 +81,11 @@ export default function ActiveZonesPage() {
     }
   };
 
-  // Helper to estimate polygon center
   const getPolygonCenter = (coords: [number, number][][]): string => {
     if (!coords || coords.length === 0 || coords[0].length === 0) return "N/A";
     const rings = coords[0];
     let sumLng = 0;
     let sumLat = 0;
-    // exclude the duplicate closing point in calculation
     const len = rings.length - 1 || 1;
     for (let i = 0; i < len; i++) {
       sumLng += rings[i][0];
@@ -95,6 +93,105 @@ export default function ActiveZonesPage() {
     }
     return `${(sumLat / len).toFixed(5)}, ${(sumLng / len).toFixed(5)}`;
   };
+
+  const zoneColumns: Column<AvoidanceZone>[] = [
+    {
+      key: 'select',
+      title: (
+        <input
+          type="checkbox"
+          onChange={handleSelectAll}
+          checked={
+            zones.length > 0 &&
+            zones.some((z) => z.is_active) &&
+            zones.filter((z) => z.is_active).every((z) => selectedIds.includes(z.id))
+          }
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+        />
+      ),
+      sortable: false,
+      render: (zone) => (
+        <input
+          type="checkbox"
+          checked={zone.is_active ? selectedIds.includes(zone.id) : false}
+          onChange={(e) => zone.is_active && handleSelectRow(zone.id, e.target.checked)}
+          disabled={!zone.is_active}
+          className={
+            zone.is_active 
+              ? "rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+              : "rounded border-gray-200 bg-gray-100 w-4 h-4 cursor-not-allowed opacity-50"
+          }
+        />
+      )
+    },
+    {
+      key: 'id',
+      title: 'Zone ID',
+      sortable: true,
+      render: (zone) => <span className="font-mono text-xs font-semibold">#{zone.id}</span>
+    },
+    {
+      key: 'report_id',
+      title: 'Report ID',
+      sortable: true,
+      render: (zone) => <span className="font-semibold text-gray-700">Report #{zone.report_id}</span>
+    },
+    {
+      key: 'center',
+      title: 'Detour Center',
+      sortable: false,
+      render: (zone) => <span className="font-medium text-gray-600 text-xs">{getPolygonCenter(zone.geometry.coordinates)}</span>
+    },
+    {
+      key: 'created_at',
+      title: 'Created At',
+      sortable: true,
+      render: (zone) => <span className="text-xs">{new Date(zone.created_at).toLocaleString()}</span>
+    },
+    {
+      key: 'expires_at',
+      title: 'Expires At',
+      sortable: true,
+      render: (zone) => <span className="text-xs text-gray-500">{zone.expires_at ? new Date(zone.expires_at).toLocaleString() : "Never (Infinite)"}</span>
+    },
+    {
+      key: 'is_active',
+      title: 'Status',
+      sortable: true,
+      render: (zone) => (
+        zone.is_active ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+            Active Detour
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+            Deactivated
+          </span>
+        )
+      )
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      sortable: false,
+      render: (zone) => (
+        <div className="flex justify-end">
+          {zone.is_active ? (
+            <TableActionGroup>
+              <TableActionButton
+                actionVariant="disable"
+                onClick={() => setConfirmId(zone.id)}
+              >
+                Deactivate
+              </TableActionButton>
+            </TableActionGroup>
+          ) : (
+            <span className="text-xs text-gray-400 select-none">Archived</span>
+          )}
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 text-gray-900">
@@ -155,96 +252,13 @@ export default function ActiveZonesPage() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm relative">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-semibold tracking-wider">
-                <tr>
-                  <th className="px-6 py-4 w-10">
-                    <input
-                      type="checkbox"
-                      onChange={handleSelectAll}
-                      checked={
-                        zones.length > 0 &&
-                        zones.some((z) => z.is_active) &&
-                        zones.filter((z) => z.is_active).every((z) => selectedIds.includes(z.id))
-                      }
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                    />
-                  </th>
-                  <th className="px-6 py-4">Zone ID</th>
-                  <th className="px-6 py-4">Report ID</th>
-                  <th className="px-6 py-4">Detour Center</th>
-                  <th className="px-6 py-4">Created At</th>
-                  <th className="px-6 py-4">Expires At</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y divide-gray-200 transition-opacity duration-150 ${isPlaceholderData ? "opacity-60" : "opacity-100"}`}>
-                {zones.map((zone: AvoidanceZone) => (
-                  <tr 
-                    key={zone.id} 
-                    className={`hover:bg-gray-50/50 transition-colors ${
-                      !zone.is_active ? "bg-gray-50/30 text-gray-400" : ""
-                    }`}
-                  >
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={zone.is_active ? selectedIds.includes(zone.id) : false}
-                        onChange={(e) => zone.is_active && handleSelectRow(zone.id, e.target.checked)}
-                        disabled={!zone.is_active}
-                        className={
-                          zone.is_active 
-                            ? "rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                            : "rounded border-gray-200 bg-gray-100 w-4 h-4 cursor-not-allowed opacity-50"
-                        }
-                      />
-                    </td>
-                    <td className="px-6 py-4 font-mono text-xs font-semibold">
-                      #{zone.id}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-700">
-                      Report #{zone.report_id}
-                    </td>
-                    <td className="px-6 py-4 font-medium text-gray-600 text-xs">
-                      {getPolygonCenter(zone.geometry.coordinates)}
-                    </td>
-                    <td className="px-6 py-4 text-xs">
-                      {new Date(zone.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500">
-                      {zone.expires_at ? new Date(zone.expires_at).toLocaleString() : "Never (Infinite)"}
-                    </td>
-                    <td className="px-6 py-4">
-                      {zone.is_active ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          Active Detour
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
-                          Deactivated
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {zone.is_active ? (
-                        <TableActionGroup>
-                          <TableActionButton
-                            actionVariant="disable"
-                            onClick={() => setConfirmId(zone.id)}
-                          >
-                            Deactivate
-                          </TableActionButton>
-                        </TableActionGroup>
-                      ) : (
-                        <span className="text-xs text-gray-400 select-none">Archived</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className={`transition-opacity duration-150 ${isPlaceholderData ? "opacity-60" : "opacity-100"}`}>
+            <DataTable
+              columns={zoneColumns}
+              data={zones}
+              keyExtractor={(zone) => zone.id}
+              pagination={{ page, totalPages, onPageChange: setPage }}
+            />
           </div>
 
           {/* Bulk Action Float Bar */}
@@ -273,12 +287,6 @@ export default function ActiveZonesPage() {
           )}
         </div>
       )}
-
-      <Pagination 
-        page={page} 
-        totalPages={totalPages} 
-        onPageChange={setPage} 
-      />
 
       {/* Confirmation Modals */}
       <Modal

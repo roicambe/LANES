@@ -35,6 +35,7 @@ export default function ReportsPage() {
   const [severity, setSeverity] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   /**
    * Returns a human-readable coordinate label for a report geometry.
@@ -281,7 +282,10 @@ export default function ReportsPage() {
               <div className="p-6 flex-1 flex flex-col sm:flex-row gap-6">
                 {/* Optional Image Thumbnail */}
                 {report.image_url && (
-                  <div className="shrink-0 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                  <div 
+                    className="shrink-0 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedImage(report.image_url)}
+                  >
                     <img 
                       src={report.image_url} 
                       alt="Flood evidence" 
@@ -365,6 +369,28 @@ export default function ReportsPage() {
         totalPages={totalPages} 
         onPageChange={setPage} 
       />
+
+      {/* Lightbox Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="absolute -top-10 right-0 md:-right-10 text-white hover:text-gray-300 bg-black/50 p-2 rounded-full transition-colors"
+              onClick={() => setSelectedImage(null)}
+            >
+              <XCircle className="w-8 h-8" />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Expanded flood evidence" 
+              className="max-h-[85vh] object-contain rounded-xl shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -256,7 +256,27 @@ All critical actions (route input, recalculation, rerouting) must require minima
 
 ---
 
-## 5. Security & Access Architecture
+## 5. Community Feed & Social Validation Architecture
+
+The platform incorporates a dedicated **Community Feed** to provide localized, real-time crowdsourced updates alongside official hazard zones. 
+
+### A. Three-Column Layout Strategy
+The Community Feed page is built around a standard desktop Three-Column Layout (which collapses on mobile):
+1. **Left Column (Navigation):** Houses main menu links, profile shortcuts, and spatial filters.
+2. **Center Column (Main Feed):** A highly performant, virtualized list of community reports. The feed employs a **Tabbed Strategy**:
+   - **Nearby:** Utilizes PostGIS distance operators (`<->` and `ST_DWithin`) to rank recent posts strictly by proximity to the user's GPS coordinates.
+   - **Recent:** Chronological ordering of the latest city-wide hazard reports.
+3. **Right Column (Auxiliary Info):** Contains secondary modules such as Active Weather Alerts, News/Articles, and User Leaderboards.
+
+### B. Crowdsourced Validation (Upvote/Downvote Model)
+Rather than standard social media "Likes," interactions serve a strict utilitarian purpose:
+* **Upvote:** Signals validation ("I see this flood too" / "Still flooded").
+* **Downvote:** Signals inaccuracy or clearance ("Flood has subsided" / "False report").
+This creates a self-healing data ecosystem where the community passively moderates hazard validity before or alongside DRRM admin review.
+
+---
+
+## 6. Security & Access Architecture
 
 ### A. Principle of Least Privilege (PoLP)
 The database enforces strict role separation:
@@ -292,7 +312,7 @@ graph TD
 
 ---
 
-## 6. Non-Functional Requirements (NFRs)
+## 7. Non-Functional Requirements (NFRs)
 
 To guarantee the platform runs successfully during weather-induced emergency scenarios, the system adheres to the following performance bounds:
 * **Latency constraint:** Route calculation and flood bypassing response queries must resolve in **under 3 seconds** under ordinary network conditions.
@@ -302,7 +322,7 @@ To guarantee the platform runs successfully during weather-induced emergency sce
 
 ---
 
-## 7. System Constraints & Assumptions
+## 8. System Constraints & Assumptions
 
 ### A. Assumptions
 * **Internet Connectivity:** The client dashboard requires a stable internet connection to fetch vector maps and make async API queries to the backend.
@@ -316,7 +336,7 @@ To guarantee the platform runs successfully during weather-induced emergency sce
 
 ---
 
-## 8. Audit Logging & Moderation Logs
+## 9. Audit Logging & Moderation Logs
 
 To maintain administrative accountability and track disaster database updates:
 

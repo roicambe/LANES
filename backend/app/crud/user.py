@@ -9,15 +9,15 @@ from app.core.security import get_password_hash
 
 
 def get_user(db: Session, user_id: int) -> Optional[models.User]:
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    return db.query(models.User).filter(models.User.id == user_id, models.User.deleted_at.is_(None)).first()
 
 
 def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
-    return db.query(models.User).filter(models.User.username == username).first()
+    return db.query(models.User).filter(models.User.username == username, models.User.deleted_at.is_(None)).first()
 
 
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
-    return db.query(models.User).filter(models.User.email == email).first()
+    return db.query(models.User).filter(models.User.email == email, models.User.deleted_at.is_(None)).first()
 
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
@@ -76,9 +76,13 @@ def get_users_filtered(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = None,
-    role: Optional[str] = None
+    role: Optional[str] = None,
+    archived: bool = False
 ) -> tuple[List[models.User], int]:
-    query = db.query(models.User)
+    if archived:
+        query = db.query(models.User).filter(models.User.deleted_at.is_not(None))
+    else:
+        query = db.query(models.User).filter(models.User.deleted_at.is_(None))
     
     if search:
         query = query.filter(
@@ -87,7 +91,7 @@ def get_users_filtered(
         )
     
     if role and role != "all":
-        query = query.filter(models.User.role == role)
+        query = query.join(models.Role).filter(models.Role.name == role)
         
     total = query.count()
     users = query.order_by(models.User.created_at.desc()).offset(skip).limit(limit).all()
@@ -106,7 +110,8 @@ def update_user_status(db: Session, user_id: int, is_active: bool) -> Optional[m
 def delete_user(db: Session, user_id: int) -> bool:
     user = get_user(db, user_id)
     if user:
-        db.delete(user)
+        from datetime import datetime
+        user.deleted_at = datetime.utcnow()
         db.commit()
         return True
     return False

@@ -29,6 +29,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");
+
   
   // Status toggle modals
   const [statusUser, setStatusUser] = useState<UserRecord | null>(null);
@@ -80,8 +81,8 @@ export default function UsersPage() {
     setPage(1);
   };
 
-  const handleRoleChange = (e: { target: { value: string | number } }) => {
-    setRole(String(e.target.value));
+  const handleRoleTabChange = (newRole: string) => {
+    setRole(newRole);
     setPage(1);
   };
 
@@ -206,6 +207,30 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <div className="flex space-x-8">
+          {[
+            { id: "all", label: "All Accounts" },
+            { id: "Commuter", label: "Citizens" },
+            { id: "Sub-Administrator", label: "Sub-Administrators" },
+            { id: "Super-Administrator", label: "Super-Administrators" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleRoleTabChange(tab.id)}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                role === tab.id
+                  ? "border-blue-600 text-blue-600 font-semibold"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Filter Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex flex-1 gap-3 w-full sm:w-auto">
@@ -217,17 +242,6 @@ export default function UsersPage() {
             value={search}
             onChange={handleSearchChange}
             className="text-gray-900 bg-white"
-          />
-
-          <Select
-            value={role}
-            onChange={handleRoleChange}
-            className="w-40 font-medium"
-            options={[
-              { label: "All Roles", value: "all" },
-              { label: "Administrators", value: "admin" },
-              { label: "Commuters", value: "commuter" }
-            ]}
           />
         </div>
 
