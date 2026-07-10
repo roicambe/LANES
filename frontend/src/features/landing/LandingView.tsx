@@ -110,9 +110,9 @@ export default function LandingView() {
 
   return (
 
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex-1 bg-gray-50 flex flex-col">
 
-      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-8 lg:gap-12 max-w-7xl mx-auto w-full pt-20 sm:pt-32 lg:pt-36">
+      <main className="flex-grow flex flex-col lg:flex-row items-center justify-center p-6 md:p-12 gap-8 lg:gap-12 max-w-7xl mx-auto w-full">
 
         <div className="flex-1 space-y-6 text-center lg:text-left">
 
@@ -291,7 +291,7 @@ export default function LandingView() {
 
 
 
-      <footer className="bg-gray-100 py-8 pb-24 sm:pb-8 mt-auto">
+      <footer className="bg-gray-100 py-8 mt-auto">
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
 

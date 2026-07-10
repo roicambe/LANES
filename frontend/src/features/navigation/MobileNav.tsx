@@ -17,7 +17,7 @@ export default function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] sm:hidden z-50 pb-safe select-none">
+    <nav className="sticky bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] sm:hidden z-50 pb-safe select-none">
       <div className="flex justify-around items-center h-16 px-2">
         {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));

@@ -7,7 +7,7 @@ import { Logo } from "@/shared/ui/Logo";
 
 export default function RegisterPage() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-slate-50 flex flex-col lg:flex-row">
+    <div className="relative flex-1 w-full overflow-hidden bg-slate-50 flex flex-col lg:flex-row">
       
       {/* Mobile Background Image (Hidden on Desktop) */}
       <div 
@@ -21,7 +21,7 @@ export default function RegisterPage() {
         initial={{ x: "-100%" }}
         animate={{ x: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 hidden lg:flex flex-col w-[45%] min-h-screen text-white p-12 shadow-2xl"
+        className="fixed top-0 left-0 bottom-0 z-10 hidden lg:flex flex-col w-[45%] text-white p-12 shadow-2xl"
         style={{ clipPath: "polygon(0 0, 100% 0, 75% 100%, 0 100%)" }}
       >
         {/* Background Image */}
@@ -75,7 +75,7 @@ export default function RegisterPage() {
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-20 flex-1 flex flex-col items-center p-6 pt-24 pb-32 lg:pb-12 lg:p-12 lg:pt-28 min-h-screen overflow-y-auto"
+        className="relative z-20 flex-1 flex flex-col items-center p-6 lg:p-12 overflow-y-auto lg:ml-[45%]"
       >
         <div className="w-full flex flex-col items-center my-auto">
           {/* Mobile Header (Hidden on Desktop) */}

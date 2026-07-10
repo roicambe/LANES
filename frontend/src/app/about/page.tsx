@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50 pt-8 sm:pt-24 pb-24 sm:pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex-1 bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12">
         
         {/* Breadcrumbs */}

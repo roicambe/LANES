@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState, useRef, useEffect, forwardRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { ChevronUp, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +13,7 @@ export interface DatePickerProps {
   disabled?: boolean;
   required?: boolean;
   labelClassName?: string;
+  align?: "left" | "right";
 }
 
 const MONTHS = [
@@ -59,7 +63,7 @@ function getCursorValue(digits: string): string {
 }
 
 export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
-  ({ label, value, onChange, className, disabled, required, labelClassName }, ref) => {
+  ({ label, value, onChange, className, disabled, required, labelClassName, align = "left" }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -151,11 +155,15 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     };
 
     // Placement logic
-    useEffect(() => {
+    const [rect, setRect] = useState<DOMRect | null>(null);
+
+    const updatePosition = useCallback(() => {
       if (isOpen && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
+        const newRect = containerRef.current.getBoundingClientRect();
+        setRect(newRect);
+        
+        const spaceBelow = window.innerHeight - newRect.bottom;
+        const spaceAbove = newRect.top;
         if (spaceBelow < 310 && spaceAbove > spaceBelow) {
           setPlacement("top");
         } else {
@@ -163,6 +171,18 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         }
       }
     }, [isOpen]);
+
+    useEffect(() => {
+      if (isOpen) {
+        updatePosition();
+        window.addEventListener("scroll", updatePosition, true);
+        window.addEventListener("resize", updatePosition);
+        return () => {
+          window.removeEventListener("scroll", updatePosition, true);
+          window.removeEventListener("resize", updatePosition);
+        };
+      }
+    }, [isOpen, updatePosition]);
 
     useEffect(() => {
       if (value) {
@@ -301,11 +321,16 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
 
 
         {/* Calendar popup */}
-        {isOpen && (
-          <div className={cn(
-            "absolute left-0 z-50 w-72 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden",
-            placement === "top" ? "bottom-full mb-1" : "top-full mt-1"
-          )}>
+        {isOpen && typeof document !== "undefined" && createPortal(
+          <div 
+            className="fixed z-[9999] w-72 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+            style={{
+              top: placement === "bottom" && rect ? rect.bottom + 4 : undefined,
+              bottom: placement === "top" && rect ? window.innerHeight - rect.top + 4 : undefined,
+              left: align === "left" && rect ? rect.left : undefined,
+              right: align === "right" && rect ? window.innerWidth - rect.right : undefined,
+            }}
+          >
 
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-gray-100">
@@ -412,7 +437,8 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 </div>
               </>
             )}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
