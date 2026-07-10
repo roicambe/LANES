@@ -7,20 +7,15 @@ const getWsUrl = (): string => {
   const isSecure = window.location.protocol === "https:";
   const protocol = isSecure ? "wss:" : "ws:";
   
-  // If NEXT_PUBLIC_API_URL is set, parse its hostname/port
+  // If NEXT_PUBLIC_API_URL is explicitly set to a full HTTP URL, use its host
   const apiEnv = process.env.NEXT_PUBLIC_API_URL;
   if (apiEnv && apiEnv.startsWith("http")) {
     const url = new URL(apiEnv);
-    return `${isSecure ? "wss:" : "ws:"}//${url.host}/api/v1/ws`;
+    return `${protocol}//${url.host}/api/v1/ws`;
   }
   
-  // Fallback to window location host (for relative backend or dev proxy)
-  // Our backend runs at port 8000 by default (http://localhost:8000), while Next.js runs at port 3000.
-  // So if window.location.hostname is localhost, the backend is likely at localhost:8000.
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return `${protocol}//127.0.0.1:8000/api/v1/ws`;
-  }
-  
+  // Otherwise, let the connection pass through the Next.js API proxy
+  // This prevents CORS and localhost/127.0.0.1 IPv6 resolution mismatches
   return `${protocol}//${window.location.host}/api/v1/ws`;
 };
 

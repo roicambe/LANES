@@ -17,7 +17,7 @@ class Address(Base):
     barangay: Mapped[str] = mapped_column(String(100))
     city_municipality: Mapped[str] = mapped_column(String(100))
     province: Mapped[str] = mapped_column(String(100))
-    postal_code: Mapped[str] = mapped_column(String(20))
+    postal_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
     country: Mapped[str] = mapped_column(String(100), default="Philippines")
 
     # Relationships

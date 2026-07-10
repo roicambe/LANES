@@ -8,7 +8,7 @@ class AddressBase(BaseModel):
     barangay: str
     city_municipality: str
     province: str
-    postal_code: str
+    postal_code: Optional[str] = None
     country: str = "Philippines"
 
 

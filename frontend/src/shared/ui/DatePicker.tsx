@@ -9,6 +9,7 @@ export interface DatePickerProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  labelClassName?: string;
 }
 
 const MONTHS = [
@@ -58,7 +59,7 @@ function getCursorValue(digits: string): string {
 }
 
 export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
-  ({ label, value, onChange, className, disabled, required }, ref) => {
+  ({ label, value, onChange, className, disabled, required, labelClassName }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -234,7 +235,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
       <div className={cn("relative w-full", className)} ref={containerRef}>
         {/* Label */}
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={cn("block text-sm font-medium text-gray-700 mb-1", labelClassName)}>
             {label.includes("(Optional)") ? (
               <>
                 {label.replace("(Optional)", "").trim()}

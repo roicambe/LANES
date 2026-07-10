@@ -70,7 +70,7 @@ export function LocationPickerModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[100] flex flex-col bg-white"
+        className="fixed inset-0 z-[100] flex flex-col bg-white select-none"
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
