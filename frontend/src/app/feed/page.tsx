@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function FeedPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-20 sm:pt-24 pb-24 sm:pb-4">
+    <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center max-w-md w-full">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-6">
           <Construction className="w-8 h-8" />

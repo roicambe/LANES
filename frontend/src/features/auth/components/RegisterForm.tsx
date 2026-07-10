@@ -422,6 +422,7 @@ export function RegisterForm() {
                         required
                         value={formData.profile.birthdate} 
                         onChange={e => handleChange("profile", "birthdate", e.target.value)}
+                        align="right"
                       />
                     </div>
                   </div>
