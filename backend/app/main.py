@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
+from fastapi.exceptions import ResponseValidationError
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -62,6 +63,18 @@ app = FastAPI(
     version=settings.API_VERSION,
     lifespan=lifespan,
 )
+
+@app.exception_handler(ResponseValidationError)
+async def validation_exception_handler(request: Request, exc: ResponseValidationError):
+    import traceback
+    print(f"ResponseValidationError: {exc.errors()}")
+    traceback.print_exc()
+    # Stringify errors to avoid JSON serialization failure on WKBElement or Enum
+    safe_errors = [{"loc": e.get("loc"), "msg": e.get("msg"), "type": e.get("type")} for e in exc.errors()]
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Response Validation Error", "errors": safe_errors},
+    )
 
 
 # Define allowed origins for CORS.
@@ -128,3 +141,5 @@ async def favicon():
     """
     return Response(content=b"", media_type="image/x-icon")
 
+
+# Trigger reload

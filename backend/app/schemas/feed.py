@@ -1,24 +1,34 @@
 from datetime import datetime
 from typing import Optional, Union, Any
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, field_serializer
 import struct
 from geoalchemy2.elements import WKBElement
 
 from app.schemas.common import PointGeometry, LineStringGeometry, parse_ewkb_point, parse_ewkb_linestring
 from app.schemas.report import FloodReportBase
 
+from app.models.report import ReportStatus
+
 class FeedPostResponse(FloodReportBase):
     id: int
-    status: str
+    status: ReportStatus
     geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
     image_url: Optional[str] = None
     created_at: datetime
+    
+    @field_serializer('created_at')
+    def serialize_datetime(self, dt: datetime, _info):
+        if dt.tzinfo is None:
+            return dt.isoformat() + "Z"
+        return dt.isoformat()
     
     # New feed-specific fields
     upvotes: int = 0
     downvotes: int = 0
     distance_meters: Optional[float] = None
     user_interaction: Optional[str] = None  # "upvote", "downvote", or None
+    author_name: Optional[str] = None
+    comment_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 

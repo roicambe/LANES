@@ -8,6 +8,7 @@ from app.models.report import FloodReport, FloodAvoidanceZone, FloodReportLocati
 from app.models.audit import AuditLog
 from app.models.setting import SystemSetting
 from app.models.interaction import PostInteraction
+from app.models.comment import Comment
 
 # Route domain currently has no models (mostly algorithmic), adding comment per user request
 # from app.models.route import ...

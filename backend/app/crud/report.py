@@ -40,7 +40,11 @@ def create_flood_report(db: Session, report: schemas.FloodReportCreate) -> model
         raw_text=report.raw_text,
         source=report.source,
         severity=report.severity,
-        geometry=geometry_clause
+        geometry=geometry_clause,
+        human_readable_location=report.human_readable_location,
+        is_public=report.is_public,
+        user_id=report.user_id,
+        image_url=report.image_url
     )
     db.add(db_report)
     db.commit()

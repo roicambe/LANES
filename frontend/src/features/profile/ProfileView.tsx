@@ -1,29 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Construction } from "lucide-react";
+import { Construction, Loader2 } from "lucide-react";
 import LoginForm from "@/features/auth/LoginForm";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProfileView() {
-  // Check authentication state on mount
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem("lanes_token");
-    if (token) {
-      setIsLoggedIn(true);
-    }
-    setIsLoading(false);
-  }, []);
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
   if (isLoading) {
-    return null; // or a loading spinner
+    return (
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
   }
 
-  if (!isLoggedIn) {
+  if (!isAuthenticated) {
     return (
-    <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-sm border border-gray-100 rounded-2xl">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
@@ -46,10 +40,7 @@ export default function ProfileView() {
           The user profile and settings page is currently being developed. Stay tuned!
         </p>
         <button
-          onClick={() => {
-            localStorage.removeItem("lanes_token");
-            window.location.reload();
-          }}
+          onClick={() => logout()}
           className="px-4 py-2 bg-red-50 text-red-600 rounded-md font-medium hover:bg-red-100 transition-colors cursor-pointer"
         >
           Log Out

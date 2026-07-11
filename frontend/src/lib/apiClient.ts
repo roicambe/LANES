@@ -18,38 +18,41 @@ export const apiClient = {
   },
   
   async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
       headers: {
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(!isFormData && body ? { 'Content-Type': 'application/json' } : {}),
         ...options?.headers,
       },
-      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+      body: body ? (isFormData || typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     });
   },
 
   async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
       headers: {
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(!isFormData && body ? { 'Content-Type': 'application/json' } : {}),
         ...options?.headers,
       },
-      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+      body: body ? (isFormData || typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     });
   },
 
   async patch<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
       headers: {
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(!isFormData && body ? { 'Content-Type': 'application/json' } : {}),
         ...options?.headers,
       },
-      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+      body: body ? (isFormData || typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     });
   },
 

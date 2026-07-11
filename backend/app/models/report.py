@@ -1,10 +1,31 @@
+import enum
 from datetime import datetime
 from typing import List, Optional, Any
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from geoalchemy2 import Geometry
 
 from app.core.database import Base
+
+
+class ReportSource(str, enum.Enum):
+    TWITTER = "twitter"
+    FACEBOOK = "facebook"
+    USER_REPORT = "direct_user"
+    MANUAL_SEEDER = "manual_seeder"
+
+
+class ReportSeverity(str, enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    EXTREME = "extreme"
+
+
+class ReportStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 
 class FloodReport(Base):
@@ -20,12 +41,17 @@ class FloodReport(Base):
         index=True
     )
     raw_text: Mapped[str] = mapped_column(String)
-    source: Mapped[str] = mapped_column(String(50))  # e.g., 'twitter', 'facebook', 'user_report'
+    
+    source: Mapped[ReportSource] = mapped_column(Enum(ReportSource, native_enum=False, length=50, values_callable=lambda x: [e.value for e in x]))
     source_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    extracted_locations: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)  # List of locations
-    severity: Mapped[str] = mapped_column(String(20))  # 'low', 'medium', 'extreme'
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # 'pending', 'approved', 'rejected'
+    
+    severity: Mapped[ReportSeverity] = mapped_column(Enum(ReportSeverity, native_enum=False, length=50, values_callable=lambda x: [e.value for e in x]))
+    status: Mapped[ReportStatus] = mapped_column(Enum(ReportStatus, native_enum=False, length=50, values_callable=lambda x: [e.value for e in x]), default=ReportStatus.PENDING)
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    
+    # [NEW] Fields for Community Feed
+    human_readable_location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # PostGIS Geometry column for generic geometry (Point or LineString) (SRID 4326 = WGS 84 coordinate system)
     geometry: Mapped[Any] = mapped_column(
@@ -45,6 +71,11 @@ class FloodReport(Base):
     )
     locations: Mapped[List["FloodReportLocation"]] = relationship(
         "FloodReportLocation",
+        back_populates="report",
+        cascade="all, delete-orphan"
+    )
+    comments: Mapped[List["Comment"]] = relationship(
+        "Comment",
         back_populates="report",
         cascade="all, delete-orphan"
     )
@@ -88,7 +119,7 @@ class FloodAvoidanceZone(Base):
 
     @property
     def severity(self) -> str:
-        return self.report.severity if self.report else "medium"
+        return self.report.severity.value if self.report and hasattr(self.report.severity, 'value') else "medium"
 
     @property
     def report_geometry(self) -> Any:

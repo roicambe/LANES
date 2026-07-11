@@ -2,14 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { getFeed, votePost, FeedPost } from './feedApi';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
 import { PostItem } from './PostItem';
 import { Loader2, AlertCircle, Filter } from 'lucide-react';
+import { useToast } from '@/shared/ui';
 
 export function FeedPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { error: showError } = useToast();
   const [tab, setTab] = useState<'recent' | 'nearby'>('recent');
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [locError, setLocError] = useState<string | null>(null);
@@ -47,6 +51,9 @@ export function FeedPage() {
     onSuccess: () => {
       // Invalidate feed to refresh votes
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+    },
+    onError: (error) => {
+      showError('Failed to vote', error.message);
     }
   });
 
@@ -115,7 +122,7 @@ export function FeedPage() {
           )}
 
           {/* Feed Content */}
-          <div className="divide-y divide-gray-100 pb-20">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-2 overflow-hidden mb-20">
             {isLoading && (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
@@ -138,7 +145,12 @@ export function FeedPage() {
             )}
 
             {data && data.posts.map((post: FeedPost) => (
-              <PostItem key={post.id} post={post} onVote={handleVote} />
+              <PostItem 
+                key={post.id} 
+                post={post} 
+                onVote={handleVote}
+                onViewMap={(lat, lng) => router.push(`/map?lat=${lat}&lng=${lng}&zoom=16`)} 
+              />
             ))}
           </div>
 

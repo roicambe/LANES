@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, case, text
+from sqlalchemy import func, case, text, Float, String
 from app.models.report import FloodReport
 from app.models.interaction import PostInteraction
 from typing import Optional
@@ -14,11 +14,15 @@ def get_feed_posts(
     limit: int = 20,
     tab: str = "recent"
 ):
-    # Base query for active, approved reports
+    # Base query for active, approved, and public reports
     base_query = db.query(FloodReport).filter(
         FloodReport.status == "approved",
+        FloodReport.is_public == True,
         FloodReport.deleted_at.is_(None)
     )
+
+    from app.models.user import User
+    from app.models.comment import Comment
 
     # Subqueries for upvotes and downvotes
     upvotes_query = db.query(
@@ -30,6 +34,12 @@ def get_feed_posts(
         PostInteraction.report_id,
         func.count(PostInteraction.id).label("downvotes")
     ).filter(PostInteraction.interaction_type == "downvote").group_by(PostInteraction.report_id).subquery()
+
+    # Subquery for comments
+    comments_query = db.query(
+        Comment.report_id,
+        func.count(Comment.id).label("comment_count")
+    ).group_by(Comment.report_id).subquery()
 
     # Subquery for current user interaction if user_id is provided
     user_interaction_sq = None
@@ -44,6 +54,8 @@ def get_feed_posts(
         FloodReport,
         func.coalesce(upvotes_query.c.upvotes, 0).label("upvotes"),
         func.coalesce(downvotes_query.c.downvotes, 0).label("downvotes"),
+        func.coalesce(User.username, text("'External Source'")).label("author_name"),
+        func.coalesce(comments_query.c.comment_count, 0).label("comment_count"),
     ]
 
     # Distance calculation if lat/lng are provided
@@ -70,17 +82,19 @@ def get_feed_posts(
             )
     else:
         # Placeholder for distance if no location is given
-        select_fields.append(func.cast(None, text("FLOAT")).label("distance_meters"))
+        select_fields.append(func.cast(None, Float).label("distance_meters"))
 
     if user_interaction_sq is not None:
         select_fields.append(user_interaction_sq.c.user_interaction)
     else:
-        select_fields.append(func.cast(None, text("VARCHAR")).label("user_interaction"))
+        select_fields.append(func.cast(None, String).label("user_interaction"))
 
     # Join the subqueries
     query = base_query.with_entities(*select_fields)
+    query = query.outerjoin(User, FloodReport.user_id == User.id)
     query = query.outerjoin(upvotes_query, FloodReport.id == upvotes_query.c.report_id)
     query = query.outerjoin(downvotes_query, FloodReport.id == downvotes_query.c.report_id)
+    query = query.outerjoin(comments_query, FloodReport.id == comments_query.c.report_id)
     if user_interaction_sq is not None:
         query = query.outerjoin(user_interaction_sq, FloodReport.id == user_interaction_sq.c.report_id)
 
@@ -103,8 +117,10 @@ def get_feed_posts(
         report = row[0]
         upvotes = row[1]
         downvotes = row[2]
-        dist = row[3]
-        u_int = row[4]
+        author_name = row[3]
+        comment_count = row[4]
+        dist = row[5]
+        u_int = row[6]
         
         # Convert ORM model to dictionary and add extra fields
         post_data = {
@@ -112,7 +128,9 @@ def get_feed_posts(
             "upvotes": upvotes,
             "downvotes": downvotes,
             "distance_meters": dist,
-            "user_interaction": u_int
+            "user_interaction": u_int,
+            "author_name": author_name,
+            "comment_count": comment_count
         }
         posts.append(post_data)
 

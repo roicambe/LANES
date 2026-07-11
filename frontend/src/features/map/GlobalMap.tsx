@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
@@ -10,6 +10,8 @@ import RoutePanel from "@/features/routing/RoutePanel";
 import { ReportFab } from "@/features/hazards/ReportFab";
 import { FloodReportPanel } from "@/features/hazards/FloodReportPanel";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/shared/ui";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), { ssr: false });
 
@@ -49,6 +51,9 @@ function MapLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   
+  const { isAuthenticated } = useAuth();
+  const { error } = useToast();
+  
   const { 
     activePanel, 
     setActivePanel, 
@@ -58,6 +63,16 @@ function MapLayout() {
     hasBottomOffset
   } = useMapContext();
 
+  const searchParams = useSearchParams();
+
+  // Automatically open the report panel if navigated with ?action=report
+  useEffect(() => {
+    if (searchParams.get("action") === "report") {
+      setIsReportPanelOpen(true);
+      setActivePanel("flood");
+    }
+  }, [searchParams, setIsReportPanelOpen, setActivePanel]);
+
   // The panel is expanded when it is both open and actively selected.
   const isPanelExpanded = isReportPanelOpen && activePanel === "flood";
   
@@ -66,6 +81,10 @@ function MapLayout() {
     : "bottom-[calc(64px+env(safe-area-inset-bottom)+88px)]";
 
   const handleSelectFloodReport = () => {
+    if (!isAuthenticated) {
+      error("Login Required", "You must be logged in to report a flood.");
+      return;
+    }
     setIsReportPanelOpen(true);
     setActivePanel("flood");
     setIsMenuOpen(false);
@@ -117,7 +136,13 @@ function MapLayout() {
         <ReportFab
           isMenuOpen={isMenuOpen}
           isPanelExpanded={isPanelExpanded}
-          onClick={() => setIsMenuOpen((prev) => !prev)}
+          onClick={() => {
+            if (!isMenuOpen && !isAuthenticated) {
+              error("Login Required", "You must be logged in to report a flood.");
+              return;
+            }
+            setIsMenuOpen((prev) => !prev);
+          }}
         />
       )}
 

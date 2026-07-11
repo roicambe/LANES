@@ -105,6 +105,8 @@ erDiagram
 | `raw_text` | `TEXT` | NOT NULL | The original, unmodified social media post, emergency feed, or user message. | Kept for review and debugging NLP parsing algorithms. |
 | `source` | `VARCHAR(50)` | NOT NULL | Origin channel of the report (e.g., `'twitter'`, `'facebook'`, `'user_report'`). | Allows analytics regarding data feed trust and channel frequency. |
 | `source_url` | `VARCHAR(500)` | Nullable | Original URL link referencing the web article, social post, or feed bulletin. | **Fact-checking & Future AI:** Enables operators to click and verify raw sources. Will be used by the future AI model as citation references. |
+| `human_readable_location` | `VARCHAR(255)` | Nullable | Normalized street name or landmark resolved via NLP or Geocoding. | Replaces complex joins with `flood_report_locations` for fast Community Feed reads. |
+| `is_public` | `BOOLEAN` | Default: `FALSE` | Toggle indicating if the user consented to share this report on the Community Feed. | Ensures privacy compliance before making reports visible to all users. |
 | `severity` | `VARCHAR(20)` | NOT NULL | Classified risk level of the flood. Allowed: `'low'`, `'medium'`, `'high'`, `'extreme'`. | Directly determines detour routing weights and map visual color-coding. |
 | `status` | `VARCHAR(20)` | Default: `'pending'` | Moderation queue status. Allowed: `'pending'`, `'approved'`, `'rejected'`. | Approved reports automatically generate detours; rejected reports are archived. |
 | `geometry` | `GEOMETRY(Point, 4326)` | Spatial Index (GIST) | Latitude and longitude GPS point of the reported flood location (WGS 84). | **Performance:** Uses a GIST index. Essential for finding nearby flood reports quickly without doing expensive math on every record. |
