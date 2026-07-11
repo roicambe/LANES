@@ -6,7 +6,7 @@ from app.schemas.report import (
     FloodReportsPaginatedResponse, AdminDashboardStats,
     FloodAvoidanceZonesPaginatedResponse, AvoidanceZoneDeactivateBulkRequest
 )
-from app.schemas.route import RouteRequest, RouteResponse, LineStringGeometry
+from app.schemas.route import RouteRequest, RouteResponse, LineStringGeometry, RouteOption, MultiRouteResponse
 from app.schemas.common import PointGeometry, PolygonGeometry
 from app.schemas.auth import Token, TokenPayload
 from app.schemas.audit import AuditLogCreate, AuditLogResponse, AuditLogsPaginatedResponse

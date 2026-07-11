@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, case, text, Float, String
 from app.models.report import FloodReport
 from app.models.interaction import PostInteraction
-from typing import Optional
+from app.models.user import User
+from app.models.profile import Profile
+from typing import Optional, List
+from app.schemas.feed import TopReporter
 
 def get_feed_posts(
     db: Session,
@@ -139,3 +142,52 @@ def get_feed_posts(
         "total": total,
         "has_more": has_more
     }
+
+
+def get_top_reporters(
+    db: Session,
+    limit: int = 5
+) -> List[TopReporter]:
+    """Retrieve the top community reporters ranked by their approved, public report count.
+
+    Args:
+        db: The active SQLAlchemy database session.
+        limit: Maximum number of reporters to return (default 5).
+
+    Returns:
+        A list of TopReporter objects ordered by report count descending.
+    """
+    results = (
+        db.query(
+            User.id.label("user_id"),
+            User.username.label("username"),
+            Profile.avatar_url.label("avatar_url"),
+            func.count(FloodReport.id).label("report_count")
+        )
+        .join(FloodReport, FloodReport.user_id == User.id)
+        .outerjoin(Profile, Profile.user_id == User.id)
+        .filter(
+            FloodReport.status == "approved",
+            FloodReport.is_public == True,
+            FloodReport.deleted_at.is_(None),
+            User.deleted_at.is_(None),
+            User.is_active == True
+        )
+        .group_by(User.id, User.username, Profile.avatar_url)
+        .order_by(func.count(FloodReport.id).desc())
+        .limit(limit)
+        .all()
+    )
+
+    reporters: List[TopReporter] = []
+    for rank, row in enumerate(results, start=1):
+        reporters.append(
+            TopReporter(
+                rank=rank,
+                user_id=row.user_id,
+                username=row.username,
+                avatar_url=row.avatar_url,
+                report_count=row.report_count,
+            )
+        )
+    return reporters

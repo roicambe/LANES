@@ -41,10 +41,10 @@ This document serves as the central technical reference for all currently implem
 *   **Purpose:** Ensures commuter safety by dynamically routing vehicles around active flood hazards.
 *   **What it does:** Calculates optimal navigation paths between origin and destination coordinates, ensuring that any road segments intersecting active flood zones are bypassed.
 *   **How it works:**
-    1. When a user requests a route, the backend fetches all active avoidance polygons from the PostGIS database.
-    2. The routing service queries the local **OSRM (Open Source Routing Machine)** engine using a road network graph topology.
-    3. If any road segment (edge) intersects an active flood avoidance polygon, its travel cost weight is dynamically modified in the routing cost matrix to infinity ($\infty$).
-    4. The routing algorithm treats the segment as an impassable barrier, generating a safe alternative detour route.
+    1. When a user requests a route, the backend fetches all active avoidance polygons (Red, Orange, Yellow) from the PostGIS database.
+    2. The routing service queries the local **Valhalla** engine using a dynamically built HTTP request.
+    3. The avoidance polygons are passed natively into Valhalla's `avoid_polygons` parameter.
+    4. The routing algorithm mathematically treats the polygons as impassable barriers, generating a safe alternative detour route. If trapped, it falls back to allowing Yellow zones, then Orange zones.
     5. The commuter can toggle "Ignore Floods" to compare the safe path against the default flooded route.
 *   **Access & Roles:** Open to all public commuters.
 *   **Related Components:**
@@ -60,7 +60,7 @@ This document serves as the central technical reference for all currently implem
     1. Newly parsed reports are inserted with a status of `pending`.
     2. DRRM operators review the reports, verify the geolocations, and click "Approve".
     3. Upon approval, PostGIS automatically calculates a spatial buffer (using `ST_Buffer` with a 50m to 200m radius depending on whether the asset is a Point or LineString) around the coordinate.
-    4. This buffer is saved to the `flood_avoidance_zones` table as an active polygon, which immediately updates OSRM edge weights.
+    4. This buffer is saved to the `flood_avoidance_zones` table as an active polygon, which immediately updates Valhalla route requests.
     5. Discarded reports are marked as `rejected`.
 *   **Access & Roles:** Restricted to `admin` / `drrm` roles.
 *   **Related Components:**
@@ -202,10 +202,10 @@ This document serves as the central technical reference for all currently implem
 *   **Expected functionality:**
     *   Commuters select their vehicle profile (e.g., Motorcycle, Sedan, SUV, Truck).
     *   The backend retrieves specific clearance thresholds (e.g., 20cm for Sedan, 45cm for SUV).
-    *   When checking flood polygons, OSRM will only apply the infinity ($\infty$) edge cost if the flood depth exceeds the vehicle's clearing height.
+    *   When checking flood polygons, Valhalla will intelligently decide which polygons to avoid based on the vehicle clearance profile.
 *   **How it will integrate:**
     *   Update [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx) with a vehicle selector dropdown.
-    *   Update OSRM backend configurations to load multiple routing profiles or pass dynamic weight multipliers in OSRM matrix calculations.
+    *   Update Valhalla backend configurations to leverage multi-modal profiles and dynamic constraints.
 *   **Dependencies:** Database must store exact numeric flood depths (in cm) instead of only textual categories.
 
 ---
@@ -257,7 +257,7 @@ This document serves as the central technical reference for all currently implem
     *   The PWA speaks directions aloud (e.g., *"In 200 meters, turn left to bypass the flooded street ahead"*).
 *   **How it will integrate:**
     *   Hook into the HTML5 **Web Speech API (`SpeechSynthesis`)** inside [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx).
-    *   Trigger directions audio prompts based on geolocation tracking updates relative to the OSRM path coordinate array.
+    *   Trigger directions audio prompts based on geolocation tracking updates relative to the Valhalla path coordinate array.
 *   **Dependencies:** Secure HTTPS deployment (for geolocation sensor permissions).
 
 ---

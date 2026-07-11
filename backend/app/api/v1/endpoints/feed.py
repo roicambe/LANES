@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import get_current_user_optional, get_current_user
 from app.models.user import User
-from app.schemas.feed import FeedPaginatedResponse
+from app.schemas.feed import FeedPaginatedResponse, TopReportersResponse
 from app.schemas.interaction import PostInteractionCreate, PostInteraction
 from app.crud import feed as crud_feed
 from app.crud import interaction as crud_interaction
@@ -47,6 +47,16 @@ def get_feed(
     )
     
     return feed_data
+
+
+@router.get("/leaderboard", response_model=TopReportersResponse)
+def get_leaderboard(
+    limit: int = Query(5, ge=1, le=20, description="Number of top reporters to return"),
+    db: Session = Depends(get_db),
+):
+    """Retrieve the top community reporters leaderboard ranked by approved public report count."""
+    reporters = crud_feed.get_top_reporters(db=db, limit=limit)
+    return TopReportersResponse(reporters=reporters)
 
 
 @router.post("/{report_id}/vote", response_model=Optional[PostInteraction])

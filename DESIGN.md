@@ -24,7 +24,7 @@ graph LR
         FastAPI[FastAPI ASGI Server]
         SQLAlchemy[SQLAlchemy ORM]
         spaCy[spaCy NLP Parser]
-        OSRM[OSRM Engine]
+        Valhalla[Valhalla Engine]
     end
 
     subgraph Persistence Tier [Data Layer]
@@ -35,7 +35,7 @@ graph LR
     NextJS -- HTTP REST API / JSON --> FastAPI
     MapLibre -- Vectors / GeoJSON --> NextJS
     FastAPI -- SQL + Spatial Queries --> PostGIS
-    FastAPI -- Route Optimization Queries --> OSRM
+    FastAPI -- Route Optimization Queries --> Valhalla
 ```
 
 ### A. Frontend Presentation Shell (`frontend`)
@@ -49,12 +49,12 @@ graph LR
 * **Framework:** Python, FastAPI (ASGI server pipeline).
 * **Geospatial ORM:** SQLAlchemy paired with GeoAlchemy2 mapping.
 * **NLP Processing Stack:** spaCy using a custom-trained Bilingual Named Entity Recognition (NER) pipeline.
-* **Routing Compute Engine:** Open Source Routing Machine (OSRM) matrix calculations.
+* **Routing Compute Engine:** Valhalla native dynamic polygon avoidance.
 * **Role:** Handles text ingestion, processes Taglish depth phrases into standardized severity scales, queries coordinate geocodes, and serves route calculations.
 
 ### C. Project Directory Structure
 * `/frontend`: Next.js application (using **MapLibre GL JS**, **Tailwind CSS**, and **Lucide React**) representing the client maps and admin dashboards.
-* `/backend`: FastAPI application (using Python, **spaCy**, **SQLAlchemy**, and **OSRM**) serving the API routes, spatial database, and NLP pipeline.
+* `/backend`: FastAPI application (using Python, **spaCy**, **SQLAlchemy**, and **Valhalla**) serving the API routes, spatial database, and NLP pipeline.
 
 ---
 
@@ -119,7 +119,7 @@ The system operates strictly as a software-based solution, avoiding expensive Io
  (Phase 2: PostGIS Buffer)  ──► Geocode & calculate 50m bounding polygon
              │
              ▼
- (Phase 3: Route Rerouting) ──► Mark flood edge weights as infinity (∞) in OSRM
+ (Phase 3: Route Rerouting) ──► Pass active polygons to Valhalla for dynamic avoidance
 ```
 
 ```mermaid
@@ -147,8 +147,8 @@ flowchart TD
     Buffer --> Polygon["50m Avoidance Bounding Polygon (SRID 4326)"]
     
     %% Routing Engine
-    Polygon --> Router["OSRM Routing Engine"]
-    Router -- "Intercepts Commuter Route Request" --> Weight["Set affected road edge weights to infinity (∞)"]
+    Polygon --> Router["Valhalla Routing Engine"]
+    Router -- "Intercepts Commuter Route Request" --> Weight["Dynamically bypasses avoidance polygons"]
     Weight --> RouteCalculated["Compute Safe Detour Path"]
 ```
 
@@ -169,8 +169,8 @@ Flood alerts are classified into four standard safety thresholds based on vehicl
 | :--- | :--- | :--- | :--- | :--- |
 | ⬜ **White** | **Low / Passable** | `10cm` to `20cm` (Ankle-deep) | *basang-basa, bukton* | Passable. No detour required. |
 | 🟨 **Yellow** | **Moderate** | `21cm` to `50cm` (Knee-deep) | *tuhod, hanggang-tuhod* | Warning issued. Passable for heavy vehicles. |
-| 🟧 **Orange** | **High** | `51cm` to `140cm` (Waist/Chest) | *dibdib, kiwang, bewang* | **Hazardous. Path is blocked in OSRM.** |
-| 🟥 **Red** | **Extreme** | Above `140cm` (Neck-deep / Submerged) | *leeg, lubog, lagpas-tao* | **Impassable. Path is blocked in OSRM.** |
+| 🟧 **Orange** | **High** | `51cm` to `140cm` (Waist/Chest) | *dibdib, kiwang, bewang* | **Hazardous. Path is avoided in Valhalla.** |
+| 🟥 **Red** | **Extreme** | Above `140cm` (Neck-deep / Submerged) | *leeg, lubog, lagpas-tao* | **Impassable. Path is avoided in Valhalla.** |
 
 ---
 

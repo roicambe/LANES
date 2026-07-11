@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     # Defaults to PostgreSQL with psycopg (v3) driver
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/lanes"
 
-    # OSRM Server URL (defaults to local docker container)
-    OSRM_URL: str = "http://localhost:5000"
+    # Valhalla Server URL (defaults to local docker container)
+    VALHALLA_URL: str = "http://localhost:8002"
 
     # Cloudinary
     CLOUDINARY_CLOUD_NAME: str = ""
