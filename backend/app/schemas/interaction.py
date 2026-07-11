@@ -3,9 +3,11 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
+from app.models.interaction import InteractionType
+
 class PostInteractionBase(BaseModel):
     report_id: int
-    interaction_type: str
+    interaction_type: InteractionType
 
 
 class PostInteractionCreate(PostInteractionBase):

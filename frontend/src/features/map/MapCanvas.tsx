@@ -10,6 +10,7 @@ import { LoadingOverlay } from "@/shared/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { apiClient } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 
 const ROUTE_SOURCE_ID = "route-line";
 const ROUTE_LAYER_ID = "route-line-layer";
@@ -86,10 +87,33 @@ export default function MapCanvas() {
 
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     isTouchDeviceRef.current = isTouchDevice;
   }, [isTouchDevice]);
+
+  // Listen for lat/lng in URL to fly to location
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const latStr = searchParams.get("lat");
+    const lngStr = searchParams.get("lng");
+    const zoomStr = searchParams.get("zoom");
+    
+    if (latStr && lngStr) {
+      const lat = parseFloat(latStr);
+      const lng = parseFloat(lngStr);
+      const zoom = zoomStr ? parseFloat(zoomStr) : 16;
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        mapRef.current.flyTo({
+          center: [lng, lat],
+          zoom,
+          duration: 1000
+        });
+      }
+    }
+  }, [searchParams, isLoaded]);
 
   const { start, end, floodStart, floodEnd, routeGeometry, routeInfo, setPointFromMap, activePoint, isPickingOnMap, floodPreviewGeometry, activePanel, hasBottomOffset } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);

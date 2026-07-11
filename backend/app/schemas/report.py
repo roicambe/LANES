@@ -14,21 +14,25 @@ from app.schemas.common import (
 )
 
 
+from app.models.report import ReportSource, ReportSeverity, ReportStatus
+
 class FloodReportBase(BaseModel):
     raw_text: str
-    source: str
-    severity: Literal["low", "medium", "extreme"] = "medium"
+    source: ReportSource
+    severity: ReportSeverity = ReportSeverity.MEDIUM
+    human_readable_location: Optional[str] = None
+    is_public: bool = False
 
 
 class FloodReportCreate(FloodReportBase):
     geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
     image_url: Optional[str] = None
+    user_id: Optional[int] = None
 
 
 class FloodReportResponse(FloodReportBase):
     id: int
-    extracted_locations: Optional[Any] = None
-    status: str
+    status: ReportStatus
     geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
     image_url: Optional[str] = None
     created_at: datetime

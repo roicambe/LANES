@@ -1,6 +1,6 @@
 # LANES: Localised Alternative Navigation for Environs under Submersion
 
-LANES is a real-time, flood-adaptive alternative navigation platform designed for commuters in Pasig City. By mining unstructured, bilingual Taglish text inputs (social media feeds, emergency bulletins, news articles), the system programmatically extracts location tokens, classifies flood depths, and dynamically recalculates driving routes that bypass active inundation zones.
+LANES is a real-time, flood-adaptive alternative navigation platform designed for commuters in Pasig City. By leveraging crowdsourced community flood reports, real-time admin verification, and interactive map displays, the system dynamically recalculates driving routes to bypass active inundation zones.
 
 ---
 
@@ -28,7 +28,7 @@ Developed in partial fulfillment of the requirements for the degree of **Bachelo
 
 ### Prerequisites
 * **Node.js** (v18 or higher)
-* **Python** (v3.11 or v3.12). *Note: Avoid Python 3.13+ for now due to C-compiler build limitations with spaCy.*
+* **Python** (v3.11 or v3.12)
 * **Docker Desktop** (For running the local PostGIS spatial database).
 
 ---
@@ -69,10 +69,9 @@ docker-compose up -d
    python3.12 -m venv venv
    source venv/bin/activate
    ```
-3. Install dependencies and download the NLP package:
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
-   python -m spacy download en_core_web_sm
    ```
 4. Ensure you have your `.env` file set up (copy from `.env.example`).
 5. Start the development server:

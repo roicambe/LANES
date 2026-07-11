@@ -14,9 +14,8 @@ const getWsUrl = (): string => {
     return `${protocol}//${url.host}/api/v1/ws`;
   }
   
-  // Otherwise, in local development, connect directly to the FastAPI backend on port 8000
-  // This avoids the Next.js API proxy which drops WebSocket upgrade headers
-  return `${protocol}//${window.location.hostname}:8000/api/v1/ws`;
+  // Connect to the Next.js frontend host, which will proxy to the backend via rewrites
+  return `${protocol}//${window.location.host}/api/v1/ws`;
 };
 
 export function useWebSocket() {

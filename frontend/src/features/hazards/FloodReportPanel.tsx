@@ -12,7 +12,9 @@ import {
   HelpCircle,
   ImagePlus,
   X,
+  User,
 } from "lucide-react";
+import Link from "next/link";
 import { Panel } from "@/shared/ui/Panel";
 import { Button } from "@/shared/ui/Button";
 import { useToast } from "@/shared/ui";
@@ -20,6 +22,7 @@ import { LocationAutocomplete } from "@/shared/ui/LocationAutocomplete";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/apiClient";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useAuth } from "@/hooks/useAuth";
 import { getCurrentLocation } from "@/features/geocoding/geocodingApi";
 import type { LocationSuggestion } from "@/features/geocoding/types";
 import { useMapContext, type ActivePoint } from "@/features/map/MapContext";
@@ -200,6 +203,7 @@ function PointSelector({
 
 export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
+  const { isAuthenticated } = useAuth();
 
   // Map context
   const {
@@ -223,6 +227,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   const [severity, setSeverity] = useState<Severity>("medium");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isPublic, setIsPublic] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const isCollapsed = activePanel !== "flood";
 
@@ -312,15 +317,13 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       formData.append("raw_text", description.trim());
       formData.append("source", "direct_user");
       formData.append("severity", severity);
+      formData.append("is_public", isPublic.toString());
       formData.append("geometry", JSON.stringify(roadGeometry));
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
-      await apiClient.post<{ id: number }>("/reports/", formData, {
-        // We override the default content-type so the browser sets the correct multipart boundary
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      await apiClient.post<{ id: number }>("/reports/", formData);
 
       // Reset form
       setFloodStart(null);
@@ -330,6 +333,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       setSeverity("medium");
       setDescription("");
       setImageFile(null);
+      setIsPublic(false);
       setStep(1);
       success("Report Submitted", "Flood report submitted successfully. It is now pending admin review.");
     } catch (err: unknown) {
@@ -373,7 +377,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   // ── Shared form body ───────────────────────────────────────────────────────
   const showClear = step === 1 
     ? (floodStart || floodEnd) 
-    : (description.trim() !== "" || imageFile !== null || severity !== "medium");
+    : (description.trim() !== "" || imageFile !== null || severity !== "medium" || isPublic);
 
   const clearButton =
     showClear ? (
@@ -391,6 +395,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             setSeverity("medium");
             setDescription("");
             setImageFile(null);
+            setIsPublic(false);
           }
         }}
         className="text-[11px] font-medium text-gray-500 hover:text-red-600 transition-colors px-2 py-1 mr-1"
@@ -400,7 +405,20 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       </button>
     ) : undefined;
 
-  const formBody = (
+  const formBody = !isAuthenticated ? (
+    <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-orange-500 mb-2 mt-8">
+        <User className="w-8 h-8" />
+      </div>
+      <h3 className="text-lg font-bold text-gray-900">Login Required</h3>
+      <p className="text-sm text-gray-500">
+        You need to be logged in to report a flood and help the community.
+      </p>
+      <Link href="/profile" className="w-full mt-4">
+        <Button className="w-full">Go to Login</Button>
+      </Link>
+    </div>
+  ) : (
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
       {step === 1 && (
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -538,6 +556,32 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
               rows={3}
               className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400 resize-none"
             />
+          </div>
+
+          {/* Community Feed Sharing */}
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <label className="flex items-start gap-2 cursor-pointer group">
+              <div className="flex h-5 items-center">
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-600 focus:ring-2"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-800 group-hover:text-gray-900">
+                  Share in Community Feed
+                </span>
+              </div>
+            </label>
+            {isPublic && (
+              <div className="bg-blue-50/70 border border-blue-100/50 rounded-lg p-3 text-[11px] leading-relaxed text-blue-900 space-y-1">
+                <p>
+                  This report may be shared publicly in the Community Feed after it has been reviewed and approved by an administrator. Please ensure that the information provided is accurate and does not contain sensitive or personal information.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto flex gap-2">

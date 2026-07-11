@@ -8,6 +8,7 @@ from app.schemas.feed import FeedPaginatedResponse
 from app.schemas.interaction import PostInteractionCreate, PostInteraction
 from app.crud import feed as crud_feed
 from app.crud import interaction as crud_interaction
+from app.models.interaction import InteractionType
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ def get_feed(
     return feed_data
 
 
-@router.post("/{report_id}/vote", response_model=PostInteraction)
+@router.post("/{report_id}/vote", response_model=Optional[PostInteraction])
 def vote_post(
     report_id: int,
     interaction_in: PostInteractionCreate,
@@ -63,7 +64,7 @@ def vote_post(
     if interaction_in.report_id != report_id:
         raise HTTPException(status_code=400, detail="Report ID mismatch")
         
-    if interaction_in.interaction_type not in ["upvote", "downvote"]:
+    if interaction_in.interaction_type not in [InteractionType.UPVOTE, InteractionType.DOWNVOTE]:
         raise HTTPException(status_code=400, detail="Invalid interaction type")
 
     result = crud_interaction.toggle_interaction(
@@ -77,13 +78,6 @@ def vote_post(
     # we can return an empty object or a dummy response if None.
     # To keep response_model clean, if it was deleted, we can return the input with a null ID.
     if result is None:
-        # Returning a pseudo-object that fits the schema for deleted
-        return {
-            "id": 0,
-            "report_id": report_id,
-            "interaction_type": "none",
-            "user_id": current_user.id,
-            "created_at": "1970-01-01T00:00:00Z"
-        }
+        return None
     
     return result

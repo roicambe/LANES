@@ -1,22 +1,28 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, DateTime, ForeignKey
+import enum
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
 
+class InteractionType(str, enum.Enum):
+    UPVOTE = "upvote"
+    DOWNVOTE = "downvote"
+
+
 class PostInteraction(Base):
     """
-    Records user interactions (upvotes/downvotes) on community feed reports.
+    PostInteraction model for tracking upvotes and downvotes on community feed reports.
     """
     __tablename__ = "post_interactions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     report_id: Mapped[int] = mapped_column(ForeignKey("flood_reports.id", ondelete="CASCADE"), index=True)
-    interaction_type: Mapped[str] = mapped_column(String(20))  # 'upvote', 'downvote'
+    interaction_type: Mapped[InteractionType] = mapped_column(Enum(InteractionType, native_enum=True, name="interactiontype_enum"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    user = relationship("User")
-    report = relationship("FloodReport")
+    user: Mapped["User"] = relationship("User")
+    report: Mapped["FloodReport"] = relationship("FloodReport", backref="interactions")

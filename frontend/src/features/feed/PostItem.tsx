@@ -1,14 +1,18 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { MapPin, ArrowUpCircle, ArrowDownCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { MapPin, ArrowUpCircle, ArrowDownCircle, AlertTriangle, ShieldCheck, MessageSquare, Share, Map as MapIcon } from 'lucide-react';
 import { FeedPost } from './feedApi';
+import { useToast } from '@/shared/ui';
 
 interface PostItemProps {
   post: FeedPost;
   onVote: (reportId: number, type: 'upvote' | 'downvote') => void;
+  onViewMap?: (lat: number, lng: number) => void;
 }
 
-export function PostItem({ post, onVote }: PostItemProps) {
+export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
+  const { info, success, error: showError } = useToast();
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'extreme': return 'bg-red-100 text-red-800 border-red-200';
@@ -31,27 +35,47 @@ export function PostItem({ post, onVote }: PostItemProps) {
     return `${(meters / 1000).toFixed(1)}km away`;
   };
 
+  const handleShare = () => {
+    try {
+      if (navigator.share) {
+        navigator.share({
+          title: 'LANES Flood Report',
+          text: post.raw_text,
+          url: `${window.location.origin}/feed/${post.id}`
+        });
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(`${window.location.origin}/feed/${post.id}`);
+        success("Link copied to clipboard!");
+      } else {
+        showError("Share API is not supported on this device/network.");
+      }
+    } catch (err) {
+      console.error("Failed to share:", err);
+      showError("Failed to share link");
+    }
+  };
+
   return (
-    <article className="py-6 px-4 sm:px-6 hover:bg-gray-50/50 transition-colors">
+    <article className="py-6 px-4 sm:px-6 border-b border-gray-100 last:border-b-0 bg-white">
       
       {/* Header Area */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-blue-200 flex items-center justify-center border border-blue-300">
             <span className="font-bold text-blue-700 text-sm">
-              {post.source === 'user_report' ? 'U' : post.source[0].toUpperCase()}
+              {post.author_name ? post.author_name[0].toUpperCase() : 'E'}
             </span>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-900 text-sm">
-                {post.source === 'user_report' ? 'Community Reporter' : 'External Source'}
+                {post.author_name || 'External Source'}
               </span>
               {post.status === 'approved' && (
                 <ShieldCheck className="w-4 h-4 text-blue-500" title="Verified by Admin" />
               )}
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+            <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 flex-wrap">
               <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
               {post.distance_meters !== undefined && (
                 <>
@@ -59,6 +83,14 @@ export function PostItem({ post, onVote }: PostItemProps) {
                   <span className="flex items-center gap-1 font-medium text-blue-600">
                     <MapPin className="w-3 h-3" />
                     {formatDistance(post.distance_meters)}
+                  </span>
+                </>
+              )}
+              {post.human_readable_location && (
+                <>
+                  <span>•</span>
+                  <span className="truncate max-w-[200px]" title={post.human_readable_location}>
+                    {post.human_readable_location}
                   </span>
                 </>
               )}
@@ -73,7 +105,7 @@ export function PostItem({ post, onVote }: PostItemProps) {
       </div>
 
       {/* Content Area */}
-      <div className="ml-13 pl-13 mb-4">
+      <div className="mb-4">
         <p className="text-gray-800 text-[15px] leading-relaxed whitespace-pre-wrap">
           {post.raw_text}
         </p>
@@ -91,41 +123,70 @@ export function PostItem({ post, onVote }: PostItemProps) {
       </div>
 
       {/* Interaction Bar */}
-      <div className="ml-13 pl-13 flex items-center gap-6">
-        <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 p-1">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 p-1">
+            <button 
+              onClick={() => onVote(post.id, 'upvote')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-colors text-sm font-medium ${
+                post.user_interaction === 'upvote' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <ArrowUpCircle className={`w-4 h-4 ${post.user_interaction === 'upvote' ? 'fill-blue-200' : ''}`} />
+              <span>{post.upvotes}</span>
+            </button>
+            
+            <div className="w-px h-4 bg-gray-300 mx-1"></div>
+            
+            <button 
+              onClick={() => onVote(post.id, 'downvote')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-colors text-sm font-medium ${
+                post.user_interaction === 'downvote' 
+                  ? 'bg-red-100 text-red-700' 
+                  : 'text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span>{post.downvotes}</span>
+              <ArrowDownCircle className={`w-4 h-4 ${post.user_interaction === 'downvote' ? 'fill-red-200' : ''}`} />
+            </button>
+          </div>
+
           <button 
-            onClick={() => onVote(post.id, 'upvote')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-sm font-medium ${
-              post.user_interaction === 'upvote' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
+            onClick={() => info("Comments section is coming soon!")}
+            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
           >
-            <ArrowUpCircle className={`w-5 h-5 ${post.user_interaction === 'upvote' ? 'fill-blue-200' : ''}`} />
-            <span>{post.upvotes}</span>
+            <MessageSquare className="w-4 h-4" />
+            <span>{post.comment_count}</span>
           </button>
           
-          <div className="w-px h-5 bg-gray-300 mx-1"></div>
-          
-          <button 
-            onClick={() => onVote(post.id, 'downvote')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-sm font-medium ${
-              post.user_interaction === 'downvote' 
-                ? 'bg-red-100 text-red-700' 
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <span>{post.downvotes}</span>
-            <ArrowDownCircle className={`w-5 h-5 ${post.user_interaction === 'downvote' ? 'fill-red-200' : ''}`} />
+          <button onClick={handleShare} className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
+            <Share className="w-4 h-4" />
+            <span>Share</span>
           </button>
         </div>
 
-        <button className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
-          Reply
-        </button>
-        <button className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
-          Share
-        </button>
+        {post.geometry && onViewMap && (
+          <button 
+            onClick={() => {
+              if (post.geometry?.type === 'Point') {
+                const [lng, lat] = post.geometry.coordinates as number[];
+                onViewMap(lat, lng);
+              } else if (post.geometry?.type === 'LineString') {
+                const coords = post.geometry.coordinates as number[][];
+                if (coords.length > 0) {
+                  const [lng, lat] = coords[0];
+                  onViewMap(lat, lng);
+                }
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors border border-blue-100"
+          >
+            <MapIcon className="w-4 h-4" />
+            <span>View on Map</span>
+          </button>
+        )}
       </div>
     </article>
   );

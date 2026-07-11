@@ -9,9 +9,9 @@ export function LeftSidebar() {
   const pathname = usePathname();
 
   const navItems = [
-    { name: 'Live Map', href: '/map', icon: Map },
     { name: 'Community Feed', href: '/feed', icon: Rss },
-    { name: 'Submit Report', href: '/report', icon: MessageSquarePlus },
+    { name: 'Live Map', href: '/map', icon: Map },
+    { name: 'Submit Report', href: '/map?action=report', icon: MessageSquarePlus },
   ];
 
   return (

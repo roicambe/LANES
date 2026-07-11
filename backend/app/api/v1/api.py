@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import users, reports, auth, admin, roles, data, settings, websocket, feed
+from app.api.v1.endpoints import users, reports, auth, admin, roles, data, settings, websocket, feed, comments
 
 api_router = APIRouter()
 
@@ -12,4 +12,5 @@ api_router.include_router(roles.router, prefix="/admin/roles", tags=["admin role
 api_router.include_router(data.router, prefix="/admin/data", tags=["admin data"])
 api_router.include_router(settings.router, prefix="/admin/settings", tags=["admin settings"])
 api_router.include_router(feed.router, prefix="/feed", tags=["feed"])
+api_router.include_router(comments.router, prefix="/reports", tags=["comments"])
 api_router.include_router(websocket.router, tags=["websocket"])

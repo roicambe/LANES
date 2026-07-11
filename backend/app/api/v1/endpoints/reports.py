@@ -10,14 +10,22 @@ from app.services.cloudinary_service import upload_image
 router = APIRouter()
 
 
+from app.services.report_service import process_new_report
+
+from app.api.deps import get_current_user
+from app import models
+
 @router.post("", response_model=schemas.FloodReportResponse, status_code=status.HTTP_201_CREATED)
-def create_report(
+async def create_report(
     raw_text: str = Form(...),
     source: str = Form(...),
     severity: str = Form("medium"),
+    human_readable_location: str = Form(None),
+    is_public: bool = Form(False),
     geometry: str = Form(None),
     image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """
     Submit a new flood report (raw Taglish text and optional coordinates/image).
@@ -33,14 +41,17 @@ def create_report(
         except Exception:
             pass
 
-    report_create = schemas.FloodReportCreate(
+    return await process_new_report(
+        db=db,
         raw_text=raw_text,
         source=source,
         severity=severity,
+        human_readable_location=human_readable_location,
+        is_public=is_public,
         geometry=geom_obj,
-        image_url=image_url
+        image_url=image_url,
+        user_id=current_user.id
     )
-    return crud.create_flood_report(db=db, report=report_create)
 
 
 @router.get("", response_model=List[schemas.FloodReportResponse])

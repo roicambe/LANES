@@ -2,45 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { Input } from "@/shared/ui/Input";
 import { Button } from "@/shared/ui/Button";
-import { apiClient } from "@/lib/apiClient";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login, isLoggingIn } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const loginMutation = useMutation({
-    mutationFn: async () => {
-      const formData = new URLSearchParams();
-      formData.append("username", username);
-      formData.append("password", password);
-
-      return apiClient.post<{ access_token: string }>("/auth/login/access-token", formData.toString(), {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        // We override body in post but because we pass a string, we need to bypass the JSON.stringify in apiClient.
-        // Actually, our apiClient does JSON.stringify by default for POST. Let's use request directly:
-      });
-    },
-    onError: (error: any) => {
-      setErrorMsg(error.message || "Failed to log in. Please check your credentials.");
-    },
-    onSuccess: (data) => {
-      localStorage.setItem("lanes_token", data.access_token);
-      router.push("/admin/dashboard");
-    },
-  });
-
-  // Custom request for form data to bypass JSON stringify
-  const handleDirectLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     
@@ -49,21 +25,10 @@ export default function LoginForm() {
     formData.append("password", password);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-      const response = await fetch(`${baseUrl}/auth/login/access-token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData.toString(),
-      });
-
-      if (!response.ok) {
-        throw new Error("Incorrect username or password");
-      }
-
-      const data = await response.json();
-      localStorage.setItem("lanes_token", data.access_token);
+      const data = await login(formData);
       
       // Determine role by fetching profile
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       const profileResponse = await fetch(`${baseUrl}/auth/test-token`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${data.access_token}` }
@@ -77,15 +42,14 @@ export default function LoginForm() {
         }
       }
       
-      // If not an admin, just refresh the profile view
-      window.location.reload();
+      // If Commuter, auth state is updated globally. No reload needed.
     } catch (err: any) {
-      setErrorMsg(err.message || "Login failed");
+      setErrorMsg(err.message || "Login failed. Please check your credentials.");
     }
   };
 
   return (
-    <form onSubmit={handleDirectLogin} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-4">
       {errorMsg && (
         <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg font-medium">
           {errorMsg}
@@ -122,8 +86,15 @@ export default function LoginForm() {
         <a href="#" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline transition-colors">Forgot password?</a>
       </div>
       <div className="pt-2">
-        <Button type="submit" className="w-full">
-          Sign In
+        <Button type="submit" className="w-full" disabled={isLoggingIn}>
+          {isLoggingIn ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign In"
+          )}
         </Button>
       </div>
       <div className="text-center pt-2">
