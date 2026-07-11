@@ -293,7 +293,7 @@ export function RegisterForm() {
 
   return (
     <>
-      <div className="w-full max-w-xl mx-auto bg-white/20 backdrop-blur-2xl lg:bg-white rounded-2xl shadow-2xl lg:shadow-xl lg:shadow-slate-200/50 border border-white/40 lg:border-slate-100">
+      <div className="w-full max-w-xl mx-auto bg-white/20 backdrop-blur-2xl lg:bg-white rounded-2xl shadow-2xl lg:shadow-[0_8px_40px_rgba(59,130,246,0.15)] lg:border lg:border-slate-200/80 border border-white/40 border-t-4 border-t-blue-600 lg:ring-1 lg:ring-blue-100/50">
         {/* Stepper Header */}
         <div className="bg-transparent lg:bg-slate-50 px-8 py-6 border-b border-slate-200/50 lg:border-slate-100 rounded-t-2xl select-none">
           <h2 className="text-xl font-bold text-white lg:text-slate-900 mb-6 text-center">Create your Citizen Account</h2>
