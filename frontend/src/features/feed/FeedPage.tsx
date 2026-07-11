@@ -7,7 +7,7 @@ import { getFeed, votePost, FeedPost } from './feedApi';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
 import { PostItem } from './PostItem';
-import { Loader2, AlertCircle, Filter } from 'lucide-react';
+import { Loader2, Filter } from 'lucide-react';
 import { useToast } from '@/shared/ui';
 
 export function FeedPage() {
@@ -16,7 +16,6 @@ export function FeedPage() {
   const { error: showError } = useToast();
   const [tab, setTab] = useState<'recent' | 'nearby'>('recent');
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [locError, setLocError] = useState<string | null>(null);
 
   // Request location if nearby tab is clicked and we don't have it
   useEffect(() => {
@@ -29,16 +28,16 @@ export function FeedPage() {
           },
           (err) => {
             console.error("Location error:", err);
-            setLocError("Location access denied or unavailable. Please enable location to use Nearby feed.");
+            showError("Location Unavailable", "Please enable location permissions to use the Nearby feed.");
             setTab('recent');
           }
         );
       } else {
-        setLocError("Geolocation is not supported by your browser.");
+        showError("Not Supported", "Geolocation is not supported by your browser.");
         setTab('recent');
       }
     }
-  }, [tab, userLocation]);
+  }, [tab, userLocation, showError]);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['feed', tab, userLocation?.lat, userLocation?.lng],
@@ -113,13 +112,6 @@ export function FeedPage() {
             </div>
           </div>
 
-          {/* Location Error Banner */}
-          {locError && (
-            <div className="p-3 m-4 bg-orange-50 border border-orange-200 rounded-xl flex items-center gap-2 text-sm text-orange-800">
-              <AlertCircle className="w-5 h-5 shrink-0" />
-              <p>{locError}</p>
-            </div>
-          )}
 
           {/* Feed Content */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-2 overflow-hidden mb-20">

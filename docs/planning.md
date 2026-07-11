@@ -17,7 +17,14 @@
 | 7 | Real-Time Operations | Completed | WebSocket broadcasting, Live active zones, Real-time admin dashboard invalidations |
 | 8 | Community Feed & Moderation | Completed | Feed layout, Upvotes/Downvotes, Post archiving, Soft deletes, Map coordinate rendering |
 
-## Active Sprint
+## Active Sprint (Next Feature)
+
+- [ ] Design UI for Recommended Routes (Rerouting)
+- [ ] Implement multi-route fetching logic with OSRM (alternative routes)
+- [ ] Allow users to pick recommended route to bypass floods
+- [ ] Render alternative routes on the map (highlighting selected)
+
+## Recently Completed
 
 - [x] Fix PostItem UI layout (large bottom padding issue)
 - [x] Fix WebSocket connection errors on local network (proxy bypass issue)
