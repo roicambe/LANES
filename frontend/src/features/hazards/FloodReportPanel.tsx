@@ -255,8 +255,13 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   }, [floodEnd?.label]);
 
   const handlePickOnMap = (target: "flood_start" | "flood_end") => {
-    setActivePoint(target);
-    setIsPickingOnMap(true);
+    if (activePoint === target) {
+      setActivePoint(null);
+      setIsPickingOnMap(false);
+    } else {
+      setActivePoint(target);
+      setIsPickingOnMap(true);
+    }
   };
 
   const confirmMapLocation = useCallback(() => {

@@ -193,34 +193,61 @@ def calculate_flood_safe_route(
     red_orange_floods = red + orange
     red_only = red
     
+    # Pre-calculate the direct route bypassing ONLY RED floods (meaning it will pass through Yellow/Orange)
+    direct_primary = None
+    if orange or yellow:
+        data_direct = request_valhalla_route(start, end, avoid_polygons=red_only)
+        if data_direct:
+            direct_candidates = process_valhalla_response(data_direct, avoided_floods=(len(red_only) > 0), blocked=True)
+            if direct_candidates:
+                direct_primary = direct_candidates[0]
+                direct_primary["label"] = "Direct (Flooded)"
+                direct_primary["index"] = 0
+
+    # Helper function to inject the direct flooded route if it differs from the safe detour
+    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str) -> Dict[str, Any]:
+        safe_candidates = process_valhalla_response(safe_data, avoided_floods=True, blocked=is_blocked)
+        if not safe_candidates:
+            return None
+            
+        final_candidates = []
+        # If we have a direct_primary that is physically different from the safest route
+        if direct_primary and abs(direct_primary["distance"] - safe_candidates[0]["distance"]) > 10:
+            final_candidates.append(direct_primary)
+            for sc in safe_candidates:
+                sc["index"] = len(final_candidates)
+                if sc["index"] == 1:
+                    sc["label"] = detour_label
+                elif sc["index"] == 2:
+                    sc["label"] = "Alternative 1"
+                else:
+                    sc["label"] = f"Alternative {sc['index'] - 1}"
+                final_candidates.append(sc)
+        else:
+            final_candidates = safe_candidates
+            
+        return {"routes": final_candidates, "recommended_index": 0}
+
     # Attempt 1: Avoid EVERYTHING (Red, Orange, Yellow)
     if all_floods:
         data = request_valhalla_route(start, end, avoid_polygons=all_floods)
         if data:
-            candidates = process_valhalla_response(data, avoided_floods=True, blocked=False)
-            return {"routes": candidates, "recommended_index": 0}
+            res = build_response(data, is_blocked=False, detour_label="Safe Detour")
+            if res: return res
             
     # Attempt 2: Trapped! Try avoiding only Red and Orange
     if red_orange_floods:
         data = request_valhalla_route(start, end, avoid_polygons=red_orange_floods)
         if data:
-            candidates = process_valhalla_response(data, avoided_floods=True, blocked=True) 
-            # Blocked=True because it passed through yellow
-            return {"routes": candidates, "recommended_index": 0}
+            # is_blocked=True because it passes through yellow
+            res = build_response(data, is_blocked=True, detour_label="Best Detour")
+            if res: return res
             
-    # Attempt 3: Still Trapped! Try avoiding ONLY Red
-    if red_only:
-        data = request_valhalla_route(start, end, avoid_polygons=red_only)
-        if data:
-            candidates = process_valhalla_response(data, avoided_floods=True, blocked=True)
-            return {"routes": candidates, "recommended_index": 0}
-            
-    # Attempt 4: Totally blocked or no floods exist. Route straight through.
-    data = request_valhalla_route(start, end)
+    # Attempt 3: Still Trapped! Try avoiding ONLY Red (or completely straight if no red)
+    data = request_valhalla_route(start, end, avoid_polygons=red_only)
     if not data:
         raise HTTPException(status_code=404, detail="Destination unreachable.")
         
-    # We only set blocked=True if we actually had flood polygons that we failed to avoid.
     is_blocked = len(all_floods) > 0
-    candidates = process_valhalla_response(data, avoided_floods=False, blocked=is_blocked)
+    candidates = process_valhalla_response(data, avoided_floods=(len(red_only) > 0), blocked=is_blocked)
     return {"routes": candidates, "recommended_index": 0}

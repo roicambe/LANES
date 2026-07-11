@@ -185,8 +185,13 @@ export default function RoutePanel() {
   }, []);
 
   const handlePickOnMapToggle = (target: ActivePoint) => {
-    setActivePoint(target);
-    setIsPickingOnMap(true);
+    if (activePoint === target) {
+      setActivePoint(null);
+      setIsPickingOnMap(false);
+    } else {
+      setActivePoint(target);
+      setIsPickingOnMap(true);
+    }
   };
 
   const confirmMapLocation = () => {
