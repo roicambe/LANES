@@ -150,6 +150,10 @@ export default function RoutePanel() {
     start,
     end,
     activePoint,
+    allRoutes,
+    selectedRouteIndex,
+    selectedRoute,
+    setSelectedRouteIndex,
     routeInfo,
     isRouting,
     routeError,
@@ -210,11 +214,11 @@ export default function RoutePanel() {
   }, [end?.label]);
 
   useEffect(() => {
-    if (isMobile && routeInfo) {
+    if (isMobile && selectedRoute) {
       setActivePanel(null);
-      setActivePoint(null); // Clear active selection to hide top buttons
+      setActivePoint(null);
     }
-  }, [routeInfo, isMobile, setActivePoint, setActivePanel]);
+  }, [selectedRoute, isMobile, setActivePoint, setActivePanel]);
 
   const handleUseCurrentLocation = async (target: ActivePoint) => {
     try {
@@ -373,7 +377,7 @@ export default function RoutePanel() {
 
         {/* Mobile Bottom Sheet for Route Summary */}
         <AnimatePresence>
-          {routeInfo && (
+          {selectedRoute && (
             <motion.div
               drag="y"
               dragConstraints={{ top: 0, bottom: 300 }}
@@ -386,26 +390,26 @@ export default function RoutePanel() {
               animate={{ y: isCollapsed ? "calc(100% - 64px)" : "0%" }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] h-[185px] overflow-hidden overscroll-y-none"
+              className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] overflow-hidden overscroll-y-none"
             >
-              <div 
+              <div
                 className="w-full flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none select-none"
                 onClick={() => setActivePanel(isCollapsed ? "route" : null)}
               >
                 <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
               </div>
-              
-              <div className="px-5 pt-1 pb-4">
-                <div className="flex items-center justify-between mb-4">
+
+              <div className="px-4 pb-5">
+                {/* Selected route summary */}
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex flex-col">
                     <span className="text-2xl font-black text-blue-600">
-                      {formatDuration(routeInfo.duration)}
+                      {formatDuration(selectedRoute.duration)}
                     </span>
                     <span className="text-sm font-medium text-gray-500">
-                      {(routeInfo.distance / 1000).toFixed(1)} km
+                      {(selectedRoute.distance / 1000).toFixed(1)} km · {selectedRoute.label}
                     </span>
                   </div>
-                  
                   <button
                     onClick={() => {
                       resetAll();
@@ -414,31 +418,62 @@ export default function RoutePanel() {
                     }}
                     className="text-xs font-semibold text-gray-400 bg-gray-100 hover:bg-red-50 hover:text-red-600 px-3 py-1.5 rounded-full transition-colors"
                   >
-                    Clear Route
+                    Clear
                   </button>
                 </div>
 
+                {/* Route option strip */}
+                {allRoutes && allRoutes.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    {allRoutes.map((route) => (
+                      <button
+                        key={route.index}
+                        id={`mobile-route-option-${route.index}`}
+                        onClick={() => setSelectedRouteIndex(route.index)}
+                        className={cn(
+                          "flex-shrink-0 flex flex-col items-center rounded-xl border px-3 py-2 text-left transition-all min-w-[100px]",
+                          route.index === selectedRouteIndex
+                            ? "border-blue-400 bg-blue-50 ring-1 ring-blue-200"
+                            : "border-gray-200 bg-white"
+                        )}
+                      >
+                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                          {route.label}
+                        </span>
+                        <span className="text-base font-black text-gray-900">
+                          {formatDuration(route.duration)}
+                        </span>
+                        <span className="text-[11px] text-gray-500">
+                          {(route.distance / 1000).toFixed(1)} km
+                        </span>
+                        {route.is_truncated && (
+                          <span className="text-[10px] text-amber-600 mt-0.5">⚠ Limited</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Flood status badge */}
                 <div
                   className={cn(
-                    "flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl border",
-                    routeInfo.blocked 
-                      ? "bg-red-50 text-red-700 border-red-100" 
-                      : routeInfo.avoided_floods
+                    "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border mt-3",
+                    selectedRoute.blocked
+                      ? "bg-red-50 text-red-700 border-red-100"
+                      : selectedRoute.avoided_floods
                         ? "bg-amber-50 text-amber-700 border-amber-100"
                         : "bg-green-50 text-green-700 border-green-100"
                   )}
                 >
-                  {routeInfo.blocked ? (
-                    <AlertTriangle className="h-5 w-5" />
-                  ) : routeInfo.avoided_floods ? (
+                  {selectedRoute.blocked || selectedRoute.avoided_floods ? (
                     <AlertTriangle className="h-5 w-5" />
                   ) : (
                     <CheckCircle className="h-5 w-5" />
                   )}
                   <span>
-                    {routeInfo.blocked
+                    {selectedRoute.blocked
                       ? "Route contains flooded areas"
-                      : routeInfo.avoided_floods
+                      : selectedRoute.avoided_floods
                         ? "Safe detour applied"
                         : "Clear path — no floods detected"}
                   </span>
@@ -549,43 +584,73 @@ export default function RoutePanel() {
           </div>
         )}
 
-        {routeInfo && !isRouting && (
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="flex border-b border-gray-100">
-              <div className="flex-1 text-center py-2.5 border-r border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide">Distance</p>
-                <p className="text-sm font-bold text-gray-900">
-                  {(routeInfo.distance / 1000).toFixed(1)} km
-                </p>
-              </div>
-              <div className="flex-1 text-center py-2.5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide">Duration</p>
-                <p className="text-sm font-bold text-gray-900">
-                  {formatDuration(routeInfo.duration)}
-                </p>
-              </div>
-            </div>
-            <div
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 text-xs font-medium",
-                routeInfo.blocked
-                  ? "bg-red-50 text-red-700"
-                  : "bg-green-50 text-green-700"
-              )}
-            >
-              {routeInfo.blocked ? (
-                <AlertTriangle className="h-4 w-4" />
-              ) : (
-                <CheckCircle className="h-4 w-4" />
-              )}
-              <span>
-                {routeInfo.blocked
-                  ? "May pass through flooded areas"
-                  : routeInfo.avoided_floods
-                    ? "Safe detour applied"
-                    : "Clear path — all safe"}
-              </span>
-            </div>
+        {/* Selectable route cards */}
+        {allRoutes && allRoutes.length > 0 && !isRouting && (
+          <div className="flex flex-col gap-2">
+            {allRoutes.map((route) => (
+              <button
+                key={route.index}
+                id={`desktop-route-option-${route.index}`}
+                onClick={() => setSelectedRouteIndex(route.index)}
+                className={cn(
+                  "w-full text-left rounded-xl border p-3 transition-all duration-150",
+                  route.index === selectedRouteIndex
+                    ? "border-blue-400 bg-blue-50 ring-1 ring-blue-200 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                )}
+              >
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                    {route.label}
+                  </span>
+                  {route.index === selectedRouteIndex && (
+                    <CheckCircle className="h-4 w-4 text-blue-500 shrink-0" />
+                  )}
+                </div>
+
+                {/* ETA + distance */}
+                <div className="flex items-baseline gap-2 mb-1.5">
+                  <span className="text-lg font-black text-gray-900">
+                    {formatDuration(route.duration)}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {(route.distance / 1000).toFixed(1)} km
+                  </span>
+                </div>
+
+                {/* Flood status badge */}
+                <div
+                  className={cn(
+                    "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full",
+                    route.blocked
+                      ? "bg-red-100 text-red-700"
+                      : route.avoided_floods
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-green-100 text-green-700"
+                  )}
+                >
+                  {route.blocked || route.avoided_floods ? (
+                    <AlertTriangle className="h-3 w-3" />
+                  ) : (
+                    <CheckCircle className="h-3 w-3" />
+                  )}
+                  {route.blocked
+                    ? "Passes flooded area"
+                    : route.avoided_floods
+                      ? "Detours around flood"
+                      : "Clear path"}
+                </div>
+
+                {/* Truncation warning */}
+                {route.is_truncated && (
+                  <p className="flex items-center gap-1 text-[11px] text-amber-600 mt-1.5 font-medium">
+                    <AlertTriangle className="h-3 w-3" />
+                    Limited by one-way roads
+                  </p>
+                )}
+              </button>
+            ))}
           </div>
         )}
       </Panel>

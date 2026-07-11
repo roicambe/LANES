@@ -57,3 +57,19 @@ class FeedPaginatedResponse(BaseModel):
     posts: list[FeedPostResponse]
     total: int
     has_more: bool
+
+
+class TopReporter(BaseModel):
+    """Schema representing a single entry in the Top Reporters leaderboard."""
+    rank: int
+    user_id: int
+    username: str
+    avatar_url: Optional[str] = None
+    report_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TopReportersResponse(BaseModel):
+    """Schema for the paginated top reporters leaderboard response."""
+    reporters: list[TopReporter]

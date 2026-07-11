@@ -34,22 +34,22 @@ Developed in partial fulfillment of the requirements for the degree of **Bachelo
 ---
 
 ### 1. Map Data & Routing Engine Setup (One-time only)
-LANES uses a local Open Source Routing Machine (OSRM) engine to calculate flood-adaptive routes. You need to download the map data and compile the routing graph first.
+LANES uses a local Valhalla engine to calculate dynamic flood-adaptive routes. You need to download the map data and compile the routing graph first.
 1. Open a PowerShell terminal at the root of the project.
-2. Run the automated setup script to download the Philippines OpenStreetMap data and build the MLD routing graph:
+2. Run the automated setup script to download the Philippines OpenStreetMap data and build the Valhalla routing graph:
    ```powershell
-   .\setup_osrm.ps1
+   .\setup_valhalla.ps1
    ```
-   *(Note: This downloads ~200MB of data and may take a few minutes. Wait for it to say "OSRM Graph successfully built!" before proceeding).*
+   *(Note: This downloads ~200MB of data and may take a few minutes. Wait for it to say "Valhalla Graph successfully built!" before proceeding).*
 
 ---
 
 ### 2. Start Background Services (Database & Router)
-Spin up the pre-configured PostgreSQL + PostGIS database and the local OSRM routing engine using Docker:
+Spin up the pre-configured PostgreSQL + PostGIS database and the local Valhalla routing engine using Docker:
 ```bash
 docker-compose up -d
 ```
-*This starts the database on port `5432` and the OSRM engine on port `5000`.*
+*This starts the database on port `5432` and the Valhalla engine on port `8002`.*
 *(Note: Docker Desktop must be open and running).*
 
 ---
@@ -106,4 +106,4 @@ Since Step 1 is a one-time setup, your daily development routine is just:
 
 ## 🛠️ Troubleshooting & Fallback
 * **TypeError: Failed to fetch (Frontend):** Check that the backend server is running at `http://localhost:8000`.
-* **Database Connection Warnings:** If PostgreSQL is offline, the backend logs a startup warning and operates in fallback mode, letting you test routing options using OSRM without crashing the server.
+* **Database Connection Warnings:** If PostgreSQL is offline, the backend logs a startup warning and operates in fallback mode, letting you test routing options using Valhalla without crashing the server.

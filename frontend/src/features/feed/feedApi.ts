@@ -36,6 +36,18 @@ export interface CommentResponse {
   author_name: string;
 }
 
+export interface TopReporter {
+  rank: number;
+  user_id: number;
+  username: string;
+  avatar_url: string | null;
+  report_count: number;
+}
+
+export interface TopReportersResponse {
+  reporters: TopReporter[];
+}
+
 export const getFeed = async (
   lat?: number, 
   lng?: number, 
@@ -70,3 +82,8 @@ export const getComments = async (reportId: number): Promise<CommentResponse[]> 
 export const postComment = async (reportId: number, content: string): Promise<CommentResponse> => {
   return apiClient.post<CommentResponse>(`/reports/${reportId}/comments`, { content });
 };
+
+export const getTopReporters = async (limit: number = 5): Promise<TopReportersResponse> => {
+  return apiClient.get<TopReportersResponse>(`/feed/leaderboard?limit=${limit}`);
+};
+

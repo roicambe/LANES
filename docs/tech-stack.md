@@ -59,8 +59,8 @@ This document serves as the official technical stack reference for the LANES pla
 
 ### **4\. Pathfinding Engine (Routing Graph Optimization)**
 
-* **Engine Core:** **Open Source Routing Machine (OSRM)**  
-  * *Role:* Handling high-performance routing calculations. Currently configured to use the public OSRM demo server (`router.project-osrm.org`) for API routing, with architecture designed to support a local container for dynamic edge-weight matrices.
+* **Engine Core:** **Valhalla**  
+  * *Role:* Handling high-performance routing calculations natively supporting dynamic polygon avoidance. Replaced OSRM to enable true intelligent detouring around real-time flood polygons while strictly respecting OpenStreetMap traffic laws like one-way streets. Run locally in Docker.
 * **Source Graph Data:** **OpenStreetMap Data**  
   * *Role:* Providing the raw baseline network structure (nodes and edges representing physical streets) utilized by the routing engine.
 

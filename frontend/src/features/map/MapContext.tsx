@@ -11,7 +11,12 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import { parseCoords } from "@/features/geocoding/geocodingApi";
-import { getRoute, type RouteGeometry, type RouteResult } from "@/features/routing/routingApi";
+import {
+  getRoute,
+  type RouteGeometry,
+  type RouteOption,
+  type MultiRouteResponse,
+} from "@/features/routing/routingApi";
 
 export type ActivePoint = "start" | "end" | "flood_start" | "flood_end" | null;
 export type ActivePanel = "route" | "flood" | null;
@@ -26,8 +31,22 @@ interface MapContextValue {
   end: MapPoint | null;
   activePoint: ActivePoint;
   activePanel: ActivePanel;
+
+  // --- Multi-route state ---
+  allRoutes: RouteOption[] | null;
+  selectedRouteIndex: number;
+  selectedRoute: RouteOption | null;
+  setSelectedRouteIndex: (index: number) => void;
+
+  // Derived convenience accessors (backward-compat with RoutePanel / MapCanvas)
   routeGeometry: RouteGeometry | null;
-  routeInfo: Omit<RouteResult, "geometry"> | null;
+  routeInfo: {
+    distance: number;
+    duration: number;
+    avoided_floods: boolean;
+    blocked: boolean;
+  } | null;
+
   isRouting: boolean;
   routeError: string | null;
   isPickingOnMap: boolean;
@@ -69,28 +88,46 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [end, setEndState] = useState<MapPoint | null>(null);
   const [activePoint, setActivePoint] = useState<ActivePoint>(null);
   const [activePanel, setActivePanel] = useState<ActivePanel>("route");
-  const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null);
-  const [routeInfo, setRouteInfo] = useState<Omit<RouteResult, "geometry"> | null>(null);
+
+  // Multi-route state
+  const [allRoutes, setAllRoutes] = useState<RouteOption[] | null>(null);
+  const [selectedRouteIndex, setSelectedRouteIndexState] = useState<number>(0);
+
   const [isRouting, setIsRouting] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [isPickingOnMap, setIsPickingOnMap] = useState(false);
   const [isReportPanelOpen, setIsReportPanelOpen] = useState(false);
-  
+
   const hasBottomOffset = isReportPanelOpen && !isPickingOnMap;
 
   const [floodStart, setFloodStartState] = useState<MapPoint | null>(null);
   const [floodEnd, setFloodEndState] = useState<MapPoint | null>(null);
   const [floodPreviewGeometry, setFloodPreviewGeometry] = useState<RouteGeometry | null>(null);
 
+  // Derived: currently active route option
+  const selectedRoute: RouteOption | null = allRoutes?.[selectedRouteIndex] ?? null;
+
+  // Backward-compat derived accessors
+  const routeGeometry: RouteGeometry | null = selectedRoute?.geometry ?? null;
+  const routeInfo = selectedRoute
+    ? {
+        distance: selectedRoute.distance,
+        duration: selectedRoute.duration,
+        avoided_floods: selectedRoute.avoided_floods,
+        blocked: selectedRoute.blocked,
+      }
+    : null;
+
+  const setSelectedRouteIndex = useCallback((index: number) => {
+    setSelectedRouteIndexState(index);
+  }, []);
+
   useEffect(() => {
     if (!locationParam) return;
-
     const coords = parseCoords(locationParam);
     if (!coords) return;
-
     const label = labelParam ?? coordsLabel(coords);
     const pointType = typeParam === "end" ? "end" : "start";
-
     if (pointType === "end") {
       setEndState({ coords, label });
       setActivePoint("start");
@@ -100,16 +137,20 @@ export function MapProvider({ children }: { children: ReactNode }) {
     }
   }, [locationParam, typeParam, labelParam]);
 
+  const clearRoute = useCallback(() => {
+    setAllRoutes(null);
+    setSelectedRouteIndexState(0);
+    setRouteError(null);
+  }, []);
+
   const setStart = useCallback((coords: [number, number] | null, label?: string) => {
     if (coords === null) {
       setStartState(null);
     } else {
       setStartState({ coords, label: label ?? coordsLabel(coords) });
     }
-    setRouteGeometry(null);
-    setRouteInfo(null);
-    setRouteError(null);
-  }, []);
+    clearRoute();
+  }, [clearRoute]);
 
   const setEnd = useCallback((coords: [number, number] | null, label?: string) => {
     if (coords === null) {
@@ -117,10 +158,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
     } else {
       setEndState({ coords, label: label ?? coordsLabel(coords) });
     }
-    setRouteGeometry(null);
-    setRouteInfo(null);
-    setRouteError(null);
-  }, []);
+    clearRoute();
+  }, [clearRoute]);
 
   const setStartLabel = useCallback((label: string) => {
     setStartState((prev) => (prev ? { ...prev, label } : null));
@@ -171,12 +210,6 @@ export function MapProvider({ children }: { children: ReactNode }) {
     [activePoint, setStart, setEnd, setFloodStart, setFloodEnd]
   );
 
-  const clearRoute = useCallback(() => {
-    setRouteGeometry(null);
-    setRouteInfo(null);
-    setRouteError(null);
-  }, []);
-
   const resetAll = useCallback(() => {
     setStartState(null);
     setEndState(null);
@@ -187,6 +220,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
     clearRoute();
   }, [clearRoute]);
 
+  // Fetch routes whenever start + end are both set
   useEffect(() => {
     if (!start || !end) {
       clearRoute();
@@ -195,39 +229,35 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
 
-    const fetchRoute = async () => {
+    const fetchRoutes = async () => {
       setIsRouting(true);
       setRouteError(null);
 
       try {
-        const result = await getRoute(start.coords, end.coords);
+        const result: MultiRouteResponse = await getRoute(start.coords, end.coords);
         if (cancelled) return;
 
-        setRouteGeometry(result.geometry);
-        setRouteInfo({
-          distance: result.distance,
-          duration: result.duration,
-          avoided_floods: result.avoided_floods,
-          blocked: result.blocked,
-        });
+        setAllRoutes(result.routes);
+        setSelectedRouteIndexState(result.recommended_index);
       } catch {
         if (!cancelled) {
           setRouteError("Could not calculate route. Check that the backend is running.");
-          setRouteGeometry(null);
-          setRouteInfo(null);
+          setAllRoutes(null);
+          setSelectedRouteIndexState(0);
         }
       } finally {
         if (!cancelled) setIsRouting(false);
       }
     };
 
-    void fetchRoute();
+    void fetchRoutes();
 
     return () => {
       cancelled = true;
     };
   }, [start, end, clearRoute]);
 
+  // Flood segment preview (uses ignore_floods=true for a straight reference line)
   useEffect(() => {
     if (!floodStart || !floodEnd) {
       setFloodPreviewGeometry(null);
@@ -238,9 +268,10 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
     const fetchFloodPreview = async () => {
       try {
-        const result = await getRoute(floodStart.coords, floodEnd.coords, true); // ignore_floods = true
+        const result = await getRoute(floodStart.coords, floodEnd.coords, true);
         if (cancelled) return;
-        setFloodPreviewGeometry(result.geometry);
+        // ignore_floods returns a single route at index 0
+        setFloodPreviewGeometry(result.routes[0]?.geometry ?? null);
       } catch {
         if (!cancelled) {
           setFloodPreviewGeometry(null);
@@ -261,6 +292,10 @@ export function MapProvider({ children }: { children: ReactNode }) {
       end,
       activePoint,
       activePanel,
+      allRoutes,
+      selectedRouteIndex,
+      selectedRoute,
+      setSelectedRouteIndex,
       routeGeometry,
       routeInfo,
       isRouting,
@@ -292,6 +327,10 @@ export function MapProvider({ children }: { children: ReactNode }) {
       end,
       activePoint,
       activePanel,
+      allRoutes,
+      selectedRouteIndex,
+      selectedRoute,
+      setSelectedRouteIndex,
       routeGeometry,
       routeInfo,
       isRouting,
