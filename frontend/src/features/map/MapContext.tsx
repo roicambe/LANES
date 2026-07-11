@@ -199,12 +199,16 @@ export function MapProvider({ children }: { children: ReactNode }) {
       const label = coordsLabel(coords);
       if (activePoint === "start") {
         setStart(coords, label);
+        setActivePoint("end");
       } else if (activePoint === "end") {
         setEnd(coords, label);
+        setActivePoint(null);
       } else if (activePoint === "flood_start") {
         setFloodStart(coords, label);
+        setActivePoint("flood_end");
       } else if (activePoint === "flood_end") {
         setFloodEnd(coords, label);
+        setActivePoint(null);
       }
     },
     [activePoint, setStart, setEnd, setFloodStart, setFloodEnd]
