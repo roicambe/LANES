@@ -41,9 +41,9 @@ const OSM_FALLBACK_STYLE = {
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: "#f59e0b",      // Yellow/Amber
-  medium: "#f97316",   // Orange
-  high: "#f97316",     // Orange (compatibility)
+  low: "#f8fafc",      // Slate 50 (White)
+  medium: "#eab308",   // Yellow
+  high: "#f97316",     // Orange
   extreme: "#ef4444",  // Red
 };
 

@@ -5,7 +5,7 @@ export interface FloodReport {
   id: number;
   raw_text: string;
   source: string;
-  severity: "Low" | "Medium" | "High";
+  severity: "low" | "medium" | "high" | "extreme";
   status: "Pending" | "Approved" | "Rejected";
   location_confidence: number;
   severity_confidence: number;

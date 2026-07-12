@@ -24,7 +24,6 @@ export function FeedPage() {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-            setLocError(null);
           },
           (err) => {
             console.error("Location error:", err);

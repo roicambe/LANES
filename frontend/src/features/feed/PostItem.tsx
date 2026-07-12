@@ -16,14 +16,16 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'extreme': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
 
   const getSeverityLabel = (severity: string) => {
     switch (severity) {
-      case 'extreme': return 'High Severity';
+      case 'extreme': return 'Extreme Severity';
+      case 'high': return 'High Severity';
       case 'medium': return 'Moderate Severity';
       default: return 'Low Severity';
     }
@@ -72,7 +74,9 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
                 {post.author_name || 'External Source'}
               </span>
               {post.status === 'approved' && (
-                <ShieldCheck className="w-4 h-4 text-blue-500" title="Verified by Admin" />
+                <span title="Verified by Admin">
+                  <ShieldCheck className="w-4 h-4 text-blue-500" />
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 flex-wrap">

@@ -35,7 +35,7 @@ interface FloodReportPanelProps {
   onClose: () => void;
 }
 
-type Severity = "low" | "medium" | "extreme";
+type Severity = "low" | "medium" | "high" | "extreme";
 
 // ── Severity config ────────────────────────────────────────────────────────────
 
@@ -48,19 +48,29 @@ const SEVERITY_OPTIONS: {
 }[] = [
   {
     value: "low",
-    emoji: "🟡",
+    emoji: "⬜",
+    label: "White",
+    description: "Ankle Deep",
+    colors: {
+      pill: "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100",
+      active: "border-slate-400 bg-slate-100 text-slate-800 ring-2 ring-slate-300/50",
+    },
+  },
+  {
+    value: "medium",
+    emoji: "🟨",
     label: "Yellow",
-    description: "Ankle to Knee Deep",
+    description: "Knee Deep",
     colors: {
       pill: "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100",
       active: "border-amber-400 bg-amber-100 text-amber-800 ring-2 ring-amber-300/50",
     },
   },
   {
-    value: "medium",
-    emoji: "🟠",
+    value: "high",
+    emoji: "🟧",
     label: "Orange",
-    description: "Knee to Waist Deep",
+    description: "Waist to Chest",
     colors: {
       pill: "border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100",
       active: "border-orange-400 bg-orange-100 text-orange-800 ring-2 ring-orange-300/50",
@@ -68,9 +78,9 @@ const SEVERITY_OPTIONS: {
   },
   {
     value: "extreme",
-    emoji: "🔴",
+    emoji: "🟥",
     label: "Red",
-    description: "Waist Deep & Above",
+    description: "Neck Deep & Above",
     colors: {
       pill: "border-red-300 text-red-700 bg-red-50 hover:bg-red-100",
       active: "border-red-400 bg-red-100 text-red-800 ring-2 ring-red-300/50",
@@ -224,7 +234,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   // Form state
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
-  const [severity, setSeverity] = useState<Severity>("medium");
+  const [severity, setSeverity] = useState<Severity>("low");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isPublic, setIsPublic] = useState(false);
@@ -315,7 +325,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
     try {
       // 1. Get the actual road geometry between the two points, ignoring any existing active floods
       const routeResult = await getRoute(floodStart.coords, floodEnd.coords, true);
-      const roadGeometry = routeResult.geometry;
+      const roadGeometry = routeResult.routes[0]?.geometry;
 
       // 2. Submit as multipart/form-data
       const formData = new FormData();
@@ -335,7 +345,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       setFloodEnd(null);
       setStartInput("");
       setEndInput("");
-      setSeverity("medium");
+      setSeverity("low");
       setDescription("");
       setImageFile(null);
       setIsPublic(false);
@@ -382,7 +392,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   // ── Shared form body ───────────────────────────────────────────────────────
   const showClear = step === 1 
     ? (floodStart || floodEnd) 
-    : (description.trim() !== "" || imageFile !== null || severity !== "medium" || isPublic);
+    : (description.trim() !== "" || imageFile !== null || severity !== "low" || isPublic);
 
   const clearButton =
     showClear ? (
@@ -397,7 +407,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             setFloodStartLabel("");
             setFloodEndLabel("");
           } else {
-            setSeverity("medium");
+            setSeverity("low");
             setDescription("");
             setImageFile(null);
             setIsPublic(false);
@@ -493,7 +503,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Flood Severity
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {SEVERITY_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}

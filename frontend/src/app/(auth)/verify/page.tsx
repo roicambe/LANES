@@ -24,7 +24,7 @@ function VerifyContent() {
     setResendMessage("");
 
     try {
-      const result = await authClient.verifyOtp(email, otp);
+      const result = await authClient.verifyOtp(email, otp) as any;
       // Store token
       localStorage.setItem("token", result.access_token);
       router.push("/");
