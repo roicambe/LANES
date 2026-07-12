@@ -102,26 +102,26 @@ export default function ReportsPage() {
     switch (sev) {
       case "low":
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
-            Passable (Low)
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+            Passable (White)
           </span>
         );
       case "medium":
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200">
-            Moderate (Medium)
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
+            Warning (Yellow)
           </span>
         );
       case "high":
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-            Hazardous (High)
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200">
+            Hazardous (Orange)
           </span>
         );
       case "extreme":
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
-            Impassable (Extreme)
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200 animate-pulse">
+            Impassable (Red)
           </span>
         );
       default:
@@ -220,10 +220,10 @@ export default function ReportsPage() {
               className="w-48"
               options={[
                 { label: "All Severities", value: "all" },
-                { label: "Passable (Low)", value: "low" },
-                { label: "Moderate (Medium)", value: "medium" },
-                { label: "Hazardous (High)", value: "high" },
-                { label: "Impassable (Extreme)", value: "extreme" }
+                { label: "Passable (White)", value: "low" },
+                { label: "Warning (Yellow)", value: "medium" },
+                { label: "Hazardous (Orange)", value: "high" },
+                { label: "Impassable (Red)", value: "extreme" }
               ]}
             />
           </div>
@@ -284,7 +284,7 @@ export default function ReportsPage() {
                 {report.image_url && (
                   <div 
                     className="shrink-0 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => setSelectedImage(report.image_url)}
+                    onClick={() => setSelectedImage(report.image_url || null)}
                   >
                     <img 
                       src={report.image_url} 

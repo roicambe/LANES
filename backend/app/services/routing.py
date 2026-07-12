@@ -71,11 +71,14 @@ def get_active_flood_polygons(db: Session) -> Tuple[List[List[List[float]]], Lis
         geom = json.loads(z.geojson)
         if geom["type"] == "Polygon" and len(geom["coordinates"]) > 0:
             exterior_ring = geom["coordinates"][0] # Valhalla expects an array of points for each polygon
-            if z.severity == ReportSeverity.EXTREME:
+            if z.severity == ReportSeverity.LOW:
+                # White/Low is passable. No detour required.
+                continue
+            elif z.severity == ReportSeverity.EXTREME:
                 red_polygons.append(exterior_ring)
-            elif z.severity in (ReportSeverity.HIGH, ReportSeverity.MEDIUM):
+            elif z.severity == ReportSeverity.HIGH:
                 orange_polygons.append(exterior_ring)
-            else:
+            elif z.severity == ReportSeverity.MEDIUM:
                 yellow_polygons.append(exterior_ring)
                 
     return red_polygons, orange_polygons, yellow_polygons
