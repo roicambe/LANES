@@ -31,8 +31,8 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 def include_object(object, name, type_, reflected, compare_to):
     if type_ == "table":
-        # Keep only our application tables, ignore system spatial/tiger geocoder tables
-        return name in ["users", "flood_reports", "flood_report_locations", "flood_avoidance_zones", "audit_logs"]
+        # Only manage tables that are defined in our SQLAlchemy models
+        return name in target_metadata.tables.keys()
     return True
 
 

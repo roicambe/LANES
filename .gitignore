@@ -59,8 +59,9 @@ lanes-documentation.md
 data/
 *.mbtiles
 
-# Node modules at root
+# Node and Next.js
 node_modules/
+.next/
 
 # IDE / Tool configs
 .gemini/

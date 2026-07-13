@@ -74,7 +74,12 @@ docker-compose up -d
    pip install -r requirements.txt
    ```
 4. Ensure you have your `.env` file set up (copy from `.env.example`).
-5. Start the development server:
+5. Run the database migrations to build the tables (Ensure Docker is running first):
+   ```bash
+   alembic upgrade head
+   ```
+   *(Note: If you are pulling new code on a computer that already has an existing LANES database, run `alembic stamp head` instead to sync the history).*
+6. Start the development server:
    ```bash
    uvicorn app.main:app --reload
    ```
@@ -105,5 +110,6 @@ Since Step 1 is a one-time setup, your daily development routine is just:
 ---
 
 ## 🛠️ Troubleshooting & Fallback
+* **setup_valhalla.ps1 Connection Timeout:** If the script fails to download the map data (e.g., `Connection timed out`), it is likely being blocked by your firewall or network proxy. Try temporarily disabling your firewall, disconnecting from a VPN, or using a different network. Alternatively, you can download the file manually from [https://download.geofabrik.de/asia/philippines-latest.osm.pbf](https://download.geofabrik.de/asia/philippines-latest.osm.pbf), place the `.pbf` file inside the `data/valhalla/custom_files/` directory, and run the script again.
 * **TypeError: Failed to fetch (Frontend):** Check that the backend server is running at `http://localhost:8000`.
 * **Database Connection Warnings:** If PostgreSQL is offline, the backend logs a startup warning and operates in fallback mode, letting you test routing options using Valhalla without crashing the server.
