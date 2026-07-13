@@ -89,6 +89,26 @@ export default function MapCanvas() {
     refetchInterval: 15000, // 15s background polling fallback
   });
 
+  // Auto-retry MapTiler when using fallback
+  useEffect(() => {
+    if (!usingFallback) return;
+
+    const retryInterval = setInterval(async () => {
+      try {
+        const response = await fetch("https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU", { method: 'GET' });
+        if (response.ok) {
+          // MapTiler is back online!
+          setUsingFallback(false);
+          setMapStyle("https://api.maptiler.com/maps/streets-v2/style.json?key=BHhRqsneD3M4HnOd57WU");
+        }
+      } catch (e) {
+        // Still blocked/offline, do nothing and let interval continue
+      }
+    }, 15000); // Check every 15 seconds
+
+    return () => clearInterval(retryInterval);
+  }, [usingFallback]);
+
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
   const searchParams = useSearchParams();
@@ -130,6 +150,14 @@ export default function MapCanvas() {
   setPointFromMapRef.current = setPointFromMap;
   const setSelectedRouteIndexRef = useRef(setSelectedRouteIndex);
   setSelectedRouteIndexRef.current = setSelectedRouteIndex;
+
+  const isPickingRef = useRef(isPickingOnMap);
+  useEffect(() => {
+    isPickingRef.current = isPickingOnMap;
+    if (mapRef.current) {
+      mapRef.current.getCanvas().style.cursor = isPickingOnMap ? "crosshair" : "";
+    }
+  }, [isPickingOnMap, isLoaded]);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -390,7 +418,7 @@ export default function MapCanvas() {
         if (map.getLayer(layerId)) map.setPaintProperty(layerId, "line-color", "#1f2937"); // Almost black on hover
       });
       map.on("mouseleave", layerId, () => {
-        map.getCanvas().style.cursor = "crosshair";
+        map.getCanvas().style.cursor = isPickingRef.current ? "crosshair" : "";
         if (map.getLayer(layerId)) map.setPaintProperty(layerId, "line-color", "#4b5563");
       });
 
@@ -586,10 +614,6 @@ export default function MapCanvas() {
 
   }, [allRoutes, selectedRouteIndex, activeZonesData, isLoaded]);
 
-  useEffect(() => {
-    if (!isLoaded || !mapRef.current) return;
-    mapRef.current.getCanvas().style.cursor = "crosshair";
-  }, [isLoaded]);
 
   // Render active flood avoidance zone polygons on the commuter map reactively
   useEffect(() => {
@@ -770,7 +794,7 @@ export default function MapCanvas() {
 
       {usingFallback && (
         <div className="absolute top-20 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 z-30 bg-amber-500/95 text-white text-xs md:text-sm px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 backdrop-blur-sm animate-pulse max-w-md pointer-events-auto border border-amber-400/20 font-medium">
-          <span>⚠️ MapTiler tiles blocked or offline. Switched to OpenStreetMap fallback.</span>
+          <span>⚠️ MapTiler tiles blocked or offline. Switched to OpenStreetMap fallback. Retrying automatically...</span>
         </div>
       )}
 

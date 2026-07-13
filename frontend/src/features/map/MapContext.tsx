@@ -203,12 +203,14 @@ export function MapProvider({ children }: { children: ReactNode }) {
       } else if (activePoint === "end") {
         setEnd(coords, label);
         setActivePoint(null);
+        setIsPickingOnMap(false);
       } else if (activePoint === "flood_start") {
         setFloodStart(coords, label);
         setActivePoint("flood_end");
       } else if (activePoint === "flood_end") {
         setFloodEnd(coords, label);
         setActivePoint(null);
+        setIsPickingOnMap(false);
       }
     },
     [activePoint, setStart, setEnd, setFloodStart, setFloodEnd]

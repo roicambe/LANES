@@ -47,6 +47,45 @@
 - Implement Comments Section for reports
 - Add authenticated routing for local networks
 
+## Capstone Roadmap & Suggestions
+
+> **Targeted for 1-2 Month Delivery Window**
+
+### 1. Home Page & Onboarding (Quick Wins)
+- [ ] **Flood Status Legend**: Add a clear breakdown of Low, Moderate, High, and Closed Roads on the home page.
+- [ ] **Daily Stats**: Show the number of *verified* flood reports for the current day.
+- [ ] **Site Visitors**: Display a metric for total active/historical site visitors.
+- [ ] **Dynamic Weather Widget**: Integrate OpenWeatherMap API (reads from user profile location, defaults to Pasig).
+
+### 2. Map & Routing Experience
+- [ ] **Vehicle Profiles**: Refined clearance-based labels:
+  - *4-Wheel High Clearance* (SUVs, Pickups)
+  - *4-Wheel Low Clearance* (Sedans, Hatchbacks)
+  - *2-Wheels* (Motorcycles, Bicycles)
+  - *Pedestrian* (Walking)
+- [ ] **Route Metrics**: Display "Safety %" and "Flood Risk" directly on alternative route banners.
+- [ ] **Flood Timelines**: Show when a flood was reported and approved directly on the map popup.
+
+### 3. Community Feed & Reporting
+- [ ] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
+- [ ] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
+- [ ] **Report Hazard Button**: Jump straight to the Flood Report Panel.
+
+### 4. Admin Panel & Report Moderation
+- [ ] **Active Zones Full View**: Show timeline, reporter details, and actions (View, Edit, Deactivate, Archive).
+- [ ] **Admin Dashboard Charts**: 
+  - Pie Chart: Flood Severity Distribution.
+  - Line Chart: Reports over time (Dynamic: Last 7 Days, Month, Year).
+  - Bar Graph: Top 5 Most Flooded Barangays.
+
+### 5. User Registry & Trust Score
+- [ ] **User Metrics**: Track "Reports Submitted", "Accuracy Rate", and "Trust Score".
+- [ ] **Rule-Based Expiration**: Admin configurable manual presets for flood expiration (e.g. 4 hours, 12 hours).
+
+### 6. Defense Talking Points (Future ML Architecture)
+- **Supervised Learning**: If DRMMO provides historical flood data (rainfall + expiration times), we can immediately train an ML model (using Python/scikit-learn) to predict future expirations.
+- **Online Learning ("Self-Learning")**: Without initial DRMMO data, the system relies on Rule-Based Expiration for immediate accuracy. However, the architecture is designed to continuously collect live data. Once enough floods are naturally recorded over time, the system can seamlessly transition to Online Machine Learning to predict expiration times automatically.
+
 ## Known Issues
 
 - Share and Clipboard API are disabled by browsers on non-HTTPS local IPs (except localhost).

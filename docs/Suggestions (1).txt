@@ -1,0 +1,93 @@
+Urgent, Not important
+Home Section 
+- Flood statuses on the home page, so that the first time user can understand it.
+Low
+Moderate
+High
+Closed Roads
+
+
+Important, Not Urgent
+- Sa may start your journey siguro dagdag tayo kung anong gamit na vehicle ng user since ang ibang kotse nakakalusong naman sa low or moderate na baha di katulad ng motor.
+"What are you driving?"
+Heavy Vehicle (truck etc.)
+SUV
+Motorcycle
+Walking
+
+
+Urgent, Not important
+- In the home page, add a part where the user can see the status how many flood are currently report today (not week and not month. and only the verified or checked by the admin)
+- also add weather report (lets see what is the best API for weather in the philippines)
+
+
+Important, Urgent
+Map Section
+- Add other field for the alternative routes such as:
+safety: 98% 
+flood risk: low
+etc.
+- We add a Speech Balloon or banner like the current banner that shows the summary the details.
+- add flood timeline when did the user report and when did the admin approved.
+
+
+Important, not Urgent
+- add a notification smart alert that can send in notification and email of the user.
+
+
+Important, Not Urgent
+Admin Panel
+- Dashboard
+	- add statistics, heat map, pie chart, donut chart, line chart, bar graph.
+
+
+Important, Urgent
+Reports
+- add a view action in the active zones so the admin can check the full detail:
+Timeline of reported by the user
+Created By: (Username and Full Name)
+Severity
+Status
+
+Action Button
+View
+Edit (So the admin can edit the details if there is wrong on the detail). 
+	note: since the admin can edit lets also add a report for the admin so it will be automatically reflect on the map.
+	note: i have a problem here because if the user report, and it will be posted on the community feed, if the admin change the details the report of the user should not be changed because it will be posted on the community feed. plan the database and the normalization of this.
+
+Deactivate
+Archive
+
+
+Important, not urgent
+Reports
+- we could list the details of:
+Reporter
+Location
+Photo
+Description
+Confidence
+Nearby Reports
+News Match
+Approve
+Reject
+Merge
+and if may possible reports like sa feed natin may two user na nagsend ng report about dyan sa isang daan pwedeng mag merge yung two reports (suggest about this, since in the flood report panel there is a check box if the user wants to share it on the community feed). can you suggest a better way for the user to add a post in the community feed. like on facebook there is a "What's on your mind" for the user to post on the feed.
+Same location
+Same time
+
+
+Important, Urgent
+User Registry
+- update the information on the user registry, for example:
+How many Reports Submitted
+how accurate is the user reports "Accuracy Rate"
+Warnings
+Last Active
+Trust Score
+(not sure about the warnings, last active, trust score. for the last active wouldn't it violate the privacy act?)
+
+
+Important, Not Urgent
+System settings
+- add a feature for automatic flood expiration (but i think we should have a machine learning here to have an accurate flood expiration, like doing a dataset or i dont know. or manually set by the admin the time expiration).

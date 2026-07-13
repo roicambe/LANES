@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import httpx
 from fastapi import HTTPException
 from sqlalchemy import func
@@ -83,9 +83,9 @@ def get_active_flood_polygons(db: Session) -> Tuple[List[List[List[float]]], Lis
                 
     return red_polygons, orange_polygons, yellow_polygons
 
-def request_valhalla_route(start: List[float], end: List[float], avoid_polygons: List[List[List[float]]] = None) -> Dict[str, Any]:
+def request_valhalla_route(start: List[float], end: List[float], avoid_polygons: Optional[List[List[List[float]]]] = None) -> Optional[Dict[str, Any]]:
     """Queries the Valhalla server for routes between start and end coordinates, optionally avoiding polygons."""
-    body = {
+    body: Dict[str, Any] = {
         "locations": [
             {"lat": start[1], "lon": start[0]},
             {"lat": end[1], "lon": end[0]}
@@ -208,7 +208,7 @@ def calculate_flood_safe_route(
                 direct_primary["index"] = 0
 
     # Helper function to inject the direct flooded route if it differs from the safe detour
-    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str) -> Dict[str, Any]:
+    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str) -> Optional[Dict[str, Any]]:
         safe_candidates = process_valhalla_response(safe_data, avoided_floods=True, blocked=is_blocked)
         if not safe_candidates:
             return None
