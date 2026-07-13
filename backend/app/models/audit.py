@@ -28,3 +28,12 @@ class AuditLog(Base):
 
     # Relationships
     admin: Mapped[Optional["User"]] = relationship("User")
+
+class VisitorCount(Base):
+    """
+    Simple model to track total site visitors for the landing page statistics.
+    """
+    __tablename__ = "visitor_counts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    total_visitors: Mapped[int] = mapped_column(Integer, default=0)

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/shared/ui/Logo";
-import { motion } from "framer-motion";
 import { Home, Map as MapIcon, User, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +18,8 @@ export default function FloatingNav() {
   const isMapPage = pathname === "/map";
 
   return (
-    <header className="sticky top-4 z-50 hidden sm:flex justify-center pointer-events-none pb-4 w-full select-none">
-      <motion.nav
-        layout
-        transition={{ type: "spring", stiffness: 350, damping: 32 }}
-        className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-2 py-1.5 w-max max-w-[calc(100vw-2rem)]"
-      >
+    <header className="fixed top-4 z-50 hidden sm:flex justify-center pointer-events-none pb-4 w-full select-none">
+      <nav className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-2 py-1.5 w-max max-w-[calc(100vw-2rem)] transition-all duration-500 ease-in-out">
         <Link href="/" className="flex items-center pl-3 pr-2 hidden sm:flex transition-opacity hover:opacity-80 shrink-0" title="Go to Landing Page">
           <Logo size="xs" textClassName="mt-0.5 hidden md:block shrink-0" />
         </Link>
@@ -36,28 +31,24 @@ export default function FloatingNav() {
               key={href}
               href={href}
               className={cn(
-                "group relative flex items-center justify-center transition-all duration-500 ease-in-out shrink-0",
-                isMapPage ? "rounded-xl px-3 py-1.5" : "rounded-full px-3 py-1.5 md:gap-2",
+                "group relative flex items-center justify-center shrink-0",
+                isMapPage ? "rounded-xl px-3 py-1.5 gap-0" : "rounded-full px-3 py-1.5 gap-0 md:gap-2",
                 isActive
-                  ? "text-white"
+                  ? "text-white bg-blue-600"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               )}
+              style={{ transition: 'border-radius 500ms ease-in-out, gap 500ms ease-in-out, background-color 300ms ease-in-out, color 300ms ease-in-out' }}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="nav-active-pill"
-                  className={cn("absolute inset-0 bg-blue-600 -z-10", isMapPage ? "rounded-xl" : "rounded-full")}
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-              <Icon className={cn("shrink-0 transition-all duration-500", "h-5 w-5")} />
+              <Icon className={cn("shrink-0 transition-colors duration-300 ease-in-out", "h-5 w-5")} />
               
               {/* Inline text for expanded mode */}
-              <span className={cn(
-                "overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-500 ease-in-out",
-                isMapPage ? "max-w-0 opacity-0 hidden" : "max-w-0 opacity-0 hidden md:block md:max-w-[100px] md:opacity-100"
-              )}>
+              <span 
+                className={cn(
+                  "overflow-hidden whitespace-nowrap text-sm font-medium",
+                  isMapPage ? "max-w-0 opacity-0" : "max-w-0 opacity-0 md:max-w-[100px] md:opacity-100"
+                )}
+                style={{ transition: 'max-width 500ms ease-in-out, opacity 300ms ease-in-out' }}
+              >
                 {label}
               </span>
 
@@ -73,7 +64,7 @@ export default function FloatingNav() {
             </Link>
           );
         })}
-      </motion.nav>
+      </nav>
     </header>
   );
 }

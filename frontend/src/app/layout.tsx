@@ -39,14 +39,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <head>
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
-      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-gray-50 text-slate-900">
+      <body suppressHydrationWarning className="min-h-screen flex flex-col font-sans bg-gray-50 text-slate-900">
         <OfflineBanner />
         <NavigationWrapper>
           <Providers>
