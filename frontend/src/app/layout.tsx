@@ -46,7 +46,7 @@ export default function RootLayout({
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-gray-50 text-slate-900">
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-gray-50 text-slate-900">
         <OfflineBanner />
         <NavigationWrapper>
           <Providers>

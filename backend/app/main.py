@@ -14,7 +14,7 @@ from app import models
 async def lifespan(app: FastAPI):
     # Attempt to create database tables on startup
     try:
-        Base.metadata.create_all(bind=engine)
+        # Base.metadata.create_all(bind=engine) # Disabled to enforce Alembic migrations
         print("Database tables created or already exist.")
         
         # Seed default roles and admin user
