@@ -34,7 +34,7 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   // @ts-ignore - allowedDevOrigins is suggested by Next.js CLI but may lack TS definitions
-  allowedDevOrigins: ['192.168.0.119', 'localhost', '127.0.0.1'],
+  allowedDevOrigins: ['192.168.0.119', '172.27.240.1', 'localhost', '127.0.0.1'],
   turbopack: {},
   async rewrites() {
     return [
