@@ -32,6 +32,10 @@
 
 ## Recently Completed
 
+- [x] Fixed Navigation Bar scroll jump bug by decoupling positioning from framer-motion layout
+- [x] Re-implemented smooth navbar expansion/shrinking with choreographed two-speed CSS transitions (500ms layout, 300ms color fades)
+- [x] Fixed site visitor counter double-incrementing on refresh by migrating to robust localStorage and preventing React StrictMode race conditions
+- [x] Validated Weather API 15-minute server-side caching to prevent rate-limiting on refresh
 - [x] Migrated pathfinding engine to Valhalla for intelligent dynamic flood avoidance
 - [x] Multi-Route Alternatives with clickable route selection and map ETA banners
 - [x] Top Reporters leaderboard (live data, `GET /feed/leaderboard`)
@@ -47,18 +51,18 @@
 - Implement Comments Section for reports
 - Add authenticated routing for local networks
 
-## Capstone Roadmap & Suggestions
+## Capstone Roadmap (1-2 Month Execution Plan)
 
-> **Targeted for 1-2 Month Delivery Window**
+> **Implementation Strategy:** We will execute this roadmap in 5 distinct phases, starting with high-visibility features (Home Page) and ending with complex logic (Admin Charts & Trust Scores).
 
-### 1. Home Page & Onboarding (Quick Wins)
-- [ ] **Flood Status Legend**: Add a clear breakdown of Low, Moderate, High, and Closed Roads on the home page.
-- [ ] **Daily Stats**: Show the number of *verified* flood reports for the current day.
-- [ ] **Site Visitors**: Display a metric for total active/historical site visitors.
-- [ ] **Dynamic Weather Widget**: Integrate OpenWeatherMap API (reads from user profile location, defaults to Pasig).
+### Phase 1: Home Page & Onboarding (🟢 COMPLETED)
+- [x] **Dynamic Weather Widget**: Integrate OpenWeatherMap API (reads from user profile location, defaults to Pasig).
+- [x] **Daily Stats**: Show the number of *verified* flood reports for the current day.
+- [x] **Site Visitors**: Display a metric for total active/historical site visitors.
+- [x] **Flood Status Legend**: Add a clear breakdown of White, Yellow, Orange, and Red on the home page.
 
-### 2. Map & Routing Experience
-- [ ] **Vehicle Profiles**: Refined clearance-based labels:
+### Phase 2: Map & Routing Engine (🟢 NEXT TO DO)
+- [ ] **Vehicle Profiles**: Implement clearance-based routing labels:
   - *4-Wheel High Clearance* (SUVs, Pickups)
   - *4-Wheel Low Clearance* (Sedans, Hatchbacks)
   - *2-Wheels* (Motorcycles, Bicycles)
@@ -66,19 +70,19 @@
 - [ ] **Route Metrics**: Display "Safety %" and "Flood Risk" directly on alternative route banners.
 - [ ] **Flood Timelines**: Show when a flood was reported and approved directly on the map popup.
 
-### 3. Community Feed & Reporting
-- [ ] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
-- [ ] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
+### Phase 3: Community Feed & Notifications
 - [ ] **Report Hazard Button**: Jump straight to the Flood Report Panel.
+- [ ] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
+- [ ] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
 
-### 4. Admin Panel & Report Moderation
+### Phase 4: Admin Panel & Report Moderation
 - [ ] **Active Zones Full View**: Show timeline, reporter details, and actions (View, Edit, Deactivate, Archive).
 - [ ] **Admin Dashboard Charts**: 
   - Pie Chart: Flood Severity Distribution.
   - Line Chart: Reports over time (Dynamic: Last 7 Days, Month, Year).
   - Bar Graph: Top 5 Most Flooded Barangays.
 
-### 5. User Registry & Trust Score
+### Phase 5: User Registry & System Rules
 - [ ] **User Metrics**: Track "Reports Submitted", "Accuracy Rate", and "Trust Score".
 - [ ] **Rule-Based Expiration**: Admin configurable manual presets for flood expiration (e.g. 4 hours, 12 hours).
 

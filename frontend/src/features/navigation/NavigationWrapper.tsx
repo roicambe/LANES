@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import FloatingNav from "./FloatingNav";
 import MobileNav from "./MobileNav";
+import { cn } from "@/lib/utils";
 
 export default function NavigationWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,11 +14,15 @@ export default function NavigationWrapper({ children }: { children: React.ReactN
   }
 
   const isMapPage = pathname === "/map";
+  const isLandingPage = pathname === "/";
 
   return (
-    <div className={`flex-1 flex flex-col w-full ${!isMapPage ? "bg-gray-50" : ""}`}>
+    <div className={`flex-1 flex flex-col w-full pb-16 sm:pb-0 ${!isMapPage ? "bg-gray-50" : ""}`}>
       <FloatingNav />
-      <main className="flex-1 flex flex-col w-full min-w-0">
+      <main className={cn(
+        "flex-1 flex flex-col w-full min-w-0",
+        !isMapPage && !isLandingPage && "sm:pt-[60px]" // Safe zone ONLY on screens where FloatingNav exists
+      )}>
         {children}
       </main>
       <MobileNav />

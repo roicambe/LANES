@@ -65,3 +65,21 @@ body {
     right: 8px !important;
   }
 }
+
+@keyframes wave-animation-top {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes wave-animation-bottom {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-wave-top {
+  animation: wave-animation-top 6s linear infinite;
+}
+
+.animate-wave-bottom {
+  animation: wave-animation-bottom 8s linear infinite;
+}
