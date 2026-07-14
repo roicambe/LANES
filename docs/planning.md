@@ -64,14 +64,14 @@
 - [x] **Site Visitors**: Display a metric for total active/historical site visitors.
 - [x] **Flood Status Legend**: Add a clear breakdown of White, Yellow, Orange, and Red on the home page.
 
-### Phase 2: Map & Routing Engine (🟢 NEXT TO DO)
-- [ ] **Vehicle Profiles**: Implement clearance-based routing labels:
+### Phase 2: Map & Routing Engine (🟢 COMPLETED)
+- [x] **Vehicle Profiles**: Implement clearance-based routing labels:
   - *4-Wheel High Clearance* (SUVs, Pickups)
   - *4-Wheel Low Clearance* (Sedans, Hatchbacks)
   - *2-Wheels* (Motorcycles, Bicycles)
   - *Pedestrian* (Walking)
-- [ ] **Route Metrics**: Display "Safety %" and "Flood Risk" directly on alternative route banners.
-- [ ] **Flood Timelines**: Show when a flood was reported and approved directly on the map popup.
+- [x] **Route Metrics**: Display "Safety %" and "Flood Risk" directly on alternative route banners.
+- [x] **Flood Timelines**: Show when a flood was reported and approved directly on the map popup.
 
 ### Phase 3: Community Feed & Notifications
 - [ ] **Report Hazard Button**: Jump straight to the Flood Report Panel.

@@ -38,56 +38,42 @@ interface FloodReportPanelProps {
 }
 
 type Severity = "low" | "medium" | "high" | "extreme";
+type ReportVisualOption = "gutter" | "half-knee" | "half-tire" | "knee" | "tires" | "waist" | "chest" | "neck";
 
-// ── Severity config ────────────────────────────────────────────────────────────
+const SEVERITY_COLORS = {
+  low: {
+    pill: "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100",
+    active: "border-slate-400 bg-slate-100 text-slate-800 ring-2 ring-slate-300/50",
+  },
+  medium: {
+    pill: "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100",
+    active: "border-amber-400 bg-amber-100 text-amber-800 ring-2 ring-amber-300/50",
+  },
+  high: {
+    pill: "border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100",
+    active: "border-orange-400 bg-orange-100 text-orange-800 ring-2 ring-orange-300/50",
+  },
+  extreme: {
+    pill: "border-red-300 text-red-700 bg-red-50 hover:bg-red-100",
+    active: "border-red-400 bg-red-100 text-red-800 ring-2 ring-red-300/50",
+  },
+};
 
-const SEVERITY_OPTIONS: {
-  value: Severity;
+const VISUAL_OPTIONS: {
+  id: ReportVisualOption;
+  severity: Severity;
   emoji: string;
   label: string;
   description: string;
-  colors: { pill: string; active: string };
 }[] = [
-  {
-    value: "low",
-    emoji: "⬜",
-    label: "White",
-    description: "Ankle Deep",
-    colors: {
-      pill: "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100",
-      active: "border-slate-400 bg-slate-100 text-slate-800 ring-2 ring-slate-300/50",
-    },
-  },
-  {
-    value: "medium",
-    emoji: "🟨",
-    label: "Yellow",
-    description: "Knee Deep",
-    colors: {
-      pill: "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100",
-      active: "border-amber-400 bg-amber-100 text-amber-800 ring-2 ring-amber-300/50",
-    },
-  },
-  {
-    value: "high",
-    emoji: "🟧",
-    label: "Orange",
-    description: "Waist to Chest",
-    colors: {
-      pill: "border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100",
-      active: "border-orange-400 bg-orange-100 text-orange-800 ring-2 ring-orange-300/50",
-    },
-  },
-  {
-    value: "extreme",
-    emoji: "🟥",
-    label: "Red",
-    description: "Neck Deep & Above",
-    colors: {
-      pill: "border-red-300 text-red-700 bg-red-50 hover:bg-red-100",
-      active: "border-red-400 bg-red-100 text-red-800 ring-2 ring-red-300/50",
-    },
-  },
+  { id: "gutter", severity: "low", emoji: "⬜", label: "Gutter", description: "8 inches" },
+  { id: "half-knee", severity: "low", emoji: "⬜", label: "Half-Knee", description: "10 inches" },
+  { id: "half-tire", severity: "medium", emoji: "🟨", label: "Half-Tire", description: "13 inches" },
+  { id: "knee", severity: "medium", emoji: "🟨", label: "Knee", description: "19 inches" },
+  { id: "tires", severity: "high", emoji: "🟧", label: "Tires", description: "26 inches" },
+  { id: "waist", severity: "high", emoji: "🟧", label: "Waist", description: "37 inches" },
+  { id: "chest", severity: "high", emoji: "🟧", label: "Chest", description: "45 inches" },
+  { id: "neck", severity: "extreme", emoji: "🟥", label: "Neck & Above", description: "Danger" },
 ];
 
 
@@ -236,7 +222,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   // Form state
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
-  const [severity, setSeverity] = useState<Severity>("low");
+  const [visualOption, setVisualOption] = useState<ReportVisualOption>("gutter");
   const [passableVehicles, setPassableVehicles] = useState<string[]>([]);
   const [hiddenHazards, setHiddenHazards] = useState<"yes" | "no" | "unsure" | "">("");
   const [showSurvey, setShowSurvey] = useState(false);
@@ -332,7 +318,11 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       const routeResult = await getRoute(floodStart.coords, floodEnd.coords, true);
       const roadGeometry = routeResult.routes[0]?.geometry;
 
-      // 2. Submit as multipart/form-data
+      // 2. Map visual option to backend severity
+      const selectedOption = VISUAL_OPTIONS.find((opt) => opt.id === visualOption);
+      const severity = selectedOption ? selectedOption.severity : "low";
+
+      // 3. Submit as multipart/form-data
       const formData = new FormData();
       formData.append("raw_text", description.trim());
       formData.append("source", "direct_user");
@@ -357,7 +347,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       setFloodEnd(null);
       setStartInput("");
       setEndInput("");
-      setSeverity("low");
+      setVisualOption("gutter");
       setPassableVehicles([]);
       setHiddenHazards("");
       setDescription("");
@@ -409,7 +399,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
     ? (floodStart || floodEnd) 
     : showSurvey
       ? (passableVehicles.length > 0 || hiddenHazards !== "")
-      : (description.trim() !== "" || imageFile !== null || severity !== "low" || isPublic || passableVehicles.length > 0 || hiddenHazards !== "");
+      : (description.trim() !== "" || imageFile !== null || visualOption !== "gutter" || isPublic || passableVehicles.length > 0 || hiddenHazards !== "");
 
   const clearButton =
     showClear ? (
@@ -428,7 +418,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
               setPassableVehicles([]);
               setHiddenHazards("");
             } else {
-              setSeverity("low");
+              setVisualOption("gutter");
               setPassableVehicles([]);
               setHiddenHazards("");
               setDescription("");
@@ -499,21 +489,24 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
               Flood Severity <span className="text-red-500 ml-0.5">*</span>
             </label>
             <div className="grid grid-cols-4 gap-2">
-              {SEVERITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setSeverity(opt.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
-                    severity === opt.value ? opt.colors.active : opt.colors.pill
-                  )}
-                >
-                  <span className="text-base">{opt.emoji}</span>
-                  <span>{opt.label}</span>
-                  <span className="font-normal text-[10px] opacity-75">{opt.description}</span>
-                </button>
-              ))}
+              {VISUAL_OPTIONS.map((opt) => {
+                const colors = SEVERITY_COLORS[opt.severity];
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setVisualOption(opt.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
+                      visualOption === opt.id ? colors.active : colors.pill
+                    )}
+                  >
+                    <span className="text-base">{opt.emoji}</span>
+                    <span>{opt.label}</span>
+                    <span className="font-normal text-[10px] opacity-75">{opt.description}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

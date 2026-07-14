@@ -208,32 +208,34 @@ def calculate_flood_safe_route(
     except Exception as e:
         print(f"Warning: Failed to fetch flood polygons ({e}). Bypassing flood avoidance.")
         red, orange, yellow = [], [], []
-        
-    all_floods = red + orange + yellow
-    red_orange_floods = red + orange
-    red_only = red
-    
-    # Pre-calculate the direct route bypassing ONLY RED floods (meaning it will pass through Yellow/Orange)
-    # This is our ultimate fallback if the safest detours are too far or non-existent
-    direct_primary = None
-    if orange or yellow:
-        data_direct = request_valhalla_route(start, end, avoid_polygons=red_only, vehicle_profile=vehicle_profile)
-        if data_direct:
-            # If we avoid red only, we might pass through Orange (risk high, safety 50) or Yellow (risk medium, safety 80).
-            # For simplicity of the direct fallback, we assume the worst un-avoided flood is Orange if orange exists, else Yellow.
-            worst_risk = "high" if orange else "medium"
-            worst_safety = 50.0 if orange else 80.0
-            direct_candidates = process_valhalla_response(
-                data_direct, avoided_floods=(len(red_only) > 0), blocked=True, 
-                safety_score=worst_safety, flood_risk=worst_risk
-            )
-            if direct_candidates:
-                direct_primary = direct_candidates[0]
-                direct_primary["label"] = "Direct (Flooded)"
-                direct_primary["index"] = 0
 
-    # Helper function to inject the direct flooded route if it differs from the safe detour
-    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str, safety_score: float, flood_risk: str) -> Optional[Dict[str, Any]]:
+    # 3. Vehicle Profile Matrix Definitions
+    blocked = []
+    penalized = []
+    risk_map = {}
+
+    if vehicle_profile == "walk":
+        blocked = red + orange
+        penalized = yellow
+        risk_map = {"yellow": ("medium", 80.0)}
+    elif vehicle_profile in ["motorcycle", "light"]:
+        blocked = red + orange + yellow
+        penalized = []
+        risk_map = {}
+    elif vehicle_profile == "heavy":
+        blocked = red
+        penalized = orange + yellow
+        risk_map = {"orange": ("high", 35.0), "yellow": ("medium", 85.0)}
+    else:
+        # Fallback default (treat as light)
+        blocked = red + orange + yellow
+        penalized = []
+        risk_map = {}
+
+    all_to_avoid = blocked + penalized
+
+    # 4. Helper function to inject the direct route if it differs from the safe detour
+    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str, safety_score: float, flood_risk: str, direct_primary: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         safe_candidates = process_valhalla_response(
             safe_data, avoided_floods=True, blocked=is_blocked, 
             safety_score=safety_score, flood_risk=flood_risk
@@ -242,6 +244,11 @@ def calculate_flood_safe_route(
             return None
             
         final_candidates = []
+        
+        # If the direct route is blocked (0% safe), we don't even want to show it.
+        if direct_primary and direct_primary.get("blocked", False):
+            direct_primary = None
+            
         # If we have a direct_primary that is physically different from the safest route
         if direct_primary and abs(direct_primary["distance"] - safe_candidates[0]["distance"]) > 10:
             final_candidates.append(direct_primary)
@@ -256,38 +263,92 @@ def calculate_flood_safe_route(
                 final_candidates.append(sc)
         else:
             final_candidates = safe_candidates
+            for i, sc in enumerate(final_candidates):
+                sc["index"] = i
+                if i == 0:
+                    sc["label"] = "Recommended"
+                elif i == 1:
+                    sc["label"] = "Alternative 1"
+                else:
+                    sc["label"] = f"Alternative {i}"
             
-        return {"routes": final_candidates, "recommended_index": 0}
+        return {"routes": final_candidates, "recommended_index": 0 if not direct_primary else 1}
 
-    # Attempt 1: Avoid EVERYTHING (Red, Orange, Yellow)
+    # 5. Determine the Direct Route (Baseline Comparison)
+    # We always avoid Red (unless we want to show it, but Red is impassable for all).
+    # To accurately show the direct route they would take if they didn't detour, we ask Valhalla to avoid ONLY Red.
+    direct_primary = None
+    if orange or yellow:
+        data_direct = request_valhalla_route(start, end, avoid_polygons=red, vehicle_profile=vehicle_profile)
+        if data_direct:
+            # Did this direct route pass through Blocked or Penalized zones?
+            # We assume if Orange/Yellow exist, it hit the worst available.
+            hits_orange = len(orange) > 0
+            hits_yellow = len(yellow) > 0
+            
+            is_direct_blocked = False
+            worst_direct_safety = 100.0
+            worst_direct_risk = "none"
+
+            if vehicle_profile == "walk":
+                if hits_orange: is_direct_blocked = True
+                elif hits_yellow: 
+                    worst_direct_safety = risk_map["yellow"][1]
+                    worst_direct_risk = risk_map["yellow"][0]
+            elif vehicle_profile in ["motorcycle", "light"]:
+                if hits_orange or hits_yellow: is_direct_blocked = True
+            elif vehicle_profile == "heavy":
+                if hits_orange:
+                    worst_direct_safety = risk_map["orange"][1]
+                    worst_direct_risk = risk_map["orange"][0]
+                elif hits_yellow:
+                    worst_direct_safety = risk_map["yellow"][1]
+                    worst_direct_risk = risk_map["yellow"][0]
+            
+            if is_direct_blocked:
+                worst_direct_safety = 0.0
+                worst_direct_risk = "extreme"
+
+            direct_candidates = process_valhalla_response(
+                data_direct, avoided_floods=(len(red) > 0), blocked=is_direct_blocked, 
+                safety_score=worst_direct_safety, flood_risk=worst_direct_risk
+            )
+            if direct_candidates:
+                direct_primary = direct_candidates[0]
+                direct_primary["label"] = "Direct (Flooded)"
+                direct_primary["index"] = 0
+
+    # 6. Attempt 1: Avoid EVERYTHING (Blocked + Penalized)
     # This gives a 100% safe route if available.
-    if all_floods:
-        data = request_valhalla_route(start, end, avoid_polygons=all_floods, vehicle_profile=vehicle_profile)
+    if all_to_avoid:
+        data = request_valhalla_route(start, end, avoid_polygons=all_to_avoid, vehicle_profile=vehicle_profile)
         if data:
-            res = build_response(data, is_blocked=False, detour_label="Safe Detour", safety_score=100.0, flood_risk="none")
+            res = build_response(data, is_blocked=False, detour_label="Safe Detour", safety_score=100.0, flood_risk="none", direct_primary=direct_primary)
             if res: return res
-            
-    # Attempt 2: Avoid Red and Orange (passes through Yellow)
-    # For Low Clearance and 2-Wheel, this is the limit. For High Clearance, it's preferred over Orange.
-    if red_orange_floods:
-        data = request_valhalla_route(start, end, avoid_polygons=red_orange_floods, vehicle_profile=vehicle_profile)
+
+    # 7. Attempt 2: Avoid only BLOCKED (traverse Penalized)
+    if penalized:
+        data = request_valhalla_route(start, end, avoid_polygons=blocked, vehicle_profile=vehicle_profile)
         if data:
-            # is_blocked=True because it passes through yellow
-            res = build_response(data, is_blocked=True, detour_label="Best Detour", safety_score=80.0, flood_risk="medium")
+            # We traversed penalized. Assume worst penalized.
+            worst_safety = 100.0
+            worst_risk = "none"
+            if vehicle_profile == "heavy":
+                if len(orange) > 0:
+                    worst_safety = risk_map["orange"][1]
+                    worst_risk = risk_map["orange"][0]
+                elif len(yellow) > 0:
+                    worst_safety = risk_map["yellow"][1]
+                    worst_risk = risk_map["yellow"][0]
+            elif vehicle_profile == "walk":
+                if len(yellow) > 0:
+                    worst_safety = risk_map["yellow"][1]
+                    worst_risk = risk_map["yellow"][0]
+
+            res = build_response(data, is_blocked=True, detour_label="Best Detour", safety_score=worst_safety, flood_risk=worst_risk, direct_primary=direct_primary)
             if res: return res
-            
-    # Attempt 3: Trapped! Try avoiding ONLY Red.
-    # High Clearance vehicles are allowed to brave this. Low Clearance/2-Wheel/Pedestrian can try but will be heavily penalized.
-    data = request_valhalla_route(start, end, avoid_polygons=red_only, vehicle_profile=vehicle_profile)
-    if not data:
-        raise HTTPException(status_code=404, detail="Destination unreachable.")
-        
-    is_blocked = len(all_floods) > 0
-    worst_risk = "high" if orange else ("medium" if yellow else "none")
-    worst_safety = 50.0 if orange else (80.0 if yellow else 100.0)
-    
-    candidates = process_valhalla_response(
-        data, avoided_floods=(len(red_only) > 0), blocked=is_blocked, 
-        safety_score=worst_safety, flood_risk=worst_risk
-    )
-    return {"routes": candidates, "recommended_index": 0}
+
+    # 8. Attempt 3: Trapped!
+    # If we reach this point, it means no safe detours exist. 
+    # Since we explicitly discard 0% safe direct routes, we have no valid routes to show.
+    return {"routes": [], "recommended_index": -1}

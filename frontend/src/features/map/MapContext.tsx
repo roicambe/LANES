@@ -249,6 +249,10 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
         setAllRoutes(result.routes);
         setSelectedRouteIndexState(result.recommended_index);
+        
+        if (result.routes.length === 0) {
+          setRouteError("No safe route available. The destination is completely blocked by severe floods for your vehicle profile.");
+        }
       } catch {
         if (!cancelled) {
           setRouteError("Could not calculate route. Check that the backend is running.");

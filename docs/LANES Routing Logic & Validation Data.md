@@ -58,7 +58,7 @@ The routing engine dictates whether a path segment is marked as **Passable**, **
 
 * **White (Ankle):** Passable.  
 * **Yellow (Knee):** **Passable (Penalized to 85% Safety)**. Standard mid-size SUVs in the Philippines (e.g., Isuzu mu-X, Toyota Fortuner) have an engineered water-wading depth of ![][image9] to ![][image10].  
-* **Orange (Waist/Chest):** **Passable (Penalized to 50% Safety)**. While an SUV's ![][image10] wading limit can physically clear a standard knee-to-lower-waist flood, the route is mathematically penalized to 50% safety. This enforces a "defensive routing" logic to protect drivers from hidden underwater road hazards (open manholes, debris), ensuring the app prioritizes completely dry detours first before using Orange zones as a last resort.  
+* **Orange (Waist/Chest):** **Passable (Penalized to 35% Safety)**. While an SUV's ![][image10] wading limit can physically clear a standard knee-to-lower-waist flood, the route is mathematically penalized to 35% safety. This enforces a "defensive routing" logic to protect drivers from hidden underwater road hazards (open manholes, debris), ensuring the app prioritizes completely dry detours first before using Orange zones as a last resort.
 * **Red (Neck+):** **Impassable**. Waist-level water (![][image11]) exceeds the factory ![][image10] wading limit. The engine will ingest water and stall.
 
 ## **3\. The Final Routing Truth Table**

@@ -115,6 +115,7 @@ def get_safe_route(payload: schemas.RouteRequest, db: Session = Depends(get_db))
         db=db,
         start=payload.start,
         end=payload.end,
-        ignore_floods=payload.ignore_floods
+        ignore_floods=payload.ignore_floods,
+        vehicle_profile=payload.vehicle_profile
     )
 
