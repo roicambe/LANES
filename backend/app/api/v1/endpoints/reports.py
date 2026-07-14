@@ -23,6 +23,7 @@ async def create_report(
     human_readable_location: str = Form(None),
     is_public: bool = Form(False),
     geometry: str = Form(None),
+    survey_data: str = Form(None),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
@@ -41,6 +42,13 @@ async def create_report(
         except Exception:
             pass
 
+    survey_obj = None
+    if survey_data:
+        try:
+            survey_obj = json.loads(survey_data)
+        except Exception:
+            pass
+
     return await process_new_report(
         db=db,
         raw_text=raw_text,
@@ -50,7 +58,8 @@ async def create_report(
         is_public=is_public,
         geometry=geom_obj,
         image_url=image_url,
-        user_id=current_user.id
+        user_id=current_user.id,
+        survey_data=survey_obj
     )
 
 
@@ -106,6 +115,7 @@ def get_safe_route(payload: schemas.RouteRequest, db: Session = Depends(get_db))
         db=db,
         start=payload.start,
         end=payload.end,
-        ignore_floods=payload.ignore_floods
+        ignore_floods=payload.ignore_floods,
+        vehicle_profile=payload.vehicle_profile
     )
 

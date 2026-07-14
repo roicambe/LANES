@@ -70,6 +70,8 @@ interface MapContextValue {
   setFloodEndLabel: (label: string) => void;
   clearRoute: () => void;
   resetAll: () => void;
+  vehicleProfile: "light" | "heavy" | "motorcycle" | "walk";
+  setVehicleProfile: (profile: "light" | "heavy" | "motorcycle" | "walk") => void;
 }
 
 const MapContext = createContext<MapContextValue | null>(null);
@@ -103,6 +105,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [floodStart, setFloodStartState] = useState<MapPoint | null>(null);
   const [floodEnd, setFloodEndState] = useState<MapPoint | null>(null);
   const [floodPreviewGeometry, setFloodPreviewGeometry] = useState<RouteGeometry | null>(null);
+
+  const [vehicleProfile, setVehicleProfile] = useState<"light" | "heavy" | "motorcycle" | "walk">("light");
 
   // Derived: currently active route option
   const selectedRoute: RouteOption | null = allRoutes?.[selectedRouteIndex] ?? null;
@@ -240,11 +244,15 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setRouteError(null);
 
       try {
-        const result: MultiRouteResponse = await getRoute(start.coords, end.coords);
+        const result: MultiRouteResponse = await getRoute(start.coords, end.coords, false, vehicleProfile);
         if (cancelled) return;
 
         setAllRoutes(result.routes);
         setSelectedRouteIndexState(result.recommended_index);
+        
+        if (result.routes.length === 0) {
+          setRouteError("No safe route available. The destination is completely blocked by severe floods for your vehicle profile.");
+        }
       } catch {
         if (!cancelled) {
           setRouteError("Could not calculate route. Check that the backend is running.");
@@ -261,7 +269,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [start, end, clearRoute]);
+  }, [start, end, clearRoute, vehicleProfile]);
 
   // Flood segment preview (uses ignore_floods=true for a straight reference line)
   useEffect(() => {
@@ -327,6 +335,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setPointFromMap,
       clearRoute,
       resetAll,
+      vehicleProfile,
+      setVehicleProfile,
     }),
     [
       start,
@@ -362,6 +372,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setPointFromMap,
       clearRoute,
       resetAll,
+      vehicleProfile,
+      setVehicleProfile,
     ]
   );
 

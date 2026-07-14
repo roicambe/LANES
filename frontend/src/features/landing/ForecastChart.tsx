@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MapPin } from "lucide-react";
 
 interface ForecastSlot {
   dt: number;
@@ -13,15 +14,17 @@ interface ForecastSlot {
 
 export function ForecastChart() {
   const [forecast, setForecast] = useState<ForecastSlot[]>([]);
+  const [location, setLocation] = useState<string>("Pasig");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchForecast() {
       try {
         const res = await fetch("http://localhost:8000/api/v1/weather/forecast?count=8");
-        if (res.ok) {
+          if (res.ok) {
           const data = await res.json();
           setForecast(data.forecast || []);
+          setLocation(data.location || "Pasig");
         }
       } catch (err) {
         console.error("Failed to fetch forecast:", err);
@@ -80,7 +83,13 @@ export function ForecastChart() {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 w-full overflow-hidden">
-      <h3 className="text-sm font-semibold text-gray-800 mb-6">24-Hour Forecast & Rain Probability</h3>
+      <div className="flex items-center gap-3 mb-6">
+        <h3 className="text-sm font-semibold text-gray-800">24-Hour Forecast & Rain Probability</h3>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100">
+          <MapPin className="w-3.5 h-3.5 text-blue-500" />
+          <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">{location}</span>
+        </div>
+      </div>
       
       <div className="overflow-x-auto pb-4 custom-scrollbar">
         <div className="min-w-[700px] w-full">

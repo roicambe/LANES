@@ -656,6 +656,8 @@ export default function MapCanvas() {
             color: color,
             is_road_line: true,
             is_road_based: true,
+            created_at: zone.created_at,
+            expires_at: zone.expires_at
           },
           geometry: zone.report_geometry
         });
@@ -671,6 +673,8 @@ export default function MapCanvas() {
           color: color,
           is_road_line: false,
           is_road_based: isRoadBased,
+          created_at: zone.created_at,
+          expires_at: zone.expires_at
         },
         geometry: zone.geometry
       });
@@ -725,6 +729,66 @@ export default function MapCanvas() {
       },
       filter: ["==", ["geometry-type"], "LineString"]
     }, map.getLayer(ROUTE_LAYER_ID) ? ROUTE_LAYER_ID : undefined);
+
+    // 4. Click Popups for Commuters (Flood Timelines)
+    const handlePopup = (e: any) => {
+      if (!e.features || e.features.length === 0) return;
+      const properties = e.features[0].properties;
+      if (!properties) return;
+
+      // Format date for better readability (e.g. "Aug 15, 2:30 PM")
+      let reportedText = properties.created_at;
+      try {
+        if (reportedText) {
+          const d = new Date(reportedText);
+          if (!isNaN(d.getTime())) {
+            reportedText = d.toLocaleString('en-US', { 
+              month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' 
+            });
+          }
+        }
+      } catch (err) {}
+
+      new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div style="font-family: inherit; padding: 4px; color: #1e293b; min-width: 180px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${properties.color};"></span>
+              <strong style="font-size: 14px; text-transform: capitalize;">${properties.severity} Risk</strong>
+            </div>
+            <div style="font-size: 12px; margin-bottom: 4px;">
+              <span style="color: #64748b; font-weight: 500;">Reported:</span>
+              <span style="font-weight: 600; margin-left: 4px;">${reportedText || 'Unknown'}</span>
+            </div>
+            ${properties.expires_at ? `
+            <div style="font-size: 11px; margin-top: 6px; color: #ef4444; font-weight: 500;">
+              Active Zone
+            </div>
+            ` : ''}
+          </div>
+        `)
+        .addTo(map);
+    };
+
+    const handleMouseEnter = () => { map.getCanvas().style.cursor = "pointer"; };
+    const handleMouseLeave = () => { map.getCanvas().style.cursor = ""; };
+
+    map.on("click", "active-zones-layer", handlePopup);
+    map.on("click", "active-zones-road-layer", handlePopup);
+    map.on("mouseenter", "active-zones-layer", handleMouseEnter);
+    map.on("mouseleave", "active-zones-layer", handleMouseLeave);
+    map.on("mouseenter", "active-zones-road-layer", handleMouseEnter);
+    map.on("mouseleave", "active-zones-road-layer", handleMouseLeave);
+
+    return () => {
+      map.off("click", "active-zones-layer", handlePopup);
+      map.off("click", "active-zones-road-layer", handlePopup);
+      map.off("mouseenter", "active-zones-layer", handleMouseEnter);
+      map.off("mouseleave", "active-zones-layer", handleMouseLeave);
+      map.off("mouseenter", "active-zones-road-layer", handleMouseEnter);
+      map.off("mouseleave", "active-zones-road-layer", handleMouseLeave);
+    };
   }, [isLoaded, activeZonesData]);
 
   useEffect(() => {

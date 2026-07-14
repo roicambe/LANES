@@ -15,6 +15,9 @@ import {
   AlertTriangle,
   CheckCircle,
   X,
+  Car,
+  Bike,
+  PersonStanding
 } from "lucide-react";
 import { Panel } from "@/shared/ui/Panel";
 import { CardContent } from "@/shared/ui/Card";
@@ -167,6 +170,8 @@ export default function RoutePanel() {
     setIsPickingOnMap,
     activePanel,
     setActivePanel,
+    vehicleProfile,
+    setVehicleProfile,
   } = useMapContext();
 
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
@@ -255,6 +260,13 @@ export default function RoutePanel() {
     const mins = Math.round(seconds / 60);
     return mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
   };
+
+  const PROFILE_OPTIONS: Array<{ id: "light" | "heavy" | "motorcycle" | "walk", icon: any, label: string }> = [
+    { id: "heavy", icon: Car, label: "High Clearance" },
+    { id: "light", icon: Car, label: "Low Clearance" },
+    { id: "motorcycle", icon: Bike, label: "Motorcycle" },
+    { id: "walk", icon: PersonStanding, label: "Walk" },
+  ];
 
   if (isMobile) {
     if (isPickingOnMap && (activePoint === "start" || activePoint === "end")) {
@@ -377,6 +389,25 @@ export default function RoutePanel() {
                 </button>
               ) : null}
             </div>
+          </div>
+          
+          {/* Mobile Vehicle Profile Selector */}
+          <div className="flex border-t border-gray-100 overflow-x-auto">
+            {PROFILE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setVehicleProfile(opt.id)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 text-[11px] font-semibold transition-colors",
+                  vehicleProfile === opt.id
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                )}
+              >
+                <opt.icon className="w-4 h-4" />
+                <span className="whitespace-nowrap">{opt.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -582,6 +613,25 @@ export default function RoutePanel() {
           onClear={() => { setEnd(null, ""); setEndInput(""); setEndLabel(""); }}
         />
 
+        {/* Desktop Vehicle Profile Selector */}
+        <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200">
+          {PROFILE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setVehicleProfile(opt.id)}
+              className={cn(
+                "flex-1 flex flex-col items-center gap-1 py-1.5 px-2 rounded-md transition-all",
+                vehicleProfile === opt.id
+                  ? "bg-white text-blue-600 shadow-sm border border-gray-200"
+                  : "text-gray-500 hover:bg-gray-100"
+              )}
+            >
+              <opt.icon className="w-4 h-4" />
+              <span className="text-[10px] font-medium">{opt.label}</span>
+            </button>
+          ))}
+        </div>
+
         {routeError && (
           <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
             <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -641,10 +691,10 @@ export default function RoutePanel() {
                     <CheckCircle className="h-3 w-3" />
                   )}
                   {route.blocked
-                    ? "Passes flooded area"
+                    ? `Passes flooded area (${route.safety_score}% safe)`
                     : route.avoided_floods
-                      ? "Detours around flood"
-                      : "Clear path"}
+                      ? `Detours around flood (${route.safety_score}% safe)`
+                      : `Clear path (${route.safety_score}% safe)`}
                 </div>
 
                 {/* Truncation warning */}

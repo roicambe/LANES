@@ -15,7 +15,8 @@ async def process_new_report(
     human_readable_location: str = None,
     geometry: dict = None,
     image_url: str = None,
-    user_id: int = None
+    user_id: int = None,
+    survey_data: dict = None
 ):
     """
     Business logic for processing a new flood report.
@@ -42,7 +43,8 @@ async def process_new_report(
         is_public=is_public,
         geometry=geometry,
         image_url=image_url,
-        user_id=user_id
+        user_id=user_id,
+        survey_data=survey_data
     )
     
     return create_flood_report(db=db, report=report_create)

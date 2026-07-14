@@ -15,6 +15,7 @@ class RouteRequest(BaseModel):
     start: List[float] = Field(..., min_length=2, max_length=2, description="Start coordinates [lng, lat]")
     end: List[float] = Field(..., min_length=2, max_length=2, description="End coordinates [lng, lat]")
     ignore_floods: bool = Field(False, description="Bypass flood avoidance checks and return the raw shortest path")
+    vehicle_profile: str = Field("light", description="Vehicle profile: light, heavy, motorcycle, walk")
 
 
 class RouteOption(BaseModel):
@@ -30,6 +31,8 @@ class RouteOption(BaseModel):
         blocked: True if this specific route passes through an active flood zone.
         is_truncated: True if the route appears spatially incomplete due to one-way road constraints.
                       See docs/planning.md section Routing Known Constraints for context.
+        safety_score: A calculated safety percentage (e.g. 100 for clear, 50 for traversing orange).
+        flood_risk: A string indicator of the highest flood severity encountered (e.g. 'none', 'low', 'medium', 'high').
     """
     index: int
     label: str
@@ -39,6 +42,8 @@ class RouteOption(BaseModel):
     avoided_floods: bool
     blocked: bool = False
     is_truncated: bool = False
+    safety_score: float = 100.0
+    flood_risk: str = "none"
 
 
 class MultiRouteResponse(BaseModel):

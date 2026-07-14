@@ -21,6 +21,20 @@ This document serves as the central technical reference for all currently implem
 
 ---
 
+### 2. Structured Flood Incident Survey (3NF Normalized)
+*   **Purpose:** Collects precise, structured data about flood scenarios directly from users on the ground, bypassing NLP for explicit facts.
+*   **What it does:** Allows a user to rapidly fill out a categorical survey (e.g., Hidden hazards, Passable vehicle types, Receding status) via a streamlined inline panel interface.
+*   **How it works:** 
+    1. Replaces standard text fields with responsive UI checkboxes and toggle groups within the `FloodReportPanel`.
+    2. Payload is sent alongside the standard incident report data.
+    3. The backend maps the survey to a dedicated `flood_report_surveys` table holding a strict foreign key to the root report, ensuring full Third Normal Form (3NF) relational integrity.
+*   **Access & Roles:** Public users can submit surveys; DRRM officers review them.
+*   **Related Components:**
+    *   **Frontend:** [FloodReportPanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/hazards/FloodReportPanel.tsx) (survey state & UI).
+    *   **Backend:** [report.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/models/report.py) (SQLAlchemy schemas), `POST /api/v1/reports` endpoint.
+
+---
+
 ### 2. Citizen Account Registration & Onboarding
 *   **Purpose:** Allows users to create a verified account for accurate reporting, profile management, and personalization while keeping bad actors out.
 *   **What it does:** Provides a multi-step registration wizard encompassing personal information, demographic geography via PSGC API, complex password requirements, and One-Time Password (OTP) email verification.
@@ -53,7 +67,21 @@ This document serves as the central technical reference for all currently implem
 
 ---
 
-### 3. Queue-Based Admin Moderation & Approval Workflow
+### 3. Height-Aware Rerouting (Dynamic Vehicle Profiles)
+*   **Purpose:** Customizes detour calculations based on vehicle clearance constraints (e.g., Pedestrian, Motorcycle, Sedan, SUV).
+*   **What it does:** Allows commuters to select their vehicle profile and intelligently decides which flood polygons to avoid. High-clearance vehicles (SUVs) can safely cross knee-deep water (Yellow/Orange) but incur a 35% safety penalty to account for hidden hazards, while low-clearance vehicles (Sedans) are completely blocked.
+*   **How it works:**
+    1. Commuters select their vehicle profile in the route panel.
+    2. The backend dynamically builds avoidance polygons by analyzing the `blocked` vs `penalized` zones based on the specific vehicle type.
+    3. The 8 MMDA visual severity options (Gutter, Half-Knee, Tire, etc.) are mapped to exact routing logic penalties.
+*   **Access & Roles:** Open to all public commuters.
+*   **Related Components:**
+    *   **Frontend:** [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx), [routingOptions.ts](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/routingOptions.ts).
+    *   **Backend:** [reports.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/api/v1/endpoints/reports.py) router, [routing.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/services/routing.py) service (`calculate_flood_safe_route`).
+
+---
+
+### 4. Queue-Based Admin Moderation & Approval Workflow
 *   **Purpose:** Implements a "human-in-the-loop" validation workflow to prevent automated NLP ingestion errors or mapping hallucinations from misdirecting drivers.
 *   **What it does:** Queues all raw NLP-parsed flood reports into a staging feed, allowing authorized local disaster risk managers to inspect, adjust, approve, or discard reports before public broadcast.
 *   **How it works:**
@@ -196,21 +224,7 @@ This document serves as the central technical reference for all currently implem
 
 ## 🔮 Future Features
 
-### 1. Height-Aware Rerouting (Dynamic Vehicle Profiles)
-*   **Purpose:** Customizes detour calculations based on vehicle clearance constraints.
-*   **Why it is needed:** Currently, any high severity flood blocks routes for all commuters. However, a high-clearance SUV or truck can safely cross knee-deep water (Yellow/Orange) that would stall a standard sedan or motorcycle. 
-*   **Expected functionality:**
-    *   Commuters select their vehicle profile (e.g., Motorcycle, Sedan, SUV, Truck).
-    *   The backend retrieves specific clearance thresholds (e.g., 20cm for Sedan, 45cm for SUV).
-    *   When checking flood polygons, Valhalla will intelligently decide which polygons to avoid based on the vehicle clearance profile.
-*   **How it will integrate:**
-    *   Update [RoutePanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/routing/RoutePanel.tsx) with a vehicle selector dropdown.
-    *   Update Valhalla backend configurations to leverage multi-modal profiles and dynamic constraints.
-*   **Dependencies:** Database must store exact numeric flood depths (in cm) instead of only textual categories.
-
----
-
-### 2. User-Submitted Image Depth Classifier (Computer Vision AI)
+### 1. User-Submitted Image Depth Classifier (Computer Vision AI)
 *   **Purpose:** Automates flood severity validation via crowdsourced visual proof.
 *   **Why it is needed:** Text descriptions are often subjective or exaggerated. While we currently accept photo evidence (via Cloudinary), human admins must still verify them. An AI classifier will automate the objective verification of street conditions.
 *   **Expected functionality:**

@@ -7,11 +7,13 @@ import {
   Crosshair,
   MapPin,
   Check,
+  CheckCircle,
   Loader2,
   Navigation2,
   HelpCircle,
   ImagePlus,
   X,
+  ArrowLeft,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -36,56 +38,42 @@ interface FloodReportPanelProps {
 }
 
 type Severity = "low" | "medium" | "high" | "extreme";
+type ReportVisualOption = "gutter" | "half-knee" | "half-tire" | "knee" | "tires" | "waist" | "chest" | "neck";
 
-// ── Severity config ────────────────────────────────────────────────────────────
+const SEVERITY_COLORS = {
+  low: {
+    pill: "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100",
+    active: "border-slate-400 bg-slate-100 text-slate-800 ring-2 ring-slate-300/50",
+  },
+  medium: {
+    pill: "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100",
+    active: "border-amber-400 bg-amber-100 text-amber-800 ring-2 ring-amber-300/50",
+  },
+  high: {
+    pill: "border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100",
+    active: "border-orange-400 bg-orange-100 text-orange-800 ring-2 ring-orange-300/50",
+  },
+  extreme: {
+    pill: "border-red-300 text-red-700 bg-red-50 hover:bg-red-100",
+    active: "border-red-400 bg-red-100 text-red-800 ring-2 ring-red-300/50",
+  },
+};
 
-const SEVERITY_OPTIONS: {
-  value: Severity;
+const VISUAL_OPTIONS: {
+  id: ReportVisualOption;
+  severity: Severity;
   emoji: string;
   label: string;
   description: string;
-  colors: { pill: string; active: string };
 }[] = [
-  {
-    value: "low",
-    emoji: "⬜",
-    label: "White",
-    description: "Ankle Deep",
-    colors: {
-      pill: "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100",
-      active: "border-slate-400 bg-slate-100 text-slate-800 ring-2 ring-slate-300/50",
-    },
-  },
-  {
-    value: "medium",
-    emoji: "🟨",
-    label: "Yellow",
-    description: "Knee Deep",
-    colors: {
-      pill: "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100",
-      active: "border-amber-400 bg-amber-100 text-amber-800 ring-2 ring-amber-300/50",
-    },
-  },
-  {
-    value: "high",
-    emoji: "🟧",
-    label: "Orange",
-    description: "Waist to Chest",
-    colors: {
-      pill: "border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100",
-      active: "border-orange-400 bg-orange-100 text-orange-800 ring-2 ring-orange-300/50",
-    },
-  },
-  {
-    value: "extreme",
-    emoji: "🟥",
-    label: "Red",
-    description: "Neck Deep & Above",
-    colors: {
-      pill: "border-red-300 text-red-700 bg-red-50 hover:bg-red-100",
-      active: "border-red-400 bg-red-100 text-red-800 ring-2 ring-red-300/50",
-    },
-  },
+  { id: "gutter", severity: "low", emoji: "⬜", label: "Gutter", description: "8 inches" },
+  { id: "half-knee", severity: "low", emoji: "⬜", label: "Half-Knee", description: "10 inches" },
+  { id: "half-tire", severity: "medium", emoji: "🟨", label: "Half-Tire", description: "13 inches" },
+  { id: "knee", severity: "medium", emoji: "🟨", label: "Knee", description: "19 inches" },
+  { id: "tires", severity: "high", emoji: "🟧", label: "Tires", description: "26 inches" },
+  { id: "waist", severity: "high", emoji: "🟧", label: "Waist", description: "37 inches" },
+  { id: "chest", severity: "high", emoji: "🟧", label: "Chest", description: "45 inches" },
+  { id: "neck", severity: "extreme", emoji: "🟥", label: "Neck & Above", description: "Danger" },
 ];
 
 
@@ -234,7 +222,10 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   // Form state
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
-  const [severity, setSeverity] = useState<Severity>("low");
+  const [visualOption, setVisualOption] = useState<ReportVisualOption>("gutter");
+  const [passableVehicles, setPassableVehicles] = useState<string[]>([]);
+  const [hiddenHazards, setHiddenHazards] = useState<"yes" | "no" | "unsure" | "">("");
+  const [showSurvey, setShowSurvey] = useState(false);
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isPublic, setIsPublic] = useState(false);
@@ -316,8 +307,8 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       error("Missing Information", "Please set both the Flood Start and Flood End locations.");
       return;
     }
-    if (!description.trim()) {
-      error("Missing Information", "Please add a description of the flood conditions.");
+    if (!passableVehicles.length || !hiddenHazards) {
+      error("Missing Information", "Please complete the Community Survey before submitting.");
       return;
     }
 
@@ -327,13 +318,24 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       const routeResult = await getRoute(floodStart.coords, floodEnd.coords, true);
       const roadGeometry = routeResult.routes[0]?.geometry;
 
-      // 2. Submit as multipart/form-data
+      // 2. Map visual option to backend severity
+      const selectedOption = VISUAL_OPTIONS.find((opt) => opt.id === visualOption);
+      const severity = selectedOption ? selectedOption.severity : "low";
+
+      // 3. Submit as multipart/form-data
       const formData = new FormData();
       formData.append("raw_text", description.trim());
       formData.append("source", "direct_user");
       formData.append("severity", severity);
       formData.append("is_public", isPublic.toString());
       formData.append("geometry", JSON.stringify(roadGeometry));
+      formData.append(
+        "survey_data",
+        JSON.stringify({
+          passable_vehicles: passableVehicles.length > 0 ? passableVehicles.join(", ") : null,
+          hidden_hazards: hiddenHazards,
+        })
+      );
       if (imageFile) {
         formData.append("image", imageFile);
       }
@@ -345,7 +347,9 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       setFloodEnd(null);
       setStartInput("");
       setEndInput("");
-      setSeverity("low");
+      setVisualOption("gutter");
+      setPassableVehicles([]);
+      setHiddenHazards("");
       setDescription("");
       setImageFile(null);
       setIsPublic(false);
@@ -359,7 +363,8 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
     }
   };
 
-  const canSubmit = !!floodStart && !!floodEnd && description.trim().length > 0 && !isSubmitting;
+  const isSurveyComplete = passableVehicles.length > 0 && hiddenHazards !== "";
+  const canSubmit = !!floodStart && !!floodEnd && description.trim().length > 0 && isSurveyComplete && !isSubmitting;
 
   // ── Mobile map-pick overlay ────────────────────────────────────────────────
   if (isMobile && isPickingOnMap && (activePoint === "flood_start" || activePoint === "flood_end")) {
@@ -392,7 +397,9 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
   // ── Shared form body ───────────────────────────────────────────────────────
   const showClear = step === 1 
     ? (floodStart || floodEnd) 
-    : (description.trim() !== "" || imageFile !== null || severity !== "low" || isPublic);
+    : showSurvey
+      ? (passableVehicles.length > 0 || hiddenHazards !== "")
+      : (description.trim() !== "" || imageFile !== null || visualOption !== "gutter" || isPublic || passableVehicles.length > 0 || hiddenHazards !== "");
 
   const clearButton =
     showClear ? (
@@ -407,10 +414,17 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             setFloodStartLabel("");
             setFloodEndLabel("");
           } else {
-            setSeverity("low");
-            setDescription("");
-            setImageFile(null);
-            setIsPublic(false);
+            if (showSurvey) {
+              setPassableVehicles([]);
+              setHiddenHazards("");
+            } else {
+              setVisualOption("gutter");
+              setPassableVehicles([]);
+              setHiddenHazards("");
+              setDescription("");
+              setImageFile(null);
+              setIsPublic(false);
+            }
           }
         }}
         className="text-[11px] font-medium text-gray-500 hover:text-red-600 transition-colors px-2 py-1 mr-1"
@@ -469,6 +483,33 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             onClear={() => { setFloodEnd(null); setEndInput(""); setFloodEndLabel(""); }}
           />
 
+          {/* Severity selector */}
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-gray-800 block mb-1.5">
+              Flood Severity <span className="text-red-500 ml-0.5">*</span>
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {VISUAL_OPTIONS.map((opt) => {
+                const colors = SEVERITY_COLORS[opt.severity];
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setVisualOption(opt.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
+                      visualOption === opt.id ? colors.active : colors.pill
+                    )}
+                  >
+                    <span className="text-base">{opt.emoji}</span>
+                    <span>{opt.label}</span>
+                    <span className="font-normal text-[10px] opacity-75">{opt.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Info Card */}
           <div className="bg-orange-50/70 border border-orange-100/50 rounded-xl p-3 text-[11px] leading-relaxed text-orange-950 space-y-1 shadow-sm">
             <div className="flex items-center gap-1.5 font-bold text-orange-800 mb-0.5">
@@ -496,36 +537,34 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
         </div>
       )}
 
-      {step === 2 && (
+      {step === 2 && !showSurvey && (
         <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
-          {/* Severity selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Flood Severity
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {SEVERITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setSeverity(opt.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-xs font-semibold transition-all",
-                    severity === opt.value ? opt.colors.active : opt.colors.pill
-                  )}
-                >
-                  <span className="text-base">{opt.emoji}</span>
-                  <span>{opt.label}</span>
-                  <span className="font-normal text-[10px] opacity-75">{opt.description}</span>
-                </button>
-              ))}
+          {/* Survey link */}
+          <div className="py-2 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                Community Survey <span className="text-red-500">*</span>
+                {isSurveyComplete && (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                )}
+              </span>
+              <span className="text-[11px] text-gray-500">
+                {isSurveyComplete ? "Survey complete. Thank you!" : "Required to submit report"}
+              </span>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowSurvey(true)}
+              className="text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors"
+            >
+              Take Survey
+            </button>
           </div>
 
           {/* Image Upload */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Photo Evidence (Optional)
+            <label className="text-sm font-semibold text-gray-800 block mb-1.5">
+              Photo <span className="text-gray-400 font-normal ml-1">(Optional)</span>
             </label>
             {imageFile ? (
               <div className="relative rounded-md border border-gray-200 bg-gray-50 p-2 flex items-center justify-between">
@@ -561,8 +600,8 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Description
+            <label className="text-sm font-semibold text-gray-800 block mb-1.5">
+              Description <span className="text-red-500">*</span>
             </label>
             <textarea
               placeholder="Describe the flood conditions (e.g., impassable to motorcycles, water is moving fast)"
@@ -621,6 +660,101 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
               ) : (
                 "Submit Report"
               )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && showSurvey && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full">
+          {/* Survey Header */}
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+            <button
+              type="button"
+              onClick={() => setShowSurvey(false)}
+              className="p-1.5 -ml-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              title="Back to report"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h3 className="text-sm font-bold text-gray-800">Community Survey</h3>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-800 block mb-1.5">
+              Which vehicles can safely pass? <span className="text-red-500">*</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-2">Select all that apply.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                "Pedestrians",
+                "Bicycles / E-Bikes",
+                "Motorcycles",
+                "Sedans / Hatchbacks",
+                "SUVs / Pickups",
+                "Large Trucks / Buses",
+              ].map((vehicle) => {
+                const isChecked = passableVehicles.includes(vehicle);
+                return (
+                  <label
+                    key={vehicle}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-2 cursor-pointer transition-colors",
+                      isChecked ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:bg-gray-50"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setPassableVehicles((prev) => [...prev, vehicle]);
+                        } else {
+                          setPassableVehicles((prev) => prev.filter((v) => v !== vehicle));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-600 focus:ring-2"
+                    />
+                    <span className={cn("text-xs font-medium", isChecked ? "text-orange-900" : "text-gray-700")}>
+                      {vehicle}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-800 flex items-center justify-between">
+              <span>Are there hidden hazards? <span className="text-red-500 ml-0.5">*</span></span>
+            </label>
+            <p className="text-xs text-gray-500 mb-2">E.g., open manholes, large debris underwater.</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "yes", label: "Yes", activeClass: "bg-red-50 border-red-300 text-red-700" },
+                { value: "no", label: "No", activeClass: "bg-green-50 border-green-300 text-green-700" },
+                { value: "unsure", label: "Unsure", activeClass: "bg-gray-100 border-gray-300 text-gray-700" }
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setHiddenHazards(opt.value as any)}
+                  className={cn(
+                    "rounded-md border py-2 text-sm font-medium transition-colors",
+                    hiddenHazards === opt.value
+                      ? opt.activeClass
+                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto">
+            <Button type="button" onClick={() => setShowSurvey(false)} className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold">
+              Done & Return
             </Button>
           </div>
         </div>

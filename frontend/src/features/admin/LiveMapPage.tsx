@@ -159,6 +159,7 @@ export default function LiveMapPage() {
         severity: severity.toUpperCase(),
         color: color,
         created_at: new Date(zone.created_at).toLocaleString(),
+        approved_at: zone.approved_at ? new Date(zone.approved_at).toLocaleString() : "Pending",
         expires_at: zone.expires_at ? new Date(zone.expires_at).toLocaleString() : "Never",
       };
 
@@ -254,7 +255,8 @@ export default function LiveMapPage() {
               </span>
             </div>
             <p style="font-size: 11px; margin: 2px 0;"><strong>Linked Report:</strong> #${properties.report_id}</p>
-            <p style="font-size: 11px; margin: 2px 0;"><strong>Created At:</strong> ${properties.created_at}</p>
+            <p style="font-size: 11px; margin: 2px 0;"><strong>Reported At:</strong> ${properties.created_at}</p>
+            <p style="font-size: 11px; margin: 2px 0;"><strong>Approved At:</strong> ${properties.approved_at}</p>
             <p style="font-size: 11px; margin: 2px 0;"><strong>Expires At:</strong> ${properties.expires_at}</p>
           </div>
         `)
