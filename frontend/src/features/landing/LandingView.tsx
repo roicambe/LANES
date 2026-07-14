@@ -116,6 +116,7 @@ export default function LandingView() {
                 <a
                   href="/about"
                   className="text-blue-600 font-semibold hover:underline flex items-center h-8"
+                  aria-label="Learn more about LANES"
                 >
                   {typedText}
                   <ArrowRight className="inline-block w-4 h-4 ml-1" />
@@ -136,7 +137,7 @@ export default function LandingView() {
 
             {/* Right column: Start Your Journey card */}
             <div className="w-full lg:max-w-md">
-              <Card className="w-full border border-gray-100 overflow-visible rounded-2xl bg-white/95 backdrop-blur-xl shadow-sm">
+              <Card className="w-full border border-slate-300 overflow-visible rounded-2xl bg-slate-100/95 backdrop-blur-xl shadow-md">
                 <CardHeader className="text-center pb-2 pt-6">
                   <CardTitle className="text-xl font-bold text-gray-900">Start Your Journey</CardTitle>
                 </CardHeader>

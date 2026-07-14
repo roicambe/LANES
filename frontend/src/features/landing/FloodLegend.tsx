@@ -18,7 +18,7 @@ export function FloodLegend() {
           <div className="flex items-center gap-2 mb-1.5">
             <div className="w-3.5 h-3.5 rounded-full border border-gray-300 bg-white shrink-0 shadow-sm"></div>
             <span className="font-semibold text-gray-900 text-sm">White</span>
-            <span className="text-xs text-gray-500 font-medium ml-auto px-2 py-0.5 bg-gray-100 rounded-md">Ankle Deep</span>
+            <span className="text-xs text-gray-700 font-medium ml-auto px-2 py-0.5 bg-gray-100 rounded-md">Ankle Deep</span>
           </div>
           <p className="text-xs text-gray-600 leading-snug">
             Passable by all vehicles, motorcycles, and pedestrians.
@@ -30,9 +30,9 @@ export function FloodLegend() {
           <div className="flex items-center gap-2 mb-1.5">
             <div className="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0 shadow-sm"></div>
             <span className="font-semibold text-yellow-900 text-sm">Yellow</span>
-            <span className="text-xs text-yellow-700 font-medium ml-auto px-2 py-0.5 bg-yellow-100 rounded-md">Knee Deep</span>
+            <span className="text-xs text-yellow-900 font-medium ml-auto px-2 py-0.5 bg-yellow-100 rounded-md">Knee Deep</span>
           </div>
-          <p className="text-xs text-yellow-800/80 leading-snug">
+          <p className="text-xs text-yellow-900/90 leading-snug">
             Passable by 4-Wheel High Clearance (SUVs) & Low Clearance (Sedans).
           </p>
         </div>
@@ -42,9 +42,9 @@ export function FloodLegend() {
           <div className="flex items-center gap-2 mb-1.5">
             <div className="w-3.5 h-3.5 rounded-full bg-orange-500 shrink-0 shadow-sm"></div>
             <span className="font-semibold text-orange-900 text-sm">Orange</span>
-            <span className="text-xs text-orange-700 font-medium ml-auto px-2 py-0.5 bg-orange-100 rounded-md">Waist to Chest</span>
+            <span className="text-xs text-orange-900 font-medium ml-auto px-2 py-0.5 bg-orange-100 rounded-md">Waist to Chest</span>
           </div>
-          <p className="text-xs text-orange-800/80 leading-snug">
+          <p className="text-xs text-orange-900/90 leading-snug">
             Only passable by 4-Wheel High Clearance (SUVs, Pickups).
           </p>
         </div>

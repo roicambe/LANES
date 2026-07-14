@@ -44,7 +44,7 @@ export function HomeStats() {
         <span className="text-3xl font-bold text-white">
           {loading ? "..." : stats.daily_verified_reports}
         </span>
-        <span className="text-xs font-medium text-blue-200 mt-1">Floods Today</span>
+        <span className="text-xs font-medium text-white mt-1">Floods Today</span>
       </div>
 
       <div className="h-16 w-px bg-blue-400/50"></div>
@@ -57,7 +57,7 @@ export function HomeStats() {
         <span className="text-3xl font-bold text-white">
           {loading ? "..." : stats.total_visitors.toLocaleString()}
         </span>
-        <span className="text-xs font-medium text-blue-200 mt-1">Site Visitors</span>
+        <span className="text-xs font-medium text-white mt-1">Site Visitors</span>
       </div>
     </div>
   );
