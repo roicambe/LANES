@@ -45,6 +45,9 @@
 - [x] Fix View on Map button for LineString geometries
 - [x] Add placeholder alert for Reply/Comment button
 - [x] Add explicit error handling for Upvote/Downvote mutation
+- [x] Restructured Flood Report Survey with 3NF database normalization (Checkbox UI and Inline Panel integration)
+- [x] Implemented custom animated and static Wave Dividers on the Landing Page for immersive UI flow
+- [x] Refined UX/UI on "Use Current Location" button to maximize visibility
 
 ## Backlog
 

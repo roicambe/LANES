@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/apiClient";
 
 interface WeatherData {
   temp: number | string;
+  feels_like: number | string;
   condition: string;
   icon: string;
   location: string;
@@ -51,9 +52,15 @@ export function WeatherWidget() {
 
   return (
     <div className="p-2 flex flex-col justify-center h-full items-center text-center">
-      <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider mb-2">
-        Weather ({weather.location})
-      </p>
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
+          Weather
+        </p>
+        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/30 border border-blue-400/30">
+          <MapPin className="w-3 h-3 text-blue-100" />
+          <span className="text-[10px] font-bold text-white tracking-wide uppercase">{weather.location}</span>
+        </div>
+      </div>
       <div className="flex items-center gap-3">
         <img
           src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
@@ -62,7 +69,7 @@ export function WeatherWidget() {
         />
         <div className="text-left">
           <span className="text-3xl font-bold text-white tracking-tight">{weather.temp}°C</span>
-          <p className="text-sm text-blue-100 capitalize mt-0.5">{weather.condition}</p>
+          <p className="text-sm text-blue-100 mt-0.5">Feels like {weather.feels_like}°C</p>
         </div>
       </div>
     </div>

@@ -21,6 +21,20 @@ This document serves as the central technical reference for all currently implem
 
 ---
 
+### 2. Structured Flood Incident Survey (3NF Normalized)
+*   **Purpose:** Collects precise, structured data about flood scenarios directly from users on the ground, bypassing NLP for explicit facts.
+*   **What it does:** Allows a user to rapidly fill out a categorical survey (e.g., Hidden hazards, Passable vehicle types, Receding status) via a streamlined inline panel interface.
+*   **How it works:** 
+    1. Replaces standard text fields with responsive UI checkboxes and toggle groups within the `FloodReportPanel`.
+    2. Payload is sent alongside the standard incident report data.
+    3. The backend maps the survey to a dedicated `flood_report_surveys` table holding a strict foreign key to the root report, ensuring full Third Normal Form (3NF) relational integrity.
+*   **Access & Roles:** Public users can submit surveys; DRRM officers review them.
+*   **Related Components:**
+    *   **Frontend:** [FloodReportPanel.tsx](file:///e:/Files/Documents/GitHub/LANES/frontend/src/features/hazards/FloodReportPanel.tsx) (survey state & UI).
+    *   **Backend:** [report.py](file:///e:/Files/Documents/GitHub/LANES/backend/app/models/report.py) (SQLAlchemy schemas), `POST /api/v1/reports` endpoint.
+
+---
+
 ### 2. Citizen Account Registration & Onboarding
 *   **Purpose:** Allows users to create a verified account for accurate reporting, profile management, and personalization while keeping bad actors out.
 *   **What it does:** Provides a multi-step registration wizard encompassing personal information, demographic geography via PSGC API, complex password requirements, and One-Time Password (OTP) email verification.

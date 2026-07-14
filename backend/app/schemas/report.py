@@ -14,7 +14,17 @@ from app.schemas.common import (
 )
 
 
-from app.models.report import ReportSource, ReportSeverity, ReportStatus
+from app.models.report import ReportSource, ReportSeverity, ReportStatus, HazardPresence
+
+class SurveyData(BaseModel):
+    passable_vehicles: Optional[str] = None
+    hidden_hazards: HazardPresence = HazardPresence.UNSURE
+
+class SurveyDataResponse(SurveyData):
+    id: int
+    report_id: int
+    model_config = ConfigDict(from_attributes=True)
+
 
 class FloodReportBase(BaseModel):
     raw_text: str
@@ -28,6 +38,7 @@ class FloodReportCreate(FloodReportBase):
     geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
     image_url: Optional[str] = None
     user_id: Optional[int] = None
+    survey_data: Optional[SurveyData] = None
 
 
 class FloodReportResponse(FloodReportBase):
@@ -37,6 +48,8 @@ class FloodReportResponse(FloodReportBase):
     image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    approved_at: Optional[datetime] = None
+    survey: Optional[SurveyDataResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 

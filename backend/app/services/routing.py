@@ -83,14 +83,22 @@ def get_active_flood_polygons(db: Session) -> Tuple[List[List[List[float]]], Lis
                 
     return red_polygons, orange_polygons, yellow_polygons
 
-def request_valhalla_route(start: List[float], end: List[float], avoid_polygons: Optional[List[List[List[float]]]] = None) -> Optional[Dict[str, Any]]:
+def request_valhalla_route(start: List[float], end: List[float], avoid_polygons: Optional[List[List[List[float]]]] = None, vehicle_profile: str = "light") -> Optional[Dict[str, Any]]:
     """Queries the Valhalla server for routes between start and end coordinates, optionally avoiding polygons."""
+    
+    # Map our vehicle profiles to Valhalla's native costing models
+    costing = "auto"
+    if vehicle_profile == "motorcycle":
+        costing = "motorcycle"
+    elif vehicle_profile == "walk":
+        costing = "pedestrian"
+        
     body: Dict[str, Any] = {
         "locations": [
             {"lat": start[1], "lon": start[0]},
             {"lat": end[1], "lon": end[0]}
         ],
-        "costing": "auto",
+        "costing": costing,
         "alternates": 2,
         "units": "kilometers"
     }
@@ -117,7 +125,13 @@ def request_valhalla_route(start: List[float], end: List[float], avoid_polygons:
             detail=f"Failed to communicate with Valhalla routing server: {exc}"
         )
 
-def process_valhalla_response(data: Dict[str, Any], avoided_floods: bool = False, blocked: bool = False) -> List[Dict[str, Any]]:
+def process_valhalla_response(
+    data: Dict[str, Any], 
+    avoided_floods: bool = False, 
+    blocked: bool = False,
+    safety_score: float = 100.0,
+    flood_risk: str = "none"
+) -> List[Dict[str, Any]]:
     """Converts a Valhalla route response into our MultiRouteResponse candidate list."""
     if not data or "trip" not in data:
         return []
@@ -151,7 +165,9 @@ def process_valhalla_response(data: Dict[str, Any], avoided_floods: bool = False
             "duration": duration_s,
             "avoided_floods": avoided_floods,
             "blocked": blocked,
-            "is_truncated": False # Valhalla generates native alternates, so we don't need distance heuristics
+            "is_truncated": False, # Valhalla generates native alternates, so we don't need distance heuristics
+            "safety_score": safety_score,
+            "flood_risk": flood_risk
         }
         
     primary = extract_route(data["trip"], 0)
@@ -170,16 +186,17 @@ def calculate_flood_safe_route(
     db: Session,
     start: List[float],
     end: List[float],
-    ignore_floods: bool = False
+    ignore_floods: bool = False,
+    vehicle_profile: str = "light"
 ) -> Dict[str, Any]:
-    """Queries Valhalla to find a route, intelligently falling back on flood avoidance rules."""
+    """Queries Valhalla to find a route, intelligently falling back on flood avoidance rules based on vehicle profile."""
     
     # 1. Fast path: completely ignore all floods
     if ignore_floods:
-        data = request_valhalla_route(start, end)
+        data = request_valhalla_route(start, end, vehicle_profile=vehicle_profile)
         if not data:
             raise HTTPException(status_code=404, detail="No route options found by the pathfinding engine.")
-        candidates = process_valhalla_response(data, avoided_floods=False, blocked=False)
+        candidates = process_valhalla_response(data, avoided_floods=False, blocked=False, safety_score=100.0, flood_risk="none")
         return {
             "routes": candidates,
             "recommended_index": 0
@@ -197,19 +214,30 @@ def calculate_flood_safe_route(
     red_only = red
     
     # Pre-calculate the direct route bypassing ONLY RED floods (meaning it will pass through Yellow/Orange)
+    # This is our ultimate fallback if the safest detours are too far or non-existent
     direct_primary = None
     if orange or yellow:
-        data_direct = request_valhalla_route(start, end, avoid_polygons=red_only)
+        data_direct = request_valhalla_route(start, end, avoid_polygons=red_only, vehicle_profile=vehicle_profile)
         if data_direct:
-            direct_candidates = process_valhalla_response(data_direct, avoided_floods=(len(red_only) > 0), blocked=True)
+            # If we avoid red only, we might pass through Orange (risk high, safety 50) or Yellow (risk medium, safety 80).
+            # For simplicity of the direct fallback, we assume the worst un-avoided flood is Orange if orange exists, else Yellow.
+            worst_risk = "high" if orange else "medium"
+            worst_safety = 50.0 if orange else 80.0
+            direct_candidates = process_valhalla_response(
+                data_direct, avoided_floods=(len(red_only) > 0), blocked=True, 
+                safety_score=worst_safety, flood_risk=worst_risk
+            )
             if direct_candidates:
                 direct_primary = direct_candidates[0]
                 direct_primary["label"] = "Direct (Flooded)"
                 direct_primary["index"] = 0
 
     # Helper function to inject the direct flooded route if it differs from the safe detour
-    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str) -> Optional[Dict[str, Any]]:
-        safe_candidates = process_valhalla_response(safe_data, avoided_floods=True, blocked=is_blocked)
+    def build_response(safe_data: Dict[str, Any], is_blocked: bool, detour_label: str, safety_score: float, flood_risk: str) -> Optional[Dict[str, Any]]:
+        safe_candidates = process_valhalla_response(
+            safe_data, avoided_floods=True, blocked=is_blocked, 
+            safety_score=safety_score, flood_risk=flood_risk
+        )
         if not safe_candidates:
             return None
             
@@ -232,25 +260,34 @@ def calculate_flood_safe_route(
         return {"routes": final_candidates, "recommended_index": 0}
 
     # Attempt 1: Avoid EVERYTHING (Red, Orange, Yellow)
+    # This gives a 100% safe route if available.
     if all_floods:
-        data = request_valhalla_route(start, end, avoid_polygons=all_floods)
+        data = request_valhalla_route(start, end, avoid_polygons=all_floods, vehicle_profile=vehicle_profile)
         if data:
-            res = build_response(data, is_blocked=False, detour_label="Safe Detour")
+            res = build_response(data, is_blocked=False, detour_label="Safe Detour", safety_score=100.0, flood_risk="none")
             if res: return res
             
-    # Attempt 2: Trapped! Try avoiding only Red and Orange
+    # Attempt 2: Avoid Red and Orange (passes through Yellow)
+    # For Low Clearance and 2-Wheel, this is the limit. For High Clearance, it's preferred over Orange.
     if red_orange_floods:
-        data = request_valhalla_route(start, end, avoid_polygons=red_orange_floods)
+        data = request_valhalla_route(start, end, avoid_polygons=red_orange_floods, vehicle_profile=vehicle_profile)
         if data:
             # is_blocked=True because it passes through yellow
-            res = build_response(data, is_blocked=True, detour_label="Best Detour")
+            res = build_response(data, is_blocked=True, detour_label="Best Detour", safety_score=80.0, flood_risk="medium")
             if res: return res
             
-    # Attempt 3: Still Trapped! Try avoiding ONLY Red (or completely straight if no red)
-    data = request_valhalla_route(start, end, avoid_polygons=red_only)
+    # Attempt 3: Trapped! Try avoiding ONLY Red.
+    # High Clearance vehicles are allowed to brave this. Low Clearance/2-Wheel/Pedestrian can try but will be heavily penalized.
+    data = request_valhalla_route(start, end, avoid_polygons=red_only, vehicle_profile=vehicle_profile)
     if not data:
         raise HTTPException(status_code=404, detail="Destination unreachable.")
         
     is_blocked = len(all_floods) > 0
-    candidates = process_valhalla_response(data, avoided_floods=(len(red_only) > 0), blocked=is_blocked)
+    worst_risk = "high" if orange else ("medium" if yellow else "none")
+    worst_safety = 50.0 if orange else (80.0 if yellow else 100.0)
+    
+    candidates = process_valhalla_response(
+        data, avoided_floods=(len(red_only) > 0), blocked=is_blocked, 
+        safety_score=worst_safety, flood_risk=worst_risk
+    )
     return {"routes": candidates, "recommended_index": 0}

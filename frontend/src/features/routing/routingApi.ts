@@ -14,6 +14,8 @@ export interface RouteOption {
   avoided_floods: boolean;
   blocked: boolean;
   is_truncated: boolean;
+  safety_score: number;
+  flood_risk: string;
 }
 
 export interface MultiRouteResponse {
@@ -33,11 +35,13 @@ export interface RouteResult {
 export async function getRoute(
   start: [number, number],
   end: [number, number],
-  ignoreFloods: boolean = false
+  ignoreFloods: boolean = false,
+  vehicleProfile: "light" | "heavy" | "motorcycle" | "walk" = "light"
 ): Promise<MultiRouteResponse> {
   return apiClient.post<MultiRouteResponse>("/reports/route", {
     start,
     end,
     ignore_floods: ignoreFloods,
+    vehicle_profile: vehicleProfile
   });
 }

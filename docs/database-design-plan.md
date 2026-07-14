@@ -128,6 +128,13 @@ erDiagram
         datetime created_at "UTC action timestamp"
     }
 
+    flood_report_surveys {
+        int id PK "Unique survey identifier"
+        int report_id FK "Cascade reference to flood_reports (UNIQUE)"
+        string passable_vehicles "Open text for vehicle types"
+        string hidden_hazards "yes, no, unsure"
+    }
+
     roles ||--o{ users : "assigns"
     users ||--o| profiles : "has"
     profiles ||--o| addresses : "has"
@@ -140,6 +147,7 @@ erDiagram
     flood_reports ||--o{ flood_avoidance_zones : "generates"
     flood_reports ||--o{ post_interactions : "receives"
     flood_reports ||--o{ comments : "receives"
+    flood_reports ||--o| flood_report_surveys : "contains"
 ```
 
 ---
@@ -303,14 +311,24 @@ erDiagram
 | `last_updated_by` | `INTEGER` | Foreign Key (SET NULL) | Admin who updated it last. |
 | `updated_at` | `TIMESTAMP` | On Update | Timestamp. |
 
+### Table M: `flood_report_surveys`
+**Description:** Stores structured survey data attached to flood reports regarding vehicle passability and hidden hazards.
+
+| Attribute | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | Primary Key | Survey ID. |
+| `report_id` | `INTEGER` | Foreign Key (CASCADE), UNIQUE, Index | One-to-one mapping to the associated report. |
+| `passable_vehicles` | `VARCHAR(500)` | Nullable | Open text response indicating which vehicles can pass. |
+| `hidden_hazards` | `ENUM` | NOT NULL | Indicator of hidden hazards ('yes', 'no', 'unsure'). |
+
 ---
 
 ## 3. Referential Integrity & Deletion Rules
 
 When designing relational schemas, handling deletion cascades is critical to preventing orphaned rows and data loss:
 
-1. **`ON DELETE CASCADE` (Used for Locations, Detours, Comments, Interactions, Profiles, Addresses):**
-   * If a `flood_report` is deleted, its child zones (`flood_avoidance_zones`), locations, comments, and interactions are automatically deleted. This prevents orphaned rows.
+1. **`ON DELETE CASCADE` (Used for Locations, Surveys, Detours, Comments, Interactions, Profiles, Addresses):**
+   * If a `flood_report` is deleted, its child zones (`flood_avoidance_zones`), locations, surveys, comments, and interactions are automatically deleted. This prevents orphaned rows.
    * If a `user` is deleted, their `profile` and `address` cascade drop.
 2. **`ON DELETE SET NULL` (Used for Audit Logs, Report Authors, Settings):**
    * If an administrator or user account is deleted, the user_id fields in reports, settings, or audit logs are set to `NULL`. **The core data is preserved.**

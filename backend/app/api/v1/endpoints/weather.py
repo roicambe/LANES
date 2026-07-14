@@ -1,3 +1,4 @@
+# Triggers uvicorn reload
 from typing import Any, Optional, List
 from fastapi import APIRouter, HTTPException, Query
 import httpx
@@ -25,6 +26,7 @@ async def get_current_weather(
     if not settings.OPENWEATHERMAP_API_KEY:
         return {
             "temp": 30.5,
+            "feels_like": 35.0,
             "condition": "Cloudy",
             "icon": "04d",
             "location": "Pasig"
@@ -52,6 +54,7 @@ async def get_current_weather(
             
             parsed_data = {
                 "temp": round(data["main"]["temp"], 1),
+                "feels_like": round(data["main"]["feels_like"], 1),
                 "condition": data["weather"][0]["main"],
                 "icon": data["weather"][0]["icon"],
                 "location": data["name"]
@@ -67,6 +70,7 @@ async def get_current_weather(
         except httpx.HTTPError:
             return {
                 "temp": "--",
+                "feels_like": "--",
                 "condition": "Unavailable",
                 "icon": "03d",
                 "location": "Unknown"
@@ -86,7 +90,7 @@ async def get_forecast(
     """
     if not settings.OPENWEATHERMAP_API_KEY:
         # Fallback mock data for development
-        return {"forecast": []}
+        return {"forecast": [], "location": "Pasig"}
 
     cache_key = f"fc_{round(lat, 2)},{round(lon, 2)}_{count}"
 
@@ -120,7 +124,10 @@ async def get_forecast(
                     "icon": item["weather"][0]["icon"],
                 })
 
-            parsed_data = {"forecast": slots}
+            parsed_data = {
+                "forecast": slots,
+                "location": data.get("city", {}).get("name", "Unknown")
+            }
 
             forecast_cache[cache_key] = {
                 "data": parsed_data,
@@ -130,4 +137,4 @@ async def get_forecast(
             return parsed_data
 
         except httpx.HTTPError:
-            return {"forecast": []}
+            return {"forecast": [], "location": "Unknown"}

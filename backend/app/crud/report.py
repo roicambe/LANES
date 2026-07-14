@@ -49,6 +49,17 @@ def create_flood_report(db: Session, report: schemas.FloodReportCreate) -> model
     db.add(db_report)
     db.commit()
     db.refresh(db_report)
+    
+    if report.survey_data:
+        db_survey = models.FloodReportSurvey(
+            report_id=db_report.id,
+            passable_vehicles=report.survey_data.passable_vehicles,
+            hidden_hazards=report.survey_data.hidden_hazards
+        )
+        db.add(db_survey)
+        db.commit()
+        db.refresh(db_report) # refresh to get the relationship
+
     return db_report
 
 

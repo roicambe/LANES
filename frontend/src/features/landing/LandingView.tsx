@@ -150,7 +150,7 @@ export default function LandingView() {
                       <Button
                         type="button"
                         variant="secondary"
-                        className="w-full justify-center bg-blue-50 text-blue-700 hover:bg-blue-100 py-5 rounded-xl border-0"
+                        className="w-full justify-center bg-blue-100 text-blue-800 hover:bg-blue-200 py-5 rounded-xl border border-blue-300 font-bold shadow-sm transition-all"
                         onClick={handleUseCurrentLocation}
                         disabled={isLoading}
                       >
@@ -232,7 +232,7 @@ export default function LandingView() {
 
         {/* Wave Divider 1 */}
         <div className="w-full overflow-hidden leading-none -mt-px text-blue-600 bg-white mt-auto shrink-0 flex">
-          <svg viewBox="0 0 2400 60" preserveAspectRatio="none" className="relative block w-[200%] h-[40px] md:h-[60px] fill-current animate-wave-top shrink-0">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="relative block w-[200%] h-[100px] fill-current animate-wave-top shrink-0">
             <path d="M0,30 C150,60 450,0 600,30 C750,60 1050,0 1200,30 C1350,60 1650,0 1800,30 C1950,60 2250,0 2400,30 V60 H0 Z"></path>
           </svg>
         </div>
@@ -254,14 +254,14 @@ export default function LandingView() {
 
         {/* Wave Divider 2 */}
         <div className="w-full overflow-hidden leading-none -mb-px text-blue-600 bg-white shrink-0 flex">
-          <svg viewBox="0 0 2400 60" preserveAspectRatio="none" className="relative block w-[200%] h-[40px] md:h-[60px] fill-current animate-wave-bottom shrink-0">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="relative block w-[200%] h-[100px] fill-current animate-wave-bottom shrink-0">
             <path d="M0,30 C150,0 450,60 600,30 C750,0 1050,60 1200,30 C1350,0 1650,60 1800,30 C1950,0 2250,60 2400,30 V0 H0 Z"></path>
           </svg>
         </div>
       </div>
 
       {/* ── SECTION 3: Weather Forecast ───────────────────────── */}
-      <section className="w-full bg-white py-12 border-b border-gray-50">
+      <section className="w-full bg-white py-12">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Weather Forecast</h2>
@@ -276,7 +276,14 @@ export default function LandingView() {
       </section>
 
       {/* ── SECTION 4: Flood Severity Legend ───────────────────────── */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-blue-50/80 to-white py-12 flex-grow" id="flood-legend-section">
+      <section className="relative w-full overflow-hidden bg-gradient-to-b from-blue-50/80 to-white pt-24 pb-12 flex-grow" id="flood-legend-section">
+        {/* Static Wave Divider */}
+        <div className="absolute top-0 left-0 w-full overflow-hidden leading-none text-white z-20">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="relative block w-full h-[100px] fill-current">
+            <path d="M0,30 C150,0 450,60 600,30 C750,0 1050,60 1200,30 C1350,0 1650,60 1800,30 C1950,0 2250,60 2400,30 V0 H0 Z"></path>
+          </svg>
+        </div>
+        
         {/* Parallax Background */}
         <div 
           className="absolute inset-0 z-0 opacity-10 bg-fixed mix-blend-multiply"

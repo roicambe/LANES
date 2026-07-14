@@ -28,6 +28,12 @@ class ReportStatus(str, enum.Enum):
     REJECTED = "rejected"
 
 
+class HazardPresence(str, enum.Enum):
+    YES = "yes"
+    NO = "no"
+    UNSURE = "unsure"
+
+
 class FloodReport(Base):
     """
     FloodReport model representing incoming Taglish flood feeds or manual user alerts.
@@ -62,6 +68,7 @@ class FloodReport(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
     avoidance_zones: Mapped[List["FloodAvoidanceZone"]] = relationship(
@@ -79,6 +86,12 @@ class FloodReport(Base):
         back_populates="report",
         cascade="all, delete-orphan"
     )
+    survey: Mapped[Optional["FloodReportSurvey"]] = relationship(
+        "FloodReportSurvey",
+        back_populates="report",
+        cascade="all, delete-orphan",
+        uselist=False
+    )
 
 
 class FloodReportLocation(Base):
@@ -93,6 +106,25 @@ class FloodReportLocation(Base):
 
     # Relationships
     report: Mapped["FloodReport"] = relationship("FloodReport", back_populates="locations")
+
+
+class FloodReportSurvey(Base):
+    """
+    FloodReportSurvey model storing the survey responses for a flood report.
+    """
+    __tablename__ = "flood_report_surveys"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    report_id: Mapped[int] = mapped_column(ForeignKey("flood_reports.id", ondelete="CASCADE"), index=True, unique=True)
+    
+    passable_vehicles: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    
+    hidden_hazards: Mapped[HazardPresence] = mapped_column(
+        Enum(HazardPresence, native_enum=False, length=50, values_callable=lambda x: [e.value for e in x]),
+        default=HazardPresence.UNSURE
+    )
+
+    report: Mapped["FloodReport"] = relationship("FloodReport", back_populates="survey")
 
 
 class FloodAvoidanceZone(Base):
