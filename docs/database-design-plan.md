@@ -10,7 +10,7 @@ This document details the normalized, secure database architecture designed for 
 erDiagram
     roles {
         int id PK "Auto-incrementing surrogate identifier"
-        string name UNIQUE "Role name"
+        string name UK "Role name"
         jsonb permissions "JSON permissions matrix"
         boolean is_template "Template toggle"
         datetime created_at "UTC timestamp"
@@ -18,8 +18,8 @@ erDiagram
 
     users {
         int id PK "Auto-incrementing surrogate identifier"
-        string username UNIQUE "Admin/User identity handle"
-        string email UNIQUE "Electronic mail address"
+        string username UK "Admin/User identity handle"
+        string email UK "Electronic mail address"
         string hashed_password "Salter bcrypt password hash"
         int role_id FK "Reference to roles"
         boolean is_active "Soft deactivation toggle"
