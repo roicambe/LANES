@@ -104,6 +104,19 @@ export default function LiveMapPage() {
       }
     });
 
+    // Suppress missing image warnings from MapTiler styles by providing a transparent 1x1 pixel
+    mapInstance.on("styleimagemissing", (e) => {
+      const id = e.id;
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const imageData = ctx.getImageData(0, 0, 1, 1);
+        mapInstance.addImage(id, imageData);
+      }
+    });
+
     mapInstance.on("load", () => {
       clearTimeout(fallbackTimeout);
       mapRef.current = mapInstance;

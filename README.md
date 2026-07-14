@@ -81,9 +81,9 @@ docker-compose up -d
    *(Note: If you are pulling new code on a computer that already has an existing LANES database, run `alembic stamp head` instead to sync the history).*
 6. Start the development server:
    ```bash
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
-   *The backend server runs at `http://localhost:8000`.*
+   *The backend server runs at `http://localhost:8000` (and is accessible via your network IP).*
 
 ---
 
@@ -104,7 +104,7 @@ docker-compose up -d
 ### 📅 Your Daily Workflow
 Since Step 1 is a one-time setup, your daily development routine is just:
 1. Turn on background services: `docker-compose up -d`
-2. Start the backend: `cd backend` -> Activate `venv` -> `uvicorn app.main:app --reload`
+2. Start the backend: `cd backend` -> Activate `venv` -> `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
 3. Start the frontend: `cd frontend` -> `npm run dev`
 
 ---

@@ -14,6 +14,12 @@ const getWsUrl = (): string => {
     return `${protocol}//${url.host}/api/v1/ws`;
   }
   
+  // If we are running locally on port 3000, bypass the Next.js proxy
+  // and connect directly to the backend on port 8000.
+  if (window.location.port === "3000") {
+    return `${protocol}//${window.location.hostname}:8000/api/v1/ws`;
+  }
+  
   // Connect to the Next.js frontend host, which will proxy to the backend via rewrites
   return `${protocol}//${window.location.host}/api/v1/ws`;
 };
