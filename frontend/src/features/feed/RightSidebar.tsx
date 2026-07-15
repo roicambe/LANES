@@ -66,32 +66,47 @@ function LeaderboardSkeleton() {
   );
 }
 
+import { useWeather } from '@/hooks/useWeather';
+
 export function RightSidebar() {
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['top-reporters'],
     queryFn: () => getTopReporters(5),
-    staleTime: 60_000,   // cache for 1 min — leaderboard doesn't need real-time
+    staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 
+  const { data: weather, isLoading: weatherLoading } = useWeather();
+
   return (
-    <aside className="w-80 flex-shrink-0 flex flex-col h-[calc(100vh-5rem)] sticky top-20 overflow-y-auto hidden lg:flex px-6 py-6 space-y-6">
+    <aside className="w-80 flex-shrink-0 flex flex-col h-[calc(100vh-86px)] sticky top-[86px] overflow-y-auto hidden lg:flex px-6 py-6 space-y-6">
       
       {/* Weather Widget */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <CloudRain className="w-5 h-5 text-blue-500" />
-          <h3 className="font-semibold text-gray-900">Weather Alerts</h3>
+          <h3 className="font-semibold text-gray-900">Current Weather</h3>
         </div>
         <div className="space-y-3">
-          <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
-            <p className="text-sm font-medium text-blue-900">Light Rain Expected</p>
-            <p className="text-xs text-blue-700 mt-1">Starting around 4:00 PM in your area. Low flood risk currently.</p>
-          </div>
+          {weatherLoading ? (
+            <div className="h-16 bg-gray-100 animate-pulse rounded-xl" />
+          ) : weather && weather.temp !== "--" ? (
+            <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900 capitalize">{weather.condition}</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  {weather.location} • {weather.temp}°C
+                </p>
+              </div>
+              <img
+                src={`https://openweathermap.org/img/wn/${weather.icon}.png`}
+                alt={weather.condition}
+                className="w-10 h-10 object-contain drop-shadow-sm"
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500">Weather unavailable</p>
+          )}
         </div>
       </div>
 
