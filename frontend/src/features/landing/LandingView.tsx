@@ -83,21 +83,23 @@ export default function LandingView() {
   };
 
   return (
-    <div className="flex-1 bg-white flex flex-col min-h-screen">
+    <div className="flex-1 bg-blue-50 flex flex-col min-h-screen relative z-0">
       
+      {/* Global Parallax Background */}
+      <div 
+        className="fixed inset-0 -z-10 opacity-[0.15] pointer-events-none"
+        style={{
+          backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%232563eb\" fill-opacity=\"1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"
+        }}
+      />
+
       {/* ── ABOVE THE FOLD WRAPPER (Sections 1 & 2) ── */}
       <div className="flex flex-col min-h-[100svh] w-full">
         
         {/* ── SECTION 1: Hero & Journey ─────────────────────────────────────────────── */}
-        <section className="relative w-full flex-grow flex flex-col justify-center pt-6 sm:pt-[76px] pb-4 overflow-hidden bg-gradient-to-b from-blue-50/80 to-white">
-          {/* Parallax Background */}
-          <div 
-            className="absolute inset-0 z-0 opacity-10 bg-fixed mix-blend-multiply"
-            style={{
-              backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%231e3a8a\" fill-opacity=\"1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
-            }}
-          />
+        <section className="relative w-full flex-grow flex flex-col justify-center pt-6 pb-[100px] overflow-hidden bg-transparent">
           
+
           <div className="relative z-10 max-w-7xl w-full mx-auto px-6 md:px-12 flex flex-col lg:flex-row items-center lg:items-start gap-8 lg:gap-12">
             
             {/* Left column: Hero */}
@@ -228,14 +230,14 @@ export default function LandingView() {
               </Card>
             </div>
           </div>
-        </section>
 
-        {/* Wave Divider 1 */}
-        <div className="w-full overflow-hidden leading-none -mt-px text-blue-600 bg-white mt-auto shrink-0 flex">
-          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="relative block w-[200%] h-[100px] fill-current animate-wave-top shrink-0">
-            <path d="M0,30 C150,60 450,0 600,30 C750,60 1050,0 1200,30 C1350,60 1650,0 1800,30 C1950,60 2250,0 2400,30 V60 H0 Z"></path>
-          </svg>
-        </div>
+          {/* Wave Divider 1 */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none text-blue-600 bg-transparent shrink-0 flex z-10 translate-y-[1px]">
+            <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="relative block w-[200%] h-[100px] fill-current animate-wave-top shrink-0">
+              <path d="M0,30 C150,60 450,0 600,30 C750,60 1050,0 1200,30 C1350,60 1650,0 1800,30 C1950,60 2250,0 2400,30 V60 H0 Z"></path>
+            </svg>
+          </div>
+        </section>
 
         {/* ── SECTION 2: Weather & Stats Bar ─────────────────────────────────────────────── */}
         <section className="w-full bg-blue-600 py-6 relative z-20 shrink-0">
@@ -276,7 +278,7 @@ export default function LandingView() {
       </section>
 
       {/* ── SECTION 4: Flood Severity Legend ───────────────────────── */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-blue-50/80 to-white pt-24 pb-12 flex-grow" id="flood-legend-section">
+      <section className="relative w-full overflow-hidden bg-transparent pt-24 pb-12 flex-grow" id="flood-legend-section">
         {/* Static Wave Divider */}
         <div className="absolute top-0 left-0 w-full overflow-hidden leading-none text-white z-20">
           <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="relative block w-full h-[100px] fill-current">
@@ -284,14 +286,7 @@ export default function LandingView() {
           </svg>
         </div>
         
-        {/* Parallax Background */}
-        <div 
-          className="absolute inset-0 z-0 opacity-10 bg-fixed mix-blend-multiply"
-          style={{
-            backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%231e3a8a\" fill-opacity=\"1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
-          }}
-        />
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Vehicle Clearance Rules</h2>
