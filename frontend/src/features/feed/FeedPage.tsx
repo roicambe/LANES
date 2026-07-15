@@ -60,9 +60,9 @@ export function FeedPage() {
   };
 
   return (
-    <div className="bg-transparent text-gray-900 flex justify-center w-full mt-2">
+    <div className="bg-transparent text-gray-900 flex flex-col items-center w-full mt-2 relative">
       {/* 3-Column Layout Wrapper */}
-      <div className="flex w-full px-2 lg:px-4 xl:px-8 border-t border-gray-200 pt-2">
+      <div className="flex w-full px-2 lg:px-4 xl:px-8 pt-2 max-w-[1600px]">
         
         {/* Left Navigation */}
         <LeftSidebar />
@@ -73,8 +73,8 @@ export function FeedPage() {
           {/* Main Feed */}
           <main className="w-full max-w-[720px] bg-transparent relative">
           
-          {/* Sticky Header with Tabs */}
-          <div className="sticky top-20 z-10 bg-gray-50/95 backdrop-blur-md border-b border-gray-200 px-4 pt-2 pb-0 flex flex-col justify-end">
+          {/* Header with Tabs */}
+          <div className="bg-transparent border-b border-gray-200 px-4 pt-2 pb-0 flex flex-col justify-end mb-2">
             <h1 className="text-xl font-extrabold tracking-tight mb-2 px-2">Community Feed</h1>
             
             <div className="flex justify-between items-end px-2">
