@@ -15,7 +15,7 @@ export function LeftSidebar() {
   ];
 
   return (
-    <aside className="w-64 flex-shrink-0 flex flex-col h-[calc(100vh-5rem)] sticky top-20 bg-transparent overflow-y-auto hidden md:flex px-4 border-r border-gray-200">
+    <aside className="w-64 flex-shrink-0 flex flex-col h-[calc(100vh-86px)] sticky top-[86px] bg-transparent overflow-y-auto hidden md:flex px-4 border-r border-gray-200">
       <div className="flex-1 py-6 space-y-6">
         {/* Navigation */}
         <div className="space-y-1">

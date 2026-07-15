@@ -4,31 +4,10 @@ import { useEffect, useState } from "react";
 import { Cloud, MapPin } from "lucide-react";
 import { apiClient } from "@/lib/apiClient";
 
-interface WeatherData {
-  temp: number | string;
-  feels_like: number | string;
-  condition: string;
-  icon: string;
-  location: string;
-}
+import { useWeather } from "@/hooks/useWeather";
 
 export function WeatherWidget() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchWeather() {
-      try {
-        const data = await apiClient.get<WeatherData>("/weather/current");
-        setWeather(data);
-      } catch (err) {
-        console.error("Failed to fetch weather:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchWeather();
-  }, []);
+  const { data: weather, isLoading: loading } = useWeather();
 
   if (loading) {
     return (
