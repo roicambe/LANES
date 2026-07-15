@@ -18,7 +18,7 @@ export default function NavigationWrapper({ children }: { children: React.ReactN
   const isFeedPage = pathname.startsWith("/feed");
 
   return (
-    <div className={`flex-1 flex flex-col w-full pb-16 sm:pb-0 ${!isMapPage ? "bg-gray-50" : ""}`}>
+    <div className={`flex-1 flex flex-col w-full pb-16 sm:pb-0 ${isLandingPage ? "bg-blue-50" : (!isMapPage ? "bg-gray-50" : "")}`}>
       <FloatingNav />
       {/* Background Mask for FloatingNav to hide scrolling content - ONLY on Feed Page */}
       {isFeedPage && (
@@ -26,7 +26,7 @@ export default function NavigationWrapper({ children }: { children: React.ReactN
       )}
       <main className={cn(
         "flex-1 flex flex-col w-full min-w-0 relative z-0",
-        !isMapPage && !isLandingPage && "sm:pt-[70px]" // Safe zone ONLY on screens where FloatingNav exists
+        !isMapPage && "sm:pt-[70px]" // Safe zone padding
       )}>
         {children}
       </main>
