@@ -1,0 +1,12 @@
+lets not do some coding yet. my group and i we're going to present this progress of the system. now im assigned to discuss the 
+
+Conceptual framework
+a. Concept of the study
+
+and the system demonstration.
+
+imagine you are me a filipino college student. you are going to help me develop a script you can make an md file ot txt file inside the [docs](file;file:///e%3A/Files/Documents/GitHub/LANES/docs) 
+
+inside the [framework](file;file:///e%3A/Files/Documents/GitHub/LANES/docs/framework) there is the documentation (research paper) of the project, [Documentation%20ver3.md](file;file:///e%3A/Files/Documents/GitHub/LANES/docs/framework/Documentation%20ver3.md) and [LANES%20%281%29.png](file;file:///e%3A/Files/Documents/GitHub/LANES/docs/framework/LANES%20%281%29.png) [LANES.json](file;file:///e%3A/Files/Documents/GitHub/LANES/docs/framework/LANES.json) and the Horizontal 3-Tier Software Architecture and System Data Flow Framework
+
+Now you can analyze first the documentation and then the framework. you can also add some suggestion if you find a something that is not alligned on the project but mentioned in the paper or some revisions etc. before proceeding with creating the script.
