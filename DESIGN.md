@@ -94,7 +94,16 @@ erDiagram
         timestamp created_at
     }
 
+    community_posts {
+        int id PK
+        int user_id FK
+        int flood_report_id FK "Nullable reference to flood_reports"
+        string content
+        jsonb media_urls
+    }
+
     flood_reports ||--o| flood_avoidance_zones : "generates (1:1 / 1:0)"
+    flood_reports ||--o| community_posts : "shared as"
 ```
 
 ### A. Normalization Details (3NF Compliance)

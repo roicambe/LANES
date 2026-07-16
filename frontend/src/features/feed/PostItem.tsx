@@ -64,16 +64,20 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-blue-200 flex items-center justify-center border border-blue-300">
-            <span className="font-bold text-blue-700 text-sm">
-              {post.author_name ? post.author_name[0].toUpperCase() : 'E'}
-            </span>
+            {post.author_avatar ? (
+              <img src={post.author_avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
+            ) : (
+              <span className="font-bold text-blue-700 text-sm">
+                {post.author_name ? post.author_name[0].toUpperCase() : 'E'}
+              </span>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-900 text-sm">
                 {post.author_name || 'External Source'}
               </span>
-              {post.status === 'approved' && (
+              {post.report?.status === 'approved' && (
                 <span title="Verified by Admin">
                   <ShieldCheck className="w-4 h-4 text-blue-500" />
                 </span>
@@ -81,7 +85,7 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 flex-wrap">
               <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
-              {post.distance_meters !== undefined && (
+              {post.distance_meters !== undefined && post.distance_meters !== null && (
                 <>
                   <span>•</span>
                   <span className="flex items-center gap-1 font-medium text-blue-600">
@@ -90,11 +94,11 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
                   </span>
                 </>
               )}
-              {post.human_readable_location && (
+              {post.report?.human_readable_location && (
                 <>
                   <span>•</span>
-                  <span className="truncate max-w-[200px]" title={post.human_readable_location}>
-                    {post.human_readable_location}
+                  <span className="truncate max-w-[200px]" title={post.report.human_readable_location}>
+                    {post.report.human_readable_location}
                   </span>
                 </>
               )}
@@ -102,28 +106,102 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
           </div>
         </div>
 
-        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getSeverityColor(post.severity)}`}>
-          <AlertTriangle className="w-3.5 h-3.5" />
-          {getSeverityLabel(post.severity)}
-        </span>
+        {post.report && (
+          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getSeverityColor(post.report.severity)}`}>
+            <AlertTriangle className="w-3.5 h-3.5" />
+            {getSeverityLabel(post.report.severity)}
+          </span>
+        )}
       </div>
 
       {/* Content Area */}
       <div className="mb-4">
         <p className="text-gray-800 text-[15px] leading-relaxed whitespace-pre-wrap">
-          {post.raw_text}
+          {post.content}
         </p>
 
-        {post.image_url && (
-          <div className="mt-3 rounded-2xl overflow-hidden border border-gray-100 max-h-96 bg-gray-100">
-            <img 
-              src={post.image_url} 
-              alt="Flood evidence" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        )}
+        {/* Media array rendering */}
+        {(() => {
+          if (!post.media_urls || post.media_urls.length === 0) return null;
+
+          const count = post.media_urls.length;
+          let gridContent = null;
+
+          const renderCell = (index: number, extraClass: string = "", overlayIndex?: number) => {
+            const url = post.media_urls![index];
+            const isVideo = url.match(/\.(mp4|webm|mov|ogg)$/i) || url.includes('/video/upload/');
+            return (
+              <div key={index} className={`relative w-full h-full overflow-hidden ${extraClass}`}>
+                {isVideo ? (
+                  <video src={url} controls className="w-full h-full object-cover bg-black" />
+                ) : (
+                  <img src={url} alt="Post attachment" className="w-full h-full object-cover" loading="lazy" />
+                )}
+                {overlayIndex === index && count > 5 && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+                    <span className="text-white text-3xl font-bold">+{count - 5}</span>
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          if (count === 1) {
+            gridContent = (
+              <div className="w-full max-h-[500px]">
+                {renderCell(0, "max-h-[500px]")}
+              </div>
+            );
+          } else if (count === 2) {
+            gridContent = (
+              <div className="grid grid-cols-2 gap-1 w-full aspect-video">
+                {renderCell(0)}
+                {renderCell(1)}
+              </div>
+            );
+          } else if (count === 3) {
+            gridContent = (
+              <div className="flex flex-col gap-1 w-full aspect-square">
+                <div className="flex-1 w-full">{renderCell(0)}</div>
+                <div className="flex-1 grid grid-cols-2 gap-1 w-full">
+                  {renderCell(1)}
+                  {renderCell(2)}
+                </div>
+              </div>
+            );
+          } else if (count === 4) {
+            gridContent = (
+              <div className="flex flex-col gap-1 w-full aspect-square">
+                <div className="flex-[2] w-full">{renderCell(0)}</div>
+                <div className="flex-[1] grid grid-cols-3 gap-1 w-full">
+                  {renderCell(1)}
+                  {renderCell(2)}
+                  {renderCell(3)}
+                </div>
+              </div>
+            );
+          } else {
+            gridContent = (
+              <div className="flex flex-col gap-1 w-full aspect-square">
+                <div className="flex-1 grid grid-cols-2 gap-1 w-full">
+                  {renderCell(0)}
+                  {renderCell(1)}
+                </div>
+                <div className="flex-1 grid grid-cols-3 gap-1 w-full">
+                  {renderCell(2)}
+                  {renderCell(3)}
+                  {renderCell(4, "", 4)}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="mt-3 rounded-2xl overflow-hidden border border-gray-100 bg-gray-100">
+              {gridContent}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Interaction Bar */}
@@ -171,14 +249,14 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
           </button>
         </div>
 
-        {post.geometry && onViewMap && (
+        {post.report?.geometry && onViewMap && (
           <button 
             onClick={() => {
-              if (post.geometry?.type === 'Point') {
-                const [lng, lat] = post.geometry.coordinates as number[];
+              if (post.report?.geometry?.type === 'Point') {
+                const [lng, lat] = post.report.geometry.coordinates as number[];
                 onViewMap(lat, lng);
-              } else if (post.geometry?.type === 'LineString') {
-                const coords = post.geometry.coordinates as number[][];
+              } else if (post.report?.geometry?.type === 'LineString') {
+                const coords = post.report.geometry.coordinates as number[][];
                 if (coords.length > 0) {
                   const [lng, lat] = coords[0];
                   onViewMap(lat, lng);

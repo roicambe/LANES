@@ -135,6 +135,26 @@ erDiagram
         string hidden_hazards "yes, no, unsure"
     }
 
+    community_posts {
+        int id PK "Unique post identifier"
+        int user_id FK "Reference to users"
+        int flood_report_id FK "Nullable reference to flood_reports"
+        string content "Text content of the post"
+        jsonb media_urls "Array of image/video URLs"
+        datetime created_at "UTC creation timestamp"
+        datetime updated_at "UTC update timestamp"
+    }
+
+    notifications {
+        int id PK "Unique notification identifier"
+        int user_id FK "Reference to users"
+        string type "LIKE, COMMENT, SYSTEM"
+        string message "Notification text"
+        jsonb payload "Routing metadata"
+        boolean is_read "Read status toggle"
+        datetime created_at "UTC creation timestamp"
+    }
+
     roles ||--o{ users : "assigns"
     users ||--o| profiles : "has"
     profiles ||--o| addresses : "has"
@@ -143,11 +163,14 @@ erDiagram
     users ||--o{ post_interactions : "interacts"
     users ||--o{ comments : "writes"
     users ||--o{ system_settings : "updates"
+    users ||--o{ community_posts : "writes"
+    users ||--o{ notifications : "receives"
     flood_reports ||--o{ flood_report_locations : "maps to"
     flood_reports ||--o{ flood_avoidance_zones : "generates"
-    flood_reports ||--o{ post_interactions : "receives"
-    flood_reports ||--o{ comments : "receives"
     flood_reports ||--o| flood_report_surveys : "contains"
+    flood_reports ||--o| community_posts : "shared as"
+    community_posts ||--o{ post_interactions : "receives"
+    community_posts ||--o{ comments : "receives"
 ```
 
 ---
@@ -280,24 +303,24 @@ erDiagram
 | `created_at` | `TIMESTAMP` | Default: UTC Now | Action time. |
 
 ### Table J: `post_interactions`
-**Description:** Records user upvotes and downvotes on community feed reports.
+**Description:** Records user upvotes and downvotes on community feed posts.
 
 | Attribute | Data Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key | ID. |
 | `user_id` | `INTEGER` | Foreign Key | The voting user. |
-| `report_id` | `INTEGER` | Foreign Key (CASCADE) | The report voted on. |
+| `post_id` | `INTEGER` | Foreign Key (CASCADE) | The community post voted on. |
 | `interaction_type` | `ENUM` | NOT NULL | 'upvote' or 'downvote'. |
 | `created_at` | `TIMESTAMP` | Default: UTC Now | When the vote was cast. |
 
 ### Table K: `comments`
-**Description:** User comments on flood reports.
+**Description:** User comments on community posts.
 
 | Attribute | Data Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | Primary Key | ID. |
 | `user_id` | `INTEGER` | Foreign Key (CASCADE) | Author. |
-| `report_id` | `INTEGER` | Foreign Key (CASCADE) | Associated report. |
+| `post_id` | `INTEGER` | Foreign Key (CASCADE) | Associated community post. |
 | `content` | `VARCHAR(1000)` | NOT NULL | Comment text. |
 | `created_at` | `TIMESTAMP` | Default: UTC Now | Timestamp. |
 
@@ -320,6 +343,32 @@ erDiagram
 | `report_id` | `INTEGER` | Foreign Key (CASCADE), UNIQUE, Index | One-to-one mapping to the associated report. |
 | `passable_vehicles` | `VARCHAR(500)` | Nullable | Open text response indicating which vehicles can pass. |
 | `hidden_hazards` | `ENUM` | NOT NULL | Indicator of hidden hazards ('yes', 'no', 'unsure'). |
+
+### Table N: `community_posts`
+**Description:** The core entity for the community feed. Represents standalone user posts or shared flood reports.
+
+| Attribute | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | Primary Key | Post ID. |
+| `user_id` | `INTEGER` | Foreign Key (CASCADE) | Author of the post. |
+| `flood_report_id` | `INTEGER` | Foreign Key (CASCADE), Nullable | If set, this post acts as a shared wrapper for a flood report. |
+| `content` | `TEXT` | NOT NULL | Text body of the post. |
+| `media_urls` | `JSONB` | Nullable | Array of image or video URLs. |
+| `created_at` | `TIMESTAMP` | Default: UTC Now | Timestamp. |
+| `updated_at` | `TIMESTAMP` | Default: UTC Now | Last update timestamp. |
+
+### Table O: `notifications`
+**Description:** Stores in-app alerts for users (e.g., comments, likes, system alerts).
+
+| Attribute | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | Primary Key | Notification ID. |
+| `user_id` | `INTEGER` | Foreign Key (CASCADE) | The recipient of the notification. |
+| `type` | `VARCHAR(50)` | NOT NULL | Category (e.g., 'COMMENT', 'LIKE', 'SYSTEM'). |
+| `message` | `VARCHAR(255)` | NOT NULL | Human-readable notification text. |
+| `payload` | `JSONB` | NOT NULL | Metadata for routing (e.g., `{"post_id": 12}`). |
+| `is_read` | `BOOLEAN` | Default: FALSE | Read status. |
+| `created_at` | `TIMESTAMP` | Default: UTC Now | Timestamp. |
 
 ---
 

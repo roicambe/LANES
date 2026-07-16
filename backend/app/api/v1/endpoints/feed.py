@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import get_current_user_optional, get_current_user
 from app.models.user import User
-from app.schemas.feed import FeedPaginatedResponse, TopReportersResponse
+from app.schemas.post import CommunityPostPaginatedResponse
+from app.schemas.feed import TopReportersResponse
 from app.schemas.interaction import PostInteractionCreate, PostInteraction
 from app.crud import feed as crud_feed
 from app.crud import interaction as crud_interaction
@@ -12,7 +13,7 @@ from app.models.interaction import InteractionType
 
 router = APIRouter()
 
-@router.get("/", response_model=FeedPaginatedResponse)
+@router.get("/", response_model=CommunityPostPaginatedResponse)
 def get_feed(
     lat: Optional[float] = Query(None, description="User's latitude"),
     lng: Optional[float] = Query(None, description="User's longitude"),
@@ -59,9 +60,9 @@ def get_leaderboard(
     return TopReportersResponse(reporters=reporters)
 
 
-@router.post("/{report_id}/vote", response_model=Optional[PostInteraction])
+@router.post("/{post_id}/vote", response_model=Optional[PostInteraction])
 def vote_post(
-    report_id: int,
+    post_id: int,
     interaction_in: PostInteractionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -71,8 +72,8 @@ def vote_post(
     If the exact same interaction is sent, it will toggle (remove) it.
     If a different interaction is sent (e.g. upvote when previously downvoted), it will swap.
     """
-    if interaction_in.report_id != report_id:
-        raise HTTPException(status_code=400, detail="Report ID mismatch")
+    if interaction_in.post_id != post_id:
+        raise HTTPException(status_code=400, detail="Post ID mismatch")
         
     if interaction_in.interaction_type not in [InteractionType.UPVOTE, InteractionType.DOWNVOTE]:
         raise HTTPException(status_code=400, detail="Invalid interaction type")

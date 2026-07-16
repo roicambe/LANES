@@ -210,15 +210,16 @@ This document serves as the central technical reference for all currently implem
 ---
 
 ### 12. Community Feed & Social Validation
-*   **Purpose:** Provides commuters with localized, real-time crowdsourced updates and enables peer validation of flood reports.
-*   **What it does:** Displays a 3-column feed of public flood reports with a "Nearby" (distance-based) and "Recent" (time-based) tab. Allows users to upvote or downvote reports.
+*   **Purpose:** Provides commuters with localized, real-time crowdsourced updates, general disaster discussion, and enables peer validation of flood reports.
+*   **What it does:** Displays a 3-column feed containing both shared `FloodReport`s and general `CommunityPost`s with a "Nearby" (distance-based) and "Recent" (time-based) tab. Allows users to upvote or downvote posts and receive in-app notifications.
 *   **How it works:**
-    1. Fetches reports using PostGIS `<->` operators based on the user's GPS coordinates.
-    2. Renders reports with severity badges and distance indicators.
-    3. Users interact via upvote/downvote, which updates the `post_interactions` table.
+    1. Fetches feed items using PostGIS `<->` operators for distance-based sorting or chronological ordering.
+    2. Renders `CommunityPost` items. If a post has an attached `flood_report_id`, it renders with interactive map contexts and severity badges.
+    3. Users interact via upvote/downvote and comments, which updates the `post_interactions` and `comments` tables.
+    4. Interaction events trigger a real-time `Notification` stored in the database for the post author, accessible via the global Bell icon.
 *   **Access & Roles:** Public users.
 *   **Related Components:**
-    *   **Frontend:** `src/features/feed/` (Feed components, PostCard, tabs), `src/app/feed/page.tsx`.
+    *   **Frontend:** `src/features/feed/` (Feed components, PostCard, tabs), `src/features/notifications/` (NotificationDropdown), `src/app/(feed)/feed/page.tsx`.
 
 ---
 

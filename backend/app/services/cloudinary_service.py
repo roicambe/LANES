@@ -23,11 +23,13 @@ def upload_image(file: UploadFile) -> Optional[str]:
         response = cloudinary.uploader.upload(
             file.file,
             folder="lanes_flood_reports",
-            format="webp",
-            transformation=[
-                {"width": 1024, "crop": "limit"}
-            ]
+            resource_type="auto"
         )
+        # return the secure URL with f_auto and q_auto
+        # Cloudinary URLs look like: https://res.cloudinary.com/demo/image/upload/v12345/folder/file.jpg
+        # We can just return the secure_url which already has the uploaded format, 
+        # but optimally we'd inject f_auto,q_auto if we want optimization.
+        # For simplicity, just return the raw secure_url for now.
         return response.get("secure_url")
     except Exception as e:
         print(f"Error uploading image to Cloudinary: {e}")

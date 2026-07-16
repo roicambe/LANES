@@ -81,10 +81,11 @@ class FloodReport(Base):
         back_populates="report",
         cascade="all, delete-orphan"
     )
-    comments: Mapped[List["Comment"]] = relationship(
-        "Comment",
+    community_post: Mapped[Optional["CommunityPost"]] = relationship(
+        "CommunityPost",
         back_populates="report",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        uselist=False
     )
     survey: Mapped[Optional["FloodReportSurvey"]] = relationship(
         "FloodReportSurvey",
