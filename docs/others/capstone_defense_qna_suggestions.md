@@ -88,23 +88,16 @@ This document contains potential questions from various defense panelists and ta
 
 ## 📝 Part 2: Suggestions for Documentation Improvement
 
-While analyzing your documentation, a few gaps and inconsistencies were found. Since a Q&A requires solid backing from the text, you should revise your documentation to address these issues:
+While analyzing your manuscript (`LANES_documentation.md`), a few areas could be strengthened for your defense:
 
-1. **Incomplete Agile Lifecycle (Missing Phases 3 to 5):**
-   * **The Hole:** In Section 2.2.3, you introduced the Agile SE Paradigm and listed "1. Requirements Planning and Analysis" and "2. System and Architecture Design", but the text cuts off there.
-   * **Suggestion:** You must complete this section in your actual document. Add steps for:
-     * *3. Implementation / Sprint Execution* (Coding the NLP model and backend).
-     * *4. Testing & Validation* (Evaluating ISO 25010 metrics).
-     * *5. Deployment & Review* (Releasing the PWA).
+1. **Provide an Example of the Raw Taglish Dataset:**
+   * **The Gap:** In Section 2.4 (Data Collection Methods), you mentioned gathering a "curated test dataset of 300 to 500 simulated and real-world flood-related text samples". Panelists often ask to see what this raw data actually looks like.
+   * **Suggestion:** Add a small table or appendix in your manuscript showing 3-5 examples of these Taglish texts alongside their expected NLP extraction (e.g., Raw: "lagpas tao na sa rosario", Extracted Location: "rosario", Extracted Severity: "Red").
 
-2. **Inconsistency Regarding Audit Logs:**
-   * **The Hole:** In `DESIGN.md` (Section 9), it states the `audit_logs` table is *"planned and not yet implemented"*. However, in `database-design-plan.md` and the `Feature Reference`, the Audit Trail is listed as a fully integrated feature. 
-   * **Suggestion:** A panelist might ask, *"Is your audit logging actually working or just a plan?"* You need to update `DESIGN.md` to remove the "planned" warning if it has already been coded, ensuring consistency across all files.
+2. **Justify the 80% Benchmark for NLP Metrics:**
+   * **The Gap:** In Section 2.5 (Data Analysis Procedures), you state: "A precision and recall target of 80% or higher will be considered acceptable". A panelist with an IT or Data Science background will likely ask, "Why 80%? Why not 90%?"
+   * **Suggestion:** Explicitly state in the document *why* 80% was chosen. You can mention that parsing informal bilingual text (Taglish) with heavy conversational noise makes a 90%+ score extremely difficult, and 80% is the accepted baseline in crisis informatics studies (you can cite Imran et al., 2018 from your references here).
 
-3. **Missing Explanations for Cloudinary & Brevo in Chapter 2:**
-   * **The Hole:** Your `tech-stack.md` and `feature-reference.md` mention using Cloudinary for images and Brevo for OTP emails. However, the architectural flow in Chapter 2.2.1 doesn't mention how these external APIs interact with your 3-Tier Architecture.
-   * **Suggestion:** Briefly add a sentence in the *Application Logic Tier* paragraph (Section 2.2.1) explaining that external CDN services (Cloudinary) and SMTP APIs (Brevo) are utilized to offload heavy image processing and email dispatches.
-
-4. **Missing Content Up to Section 2.7:**
-   * **The Hole:** Your instructions requested a reviewer up to "CHAPTER 2, 2.7 Summary", but the provided `LANES_documentation.md` only goes up to Section 2.2.3.
-   * **Suggestion:** Ensure your final printed manuscript actually contains Sections 2.3 to 2.7. If panelists flip to those pages, the methodology details (like Data Gathering Procedures, Respondents, etc.) must match the high-level descriptions provided in the Agile and ISO 25010 sections.
+3. **Clarify Data Retention for Privacy:**
+   * **The Gap:** In Section 2.6 (Ethical Considerations), you have a strong paragraph on the Data Privacy Act of 2012, mentioning that location data will be anonymized. However, privacy laws usually require a specific retention policy.
+   * **Suggestion:** Add a single sentence stating how long the raw location data from commuters will be kept before deletion (e.g., "All raw user interaction logs will be permanently deleted 30 days after the conclusion of the evaluation period to comply with data retention limits").
