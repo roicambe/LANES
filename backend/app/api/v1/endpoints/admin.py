@@ -69,6 +69,15 @@ async def approve_report(
                 is_active=True
             )
             crud.create_flood_avoidance_zone(db, zone=zone_in)
+            
+    # [Phase 3] Auto-create CommunityPost if the report is public
+    if report.is_public and report.user_id:
+        post_in = schemas.CommunityPostCreate(
+            flood_report_id=report.id,
+            content=report.raw_text,
+            media_urls=[report.image_url] if report.image_url else None
+        )
+        crud.create_community_post(db=db, post_in=post_in, user_id=report.user_id)
 
     client_ip = request.client.host if request.client else None
     crud.create_audit_log(

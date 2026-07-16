@@ -2,20 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getFeed, votePost, FeedPost } from './feedApi';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
 import { PostItem } from './PostItem';
+import { CreatePostModal } from './CreatePostModal';
 import { Loader2, Filter } from 'lucide-react';
 import { useToast } from '@/shared/ui';
 
 export function FeedPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { error: showError } = useToast();
   const [tab, setTab] = useState<'recent' | 'nearby'>('recent');
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Auto-open modal if user just logged in from a draft redirect
+  useEffect(() => {
+    if (searchParams.get('openPostModal') === 'true') {
+      setIsCreateModalOpen(true);
+      window.history.replaceState(null, '', '/feed');
+    }
+  }, [searchParams]);
 
   // Request location if nearby tab is clicked and we don't have it
   useEffect(() => {
@@ -45,7 +56,7 @@ export function FeedPage() {
   });
 
   const voteMutation = useMutation({
-    mutationFn: ({ reportId, type }: { reportId: number, type: 'upvote' | 'downvote' }) => votePost(reportId, type),
+    mutationFn: ({ postId, type }: { postId: number, type: 'upvote' | 'downvote' }) => votePost(postId, type),
     onSuccess: () => {
       // Invalidate feed to refresh votes
       queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -55,8 +66,8 @@ export function FeedPage() {
     }
   });
 
-  const handleVote = (reportId: number, type: 'upvote' | 'downvote') => {
-    voteMutation.mutate({ reportId, type });
+  const handleVote = (postId: number, type: 'upvote' | 'downvote') => {
+    voteMutation.mutate({ postId, type });
   };
 
   return (
@@ -111,6 +122,18 @@ export function FeedPage() {
             </div>
           </div>
 
+          {/* Create Post Input Trigger */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+              <span className="font-bold text-blue-700 text-sm">Me</span>
+            </div>
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full text-left px-5 py-3 text-gray-500 text-sm font-medium"
+            >
+              What's happening in your area?
+            </button>
+          </div>
 
           {/* Feed Content */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-2 overflow-hidden mb-20">
@@ -152,6 +175,10 @@ export function FeedPage() {
         </div>
         
       </div>
+
+      {isCreateModalOpen && (
+        <CreatePostModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
     </div>
   );
 }

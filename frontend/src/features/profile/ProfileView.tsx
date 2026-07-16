@@ -3,9 +3,21 @@
 import { Construction, Loader2 } from "lucide-react";
 import LoginForm from "@/features/auth/LoginForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function ProfileView() {
   const { isAuthenticated, isLoading, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (typeof window !== 'undefined' && sessionStorage.getItem('lanes_post_intent')) {
+        sessionStorage.removeItem('lanes_post_intent');
+        router.push('/feed?openPostModal=true');
+      }
+    }
+  }, [isAuthenticated, router]);
 
   if (isLoading) {
     return (

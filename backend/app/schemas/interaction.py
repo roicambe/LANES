@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 from app.models.interaction import InteractionType
 
 class PostInteractionBase(BaseModel):
-    report_id: int
+    post_id: int
     interaction_type: InteractionType
 
 

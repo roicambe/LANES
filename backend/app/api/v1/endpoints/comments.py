@@ -5,10 +5,13 @@ from typing import List
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
-from app.models.report import FloodReport
+from app.models.post import CommunityPost
 from app.models.comment import Comment
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from app.models.notification import NotificationType
+from app.schemas.notification import NotificationCreate
+from app.crud import notification as crud_notification
 
 router = APIRouter()
 
@@ -23,14 +26,14 @@ class CommentResponse(BaseModel):
     
     model_config = ConfigDict(from_attributes=True)
 
-@router.get("/{report_id}/comments", response_model=List[CommentResponse])
-def get_comments(report_id: int, db: Session = Depends(get_db)):
-    # Verify report exists
-    report = db.query(FloodReport).filter(FloodReport.id == report_id).first()
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
+@router.get("/{post_id}/comments", response_model=List[CommentResponse])
+def get_comments(post_id: int, db: Session = Depends(get_db)):
+    # Verify post exists
+    post = db.query(CommunityPost).filter(CommunityPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
         
-    comments = db.query(Comment).filter(Comment.report_id == report_id).order_by(Comment.created_at.asc()).all()
+    comments = db.query(Comment).filter(Comment.post_id == post_id).order_by(Comment.created_at.asc()).all()
     
     # Map author name
     results = []
@@ -44,27 +47,36 @@ def get_comments(report_id: int, db: Session = Depends(get_db)):
         
     return results
 
-@router.post("/{report_id}/comments", response_model=CommentResponse)
+@router.post("/{post_id}/comments", response_model=CommentResponse)
 def create_comment(
-    report_id: int, 
+    post_id: int, 
     comment_in: CommentCreate, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Verify report exists
-    report = db.query(FloodReport).filter(FloodReport.id == report_id).first()
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
+    # Verify post exists
+    post = db.query(CommunityPost).filter(CommunityPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
         
     db_comment = Comment(
         user_id=current_user.id,
-        report_id=report_id,
+        post_id=post_id,
         content=comment_in.content
     )
     
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
+    
+    # Notify author
+    if post.user_id != current_user.id:
+        crud_notification.create_notification(db, NotificationCreate(
+            user_id=post.user_id,
+            type=NotificationType.COMMENT,
+            message="Someone commented on your post.",
+            payload={"post_id": post_id, "actor_id": current_user.id}
+        ))
     
     return {
         "id": db_comment.id,

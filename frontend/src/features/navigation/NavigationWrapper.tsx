@@ -22,7 +22,7 @@ export default function NavigationWrapper({ children }: { children: React.ReactN
       <FloatingNav />
       {/* Background Mask for FloatingNav to hide scrolling content - ONLY on Feed Page */}
       {isFeedPage && (
-        <div className="fixed top-0 left-0 right-0 h-[70px] bg-gray-50/95 backdrop-blur-md border-b border-gray-200 z-40 hidden sm:block"></div>
+        <div className="fixed top-0 left-0 right-0 h-[70px] bg-gray-50/75 backdrop-blur-lg border-b border-gray-200 z-40 hidden sm:block"></div>
       )}
       <main className={cn(
         "flex-1 flex flex-col w-full min-w-0 relative z-0",

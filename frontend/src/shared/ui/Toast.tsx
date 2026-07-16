@@ -50,52 +50,60 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const error = useCallback((title: string, message?: string) => showToast(title, message, "error"), [showToast]);
   const info = useCallback((title: string, message?: string) => showToast(title, message, "info"), [showToast]);
 
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toastContainer = (
+    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className={`pointer-events-auto flex w-80 shadow-lg rounded-xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300
+            ${toast.type === "success" ? "bg-white border border-emerald-100" : ""}
+            ${toast.type === "error" ? "bg-white border border-red-100" : ""}
+            ${toast.type === "info" ? "bg-white border border-blue-100" : ""}
+          `}
+        >
+          {/* Status indicator bar */}
+          <div className={`w-1.5 shrink-0
+            ${toast.type === "success" ? "bg-emerald-500" : ""}
+            ${toast.type === "error" ? "bg-red-500" : ""}
+            ${toast.type === "info" ? "bg-blue-500" : ""}
+          `} />
+          
+          <div className="flex p-3 w-full gap-3 items-start">
+            <div className="shrink-0 mt-0.5">
+              {toast.type === "success" && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+              {toast.type === "error" && <XCircle className="w-5 h-5 text-red-500" />}
+              {toast.type === "info" && <Info className="w-5 h-5 text-blue-500" />}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900">{toast.title}</p>
+              {toast.message && (
+                <p className="text-sm text-gray-500 mt-0.5 leading-snug">{toast.message}</p>
+              )}
+            </div>
+            
+            <button
+              onClick={() => removeToast(toast.id)}
+              className="shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <ToastContext.Provider value={{ showToast, success, error, info }}>
       {children}
-      
-      {/* Toast Container */}
-      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`pointer-events-auto flex w-80 shadow-lg rounded-xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300
-              ${toast.type === "success" ? "bg-white border border-emerald-100" : ""}
-              ${toast.type === "error" ? "bg-white border border-red-100" : ""}
-              ${toast.type === "info" ? "bg-white border border-blue-100" : ""}
-            `}
-          >
-            {/* Status indicator bar */}
-            <div className={`w-1.5 shrink-0
-              ${toast.type === "success" ? "bg-emerald-500" : ""}
-              ${toast.type === "error" ? "bg-red-500" : ""}
-              ${toast.type === "info" ? "bg-blue-500" : ""}
-            `} />
-            
-            <div className="flex p-3 w-full gap-3 items-start">
-              <div className="shrink-0 mt-0.5">
-                {toast.type === "success" && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                {toast.type === "error" && <XCircle className="w-5 h-5 text-red-500" />}
-                {toast.type === "info" && <Info className="w-5 h-5 text-blue-500" />}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">{toast.title}</p>
-                {toast.message && (
-                  <p className="text-sm text-gray-500 mt-0.5 leading-snug">{toast.message}</p>
-                )}
-              </div>
-              
-              <button
-                onClick={() => removeToast(toast.id)}
-                className="shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {mounted ? require("react-dom").createPortal(toastContainer, document.body) : null}
     </ToastContext.Provider>
   );
 }

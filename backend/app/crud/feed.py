@@ -4,6 +4,8 @@ from app.models.report import FloodReport
 from app.models.interaction import PostInteraction
 from app.models.user import User
 from app.models.profile import Profile
+from app.models.post import CommunityPost
+from app.models.comment import Comment
 from typing import Optional, List
 from app.schemas.feed import TopReporter
 
@@ -17,48 +19,43 @@ def get_feed_posts(
     limit: int = 20,
     tab: str = "recent"
 ):
-    # Base query for active, approved, and public reports
-    base_query = db.query(FloodReport).filter(
-        FloodReport.status == "approved",
-        FloodReport.is_public == True,
-        FloodReport.deleted_at.is_(None)
-    )
-
-    from app.models.user import User
-    from app.models.comment import Comment
+    # Base query for community posts
+    base_query = db.query(CommunityPost)
 
     # Subqueries for upvotes and downvotes
     upvotes_query = db.query(
-        PostInteraction.report_id,
+        PostInteraction.post_id,
         func.count(PostInteraction.id).label("upvotes")
-    ).filter(PostInteraction.interaction_type == "upvote").group_by(PostInteraction.report_id).subquery()
+    ).filter(PostInteraction.interaction_type == "upvote").group_by(PostInteraction.post_id).subquery()
 
     downvotes_query = db.query(
-        PostInteraction.report_id,
+        PostInteraction.post_id,
         func.count(PostInteraction.id).label("downvotes")
-    ).filter(PostInteraction.interaction_type == "downvote").group_by(PostInteraction.report_id).subquery()
+    ).filter(PostInteraction.interaction_type == "downvote").group_by(PostInteraction.post_id).subquery()
 
     # Subquery for comments
     comments_query = db.query(
-        Comment.report_id,
+        Comment.post_id,
         func.count(Comment.id).label("comment_count")
-    ).group_by(Comment.report_id).subquery()
+    ).group_by(Comment.post_id).subquery()
 
     # Subquery for current user interaction if user_id is provided
     user_interaction_sq = None
     if user_id:
         user_interaction_sq = db.query(
-            PostInteraction.report_id,
+            PostInteraction.post_id,
             PostInteraction.interaction_type.label("user_interaction")
         ).filter(PostInteraction.user_id == user_id).subquery()
 
     # Build the main select fields
     select_fields = [
-        FloodReport,
+        CommunityPost,
         func.coalesce(upvotes_query.c.upvotes, 0).label("upvotes"),
         func.coalesce(downvotes_query.c.downvotes, 0).label("downvotes"),
-        func.coalesce(User.username, text("'External Source'")).label("author_name"),
+        func.coalesce(User.username, text("'Unknown'")).label("author_name"),
+        func.coalesce(Profile.avatar_url, text("null")).label("author_avatar"),
         func.coalesce(comments_query.c.comment_count, 0).label("comment_count"),
+        FloodReport # to eager load the report if exists
     ]
 
     # Distance calculation if lat/lng are provided
@@ -67,7 +64,7 @@ def get_feed_posts(
         # Create a PostGIS point for the user location
         user_pt = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
         
-        # Calculate distance in meters using Geography casting
+        # Calculate distance in meters using Geography casting against the joined report's geometry
         distance_col = func.ST_Distance(
             func.cast(FloodReport.geometry, text("GEOGRAPHY")),
             func.cast(user_pt, text("GEOGRAPHY"))
@@ -75,14 +72,17 @@ def get_feed_posts(
         select_fields.append(distance_col)
 
         if radius is not None:
-            # Filter reports within the radius
-            base_query = base_query.filter(
-                func.ST_DWithin(
-                    func.cast(FloodReport.geometry, text("GEOGRAPHY")),
-                    func.cast(user_pt, text("GEOGRAPHY")),
-                    radius
+            # Filter reports within the radius OR if there's no report, allow the post if tab is not strictly nearby?
+            # Actually, if tab=nearby, only show posts with a report inside the radius
+            if tab == "nearby":
+                base_query = base_query.filter(
+                    CommunityPost.flood_report_id.isnot(None),
+                    func.ST_DWithin(
+                        func.cast(FloodReport.geometry, text("GEOGRAPHY")),
+                        func.cast(user_pt, text("GEOGRAPHY")),
+                        radius
+                    )
                 )
-            )
     else:
         # Placeholder for distance if no location is given
         select_fields.append(func.cast(None, Float).label("distance_meters"))
@@ -94,46 +94,52 @@ def get_feed_posts(
 
     # Join the subqueries
     query = base_query.with_entities(*select_fields)
-    query = query.outerjoin(User, FloodReport.user_id == User.id)
-    query = query.outerjoin(upvotes_query, FloodReport.id == upvotes_query.c.report_id)
-    query = query.outerjoin(downvotes_query, FloodReport.id == downvotes_query.c.report_id)
-    query = query.outerjoin(comments_query, FloodReport.id == comments_query.c.report_id)
+    query = query.outerjoin(User, CommunityPost.user_id == User.id)
+    query = query.outerjoin(Profile, User.id == Profile.user_id)
+    query = query.outerjoin(FloodReport, CommunityPost.flood_report_id == FloodReport.id)
+    query = query.outerjoin(upvotes_query, CommunityPost.id == upvotes_query.c.post_id)
+    query = query.outerjoin(downvotes_query, CommunityPost.id == downvotes_query.c.post_id)
+    query = query.outerjoin(comments_query, CommunityPost.id == comments_query.c.post_id)
     if user_interaction_sq is not None:
-        query = query.outerjoin(user_interaction_sq, FloodReport.id == user_interaction_sq.c.report_id)
+        query = query.outerjoin(user_interaction_sq, CommunityPost.id == user_interaction_sq.c.post_id)
 
     # Ordering
     if tab == "nearby" and distance_col is not None:
-        query = query.order_by(distance_col.asc(), FloodReport.created_at.desc())
+        query = query.order_by(distance_col.asc(), CommunityPost.created_at.desc())
     else:
         # Default to recent
-        query = query.order_by(FloodReport.created_at.desc())
+        query = query.order_by(CommunityPost.created_at.desc())
 
     total = base_query.count()
     results = query.offset(skip).limit(limit).all()
     
     has_more = (skip + limit) < total
 
-    # Format the results to match FeedPostResponse
+    # Format the results to match CommunityPostResponse
     posts = []
     for row in results:
         # Access elements by index or name
-        report = row[0]
+        post = row[0]
         upvotes = row[1]
         downvotes = row[2]
         author_name = row[3]
-        comment_count = row[4]
-        dist = row[5]
-        u_int = row[6]
+        author_avatar = row[4]
+        comment_count = row[5]
+        report = row[6]
+        dist = row[7]
+        u_int = row[8]
         
-        # Convert ORM model to dictionary and add extra fields
+        # Convert ORM model to dictionary
         post_data = {
-            **report.__dict__,
+            **post.__dict__,
             "upvotes": upvotes,
             "downvotes": downvotes,
             "distance_meters": dist,
             "user_interaction": u_int,
             "author_name": author_name,
-            "comment_count": comment_count
+            "author_avatar": author_avatar,
+            "comment_count": comment_count,
+            "report": report
         }
         posts.append(post_data)
 
@@ -148,15 +154,7 @@ def get_top_reporters(
     db: Session,
     limit: int = 5
 ) -> List[TopReporter]:
-    """Retrieve the top community reporters ranked by their approved, public report count.
-
-    Args:
-        db: The active SQLAlchemy database session.
-        limit: Maximum number of reporters to return (default 5).
-
-    Returns:
-        A list of TopReporter objects ordered by report count descending.
-    """
+    """Retrieve the top community reporters ranked by their approved, public report count."""
     results = (
         db.query(
             User.id.label("user_id"),

@@ -2,24 +2,30 @@ import { apiClient } from '@/lib/apiClient';
 
 export interface FeedPost {
   id: number;
-  raw_text: string;
-  source: string;
-  source_url?: string;
-  severity: 'low' | 'medium' | 'extreme';
-  status: string;
-  image_url?: string;
+  content: string;
+  media_urls?: string[];
   created_at: string;
   
   upvotes: number;
   downvotes: number;
   distance_meters?: number;
   user_interaction?: 'upvote' | 'downvote';
-  human_readable_location?: string;
   author_name?: string;
+  author_avatar?: string;
   comment_count: number;
-  geometry?: {
-    type: 'Point' | 'LineString';
-    coordinates: number[] | number[][];
+  
+  report?: {
+    id: number;
+    raw_text: string;
+    source: string;
+    severity: 'low' | 'medium' | 'high' | 'extreme';
+    status: string;
+    image_url?: string;
+    human_readable_location?: string;
+    geometry?: {
+      type: 'Point' | 'LineString';
+      coordinates: number[] | number[][];
+    };
   };
 }
 
@@ -68,22 +74,38 @@ export const getFeed = async (
   return apiClient.get<FeedResponse>(`/feed/?${searchParams.toString()}`);
 };
 
-export const votePost = async (reportId: number, interactionType: 'upvote' | 'downvote') => {
-  return apiClient.post(`/feed/${reportId}/vote`, {
-    report_id: reportId,
+export const votePost = async (postId: number, interactionType: 'upvote' | 'downvote') => {
+  return apiClient.post(`/feed/${postId}/vote`, {
+    post_id: postId,
     interaction_type: interactionType,
   });
 };
 
-export const getComments = async (reportId: number): Promise<CommentResponse[]> => {
-  return apiClient.get<CommentResponse[]>(`/reports/${reportId}/comments`);
+export const getComments = async (postId: number): Promise<CommentResponse[]> => {
+  return apiClient.get<CommentResponse[]>(`/posts/${postId}/comments`);
 };
 
-export const postComment = async (reportId: number, content: string): Promise<CommentResponse> => {
-  return apiClient.post<CommentResponse>(`/reports/${reportId}/comments`, { content });
+export const postComment = async (postId: number, content: string): Promise<CommentResponse> => {
+  return apiClient.post<CommentResponse>(`/posts/${postId}/comments`, { content });
 };
 
 export const getTopReporters = async (limit: number = 5): Promise<TopReportersResponse> => {
   return apiClient.get<TopReportersResponse>(`/feed/leaderboard?limit=${limit}`);
+};
+
+export interface CreatePostRequest {
+  content: string;
+  images?: File[];
+}
+
+export const createPost = async (request: CreatePostRequest): Promise<FeedPost> => {
+  const formData = new FormData();
+  formData.append('content', request.content);
+  if (request.images && request.images.length > 0) {
+    request.images.forEach((image) => {
+      formData.append('images', image);
+    });
+  }
+  return apiClient.post<FeedPost>(`/posts`, formData);
 };
 

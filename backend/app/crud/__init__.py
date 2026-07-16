@@ -12,6 +12,6 @@ from app.crud.report import (
     get_all_avoidance_zones_filtered
 )
 
-# Route domain currently has no CRUD (mostly algorithmic), adding comment per user request
-# from app.crud.route import ...
+from app.crud.post import create_community_post, get_post, get_posts, delete_post
+from app.crud.notification import create_notification, get_notifications, get_unread_count, mark_as_read, mark_all_as_read
 from app.crud.audit import create_audit_log, get_audit_logs

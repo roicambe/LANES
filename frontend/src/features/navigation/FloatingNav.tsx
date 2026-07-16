@@ -19,7 +19,7 @@ export default function FloatingNav() {
 
   return (
     <header className="fixed top-4 z-50 hidden sm:flex justify-center pointer-events-none pb-4 w-full select-none">
-      <nav className="pointer-events-auto flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-2 py-1.5 w-max max-w-[calc(100vw-2rem)] transition-all duration-500 ease-in-out">
+      <nav className="pointer-events-auto flex items-center gap-1 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-gray-200 px-2 py-1.5 w-max max-w-[calc(100vw-2rem)] transition-all duration-500 ease-in-out">
         <Link href="/" className="flex items-center pl-3 pr-2 hidden sm:flex transition-opacity hover:opacity-80 shrink-0" title="Go to Landing Page">
           <Logo size="xs" textClassName="mt-0.5 hidden md:block shrink-0" />
         </Link>
