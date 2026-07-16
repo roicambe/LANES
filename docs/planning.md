@@ -19,16 +19,17 @@
 
 ## Active Sprint (Next Feature)
 
-**Goal:** Intelligent Dynamic Routing with Valhalla (Flood Polygon Avoidance)
+**Goal:** Global Heatmap & Spatial Analytics (Public & Admin)
 
-- [x] Migrate engine from OSRM to Valhalla
-- [x] Create `setup_valhalla.ps1` and update Docker configurations
-- [x] Refactor backend `routing.py` to pass dynamic flood polygons
-- [x] Implement fallback logic (avoid ALL -> avoid RED/ORANGE -> avoid RED)
+- [x] Implement Photon API Reverse Geocoding on backend to extract and save 'barangay' for approved reports.
+- [x] Create `/api/v1/analytics/heatmap` endpoint returning weighted GeoJSON.
+- [x] Create `/api/v1/analytics/stats` endpoint returning Top Barangays and Top Locations.
+- [x] Build `/analytics` page for public commuters with MapLibre Heatmap layer and responsive side panel.
+- [x] Build `/admin/analytics` page with distraction-free layout and data tables for DRRMO exports.
 
 **Design Decisions:**
-- Replaced OSRM with Valhalla for dynamic polygon avoidance
-- Valhalla natively supports geojson polygon avoidance natively in the API request
+- Reverse geocoding via Photon is used to resolve barangays dynamically without storing heavy shapefiles.
+- A dedicated `/analytics` route is used for commuters instead of cluttering the live global map, while keeping `GlobalMap.tsx` active in the background.
 
 ## Recently Completed
 

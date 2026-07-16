@@ -12,6 +12,7 @@ import { FloodReportPanel } from "@/features/hazards/FloodReportPanel";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/shared/ui";
+import { AnalyticsPanel } from "@/features/analytics/AnalyticsPanel";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), { ssr: false });
 
@@ -60,11 +61,21 @@ function MapLayout() {
     isPickingOnMap, 
     isReportPanelOpen, 
     setIsReportPanelOpen,
-    hasBottomOffset
+    hasBottomOffset,
+    isAnalyticsOpen,
+    setIsAnalyticsOpen
   } = useMapContext();
 
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
+  useEffect(() => {
+    if (pathname === "/admin/analytics") {
+      setIsAnalyticsOpen(true);
+    }
+  }, [pathname, setIsAnalyticsOpen]);
+
+  // -- Event Handlers --
   // Automatically open the report panel if navigated with ?action=report
   useEffect(() => {
     if (searchParams.get("action") === "report") {
@@ -96,7 +107,7 @@ function MapLayout() {
     <>
       <MapCanvas />
 
-      {/* ── 1. Backdrop blur overlay ──────────────────────────────────────── */}
+      {/* -- 1. Backdrop blur overlay ---------------------------------------- */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -111,7 +122,7 @@ function MapLayout() {
         )}
       </AnimatePresence>
 
-      {/* ── 2. Action Pill ────────────────────────────────────────────────── */}
+      {/* -- 2. Action Pill -------------------------------------------------- */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.button
@@ -131,7 +142,7 @@ function MapLayout() {
         )}
       </AnimatePresence>
 
-      {/* ── 3. FAB Button ─────────────────────────────────────────────────── */}
+      {/* -- 3. FAB Button --------------------------------------------------- */}
       {isMobile && !isPickingOnMap && (
         <ReportFab
           isMenuOpen={isMenuOpen}
@@ -146,26 +157,33 @@ function MapLayout() {
         />
       )}
 
-      {/* ── 4. Panels ─────────────────────────────────────────────────────── */}
-      <FloodReportPanel
-        isOpen={isMobile ? isReportPanelOpen : true}
-        onClose={() => setIsReportPanelOpen(false)}
-      />
-      <RoutePanel />
+      {/* -- 4. Panels ------------------------------------------------------- */}
+      <AnimatePresence>
+        {isAnalyticsOpen && <AnalyticsPanel />}
+      </AnimatePresence>
+      {pathname !== "/admin/analytics" && (
+        <>
+          <FloodReportPanel
+            isOpen={isMobile ? isReportPanelOpen : true}
+            onClose={() => setIsReportPanelOpen(false)}
+          />
+          <RoutePanel />
+        </>
+      )}
     </>
   );
 }
 
-// ── GlobalMap ──────────────────────────────────────────────────────────────────
+// -- GlobalMap ------------------------------------------------------------------
 
 export default function GlobalMap() {
   const pathname = usePathname();
-  const isMapPage = pathname === "/map";
+  const isMapVisible = pathname === "/map" || pathname === "/analytics" || pathname === "/admin/analytics";
 
   return (
     <div
       className={`fixed inset-0 z-0 transition-opacity duration-300 ${
-        isMapPage ? "opacity-100" : "opacity-0 pointer-events-none"
+        isMapVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
       <Suspense fallback={null}>

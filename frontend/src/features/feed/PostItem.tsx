@@ -42,7 +42,7 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
       if (navigator.share) {
         navigator.share({
           title: 'LANES Flood Report',
-          text: post.raw_text,
+          text: post.content || post.report?.raw_text || "Flood Report",
           url: `${window.location.origin}/feed/${post.id}`
         });
       } else if (navigator.clipboard && navigator.clipboard.writeText) {

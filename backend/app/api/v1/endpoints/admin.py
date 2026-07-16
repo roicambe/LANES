@@ -42,6 +42,37 @@ async def approve_report(
     
     report = crud.update_flood_report_status(db, report_id=report_id, status="approved")
 
+    # Reverse geocode using Photon API to get the barangay
+    response_report = schemas.FloodReportResponse.model_validate(report)
+    if response_report.geometry and not report.barangay:
+        import httpx
+        
+        coords = response_report.geometry.coordinates
+        lon, lat = None, None
+        if response_report.geometry.type == "Point":
+            lon, lat = coords[0], coords[1]
+        elif response_report.geometry.type == "LineString":
+            lon, lat = coords[0][0], coords[0][1]
+            
+        if lon is not None and lat is not None:
+            url = f"https://photon.komoot.io/reverse?lon={lon}&lat={lat}"
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(url, timeout=5.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        features = data.get("features", [])
+                        if features:
+                            props = features[0].get("properties", {})
+                            barangay = props.get("district") or props.get("locality") or props.get("city")
+                            if barangay:
+                                report.barangay = barangay
+                                db.commit()
+                                db.refresh(report)
+                                response_report = schemas.FloodReportResponse.model_validate(report)
+            except Exception as e:
+                print(f"Photon reverse geocode failed: {e}")
+
     # If the report has geometry, create an avoidance zone (simple 200m bounding box buffer)
     # The geometry field on the response schema will have the PointGeometry parsed from EWKB
     response_report = schemas.FloodReportResponse.model_validate(report)

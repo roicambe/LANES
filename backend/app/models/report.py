@@ -57,6 +57,7 @@ class FloodReport(Base):
     
     # [NEW] Fields for Community Feed
     human_readable_location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    barangay: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # PostGIS Geometry column for generic geometry (Point or LineString) (SRID 4326 = WGS 84 coordinate system)

@@ -15,11 +15,13 @@ import {
   Database,
   Settings,
   LogOut,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Dashboard",      href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Analytics",      href: "/admin/analytics", icon: TrendingUp },
   { name: "Live Map",       href: "/admin/map",       icon: Map },
   { name: "Active Zones",   href: "/admin/zones",     icon: Layers },
   { name: "Reports",        href: "/admin/reports",   icon: FileText },
@@ -31,9 +33,12 @@ const navItems = [
   { name: "System Settings",href: "/admin/settings",  icon: Settings },
 ];
 
+import { useSidebarStore } from "@/shared/stores/sidebarStore";
+
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const setIsSidebarExpanded = useSidebarStore((state) => state.setIsSidebarExpanded);
 
   const handleLogout = () => {
     localStorage.removeItem("lanes_token");
@@ -42,6 +47,8 @@ export default function AdminSidebar() {
 
   return (
     <aside 
+      onMouseEnter={() => setIsSidebarExpanded(true)}
+      onMouseLeave={() => setIsSidebarExpanded(false)}
       className="group flex flex-col h-full bg-white border-r border-gray-200 
                  w-14 hover:w-56 transition-all duration-150 ease-in-out shrink-0 z-20 shadow-sm select-none"
     >
