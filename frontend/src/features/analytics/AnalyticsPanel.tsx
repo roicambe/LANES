@@ -1,0 +1,118 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/apiClient";
+import { Loader2, TrendingUp, MapPin, AlertCircle } from "lucide-react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { Panel } from "@/shared/ui/Panel";
+import { useMapContext } from "@/features/map/MapContext";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
+interface StatItem {
+  barangay?: string;
+  location?: string;
+  count: number;
+}
+
+interface AnalyticsStats {
+  top_barangays: StatItem[];
+  top_locations: StatItem[];
+}
+
+export function AnalyticsPanel() {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const pathname = usePathname();
+  const isAdmin = pathname === "/admin/analytics";
+  
+  const { isAnalyticsOpen, setIsAnalyticsOpen } = useMapContext();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  const { data, isLoading } = useQuery({
+    queryKey: ["analyticsStats"],
+    queryFn: () => apiClient.get<AnalyticsStats>("/analytics/stats"),
+  });
+
+  return (
+    <Panel
+      title="Flood Insights"
+      icon={<TrendingUp className="w-5 h-5 text-red-600" />}
+      iconBgClassName="bg-red-500/10"
+      isCollapsed={isAdmin ? false : isCollapsed}
+      onCollapseToggle={() => {
+        if (!isAdmin) setIsCollapsed(!isCollapsed);
+      }}
+      isMobile={isMobile}
+      isOpen={isMobile ? (isAdmin ? true : isAnalyticsOpen) : true}
+      onClose={() => setIsAnalyticsOpen(false)}
+      hideCollapseIcon={isAdmin}
+      showDesktopClose={true}
+      anchor="left"
+      initialPosition={{ x: 16, y: 80 }}
+    >
+      <div className="flex-1 space-y-8 no-scrollbar">
+        {isLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          </div>
+        ) : (
+          <>
+            {/* Top Barangays Section */}
+            <section>
+              <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-orange-500" />
+                Most Flooded Barangays
+              </h3>
+              
+              {data?.top_barangays.length === 0 ? (
+                <p className="text-sm text-slate-500 italic">No flood data available.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {data?.top_barangays.map((item, idx) => (
+                    <li key={idx} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-4">{idx + 1}</span>
+                        <span className="text-sm font-medium text-slate-700">{item.barangay}</span>
+                      </div>
+                      <span className="text-xs font-semibold bg-red-100 text-red-700 px-2 py-1 rounded-lg">
+                        {item.count} alerts
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Top Locations Section */}
+            <section>
+              <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-orange-500" />
+                Frequent Flood Locations
+              </h3>
+              
+              {data?.top_locations.length === 0 ? (
+                <p className="text-sm text-slate-500 italic">No location data available.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {data?.top_locations.map((item, idx) => (
+                    <li key={idx} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-4">{idx + 1}</span>
+                        <span className="text-sm font-medium text-slate-700 line-clamp-1 max-w-[200px]">
+                          {item.location}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-1 rounded-lg shrink-0">
+                        {item.count} alerts
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+    </Panel>
+  );
+}

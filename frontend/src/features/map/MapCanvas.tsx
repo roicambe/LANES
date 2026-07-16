@@ -10,7 +10,7 @@ import { LoadingOverlay } from "@/shared/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { apiClient } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 
 const ROUTE_SOURCE_ID = "route-line";
 const ROUTE_LAYER_ID = "route-line-layer";
@@ -66,6 +66,118 @@ const isPointInPolygon = (point: [number, number], polygon: any): boolean => {
   return inside;
 };
 
+class TopViewControlV3 {
+  private _map: maplibregl.Map | undefined;
+  private _container: HTMLDivElement | undefined;
+  private _button: HTMLButtonElement | undefined;
+
+  onAdd(map: maplibregl.Map) {
+    this._map = map;
+    this._container = document.createElement("div");
+    this._container.style.display = "none"; // Hide this wrapper container
+    
+    this._button = document.createElement("button");
+    this._button.type = "button";
+    this._button.title = "Reset to Top View";
+    this._button.className = "maplibregl-ctrl-icon"; // MapLibre native class for icons
+    
+    // Icon representing 2D top-down view
+    this._button.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: auto;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`;
+    
+    this._button.onclick = () => {
+      if (this._map) {
+        this._map.easeTo({ 
+          pitch: 0, 
+          bearing: this._map.getBearing(), 
+          duration: 600 
+        });
+      }
+    };
+    
+    // Use a small timeout to let the NavigationControl render first
+    setTimeout(() => {
+      const navGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
+      if (navGroup && this._button) {
+        navGroup.appendChild(this._button);
+      }
+    }, 100);
+    
+    return this._container;
+  }
+
+  onRemove() {
+    this._button?.parentNode?.removeChild(this._button);
+    this._container?.parentNode?.removeChild(this._container);
+    this._map = undefined;
+  }
+}
+
+class AnalyticsControl {
+  private _map: maplibregl.Map | undefined;
+  private _container: HTMLDivElement | undefined;
+  private _onToggle: () => void;
+
+  constructor(onToggle: () => void) {
+    this._onToggle = onToggle;
+  }
+
+  onAdd(map: maplibregl.Map) {
+    this._map = map;
+    this._container = document.createElement("div");
+    this._container.className = "maplibregl-ctrl";
+    
+    const button = document.createElement("button");
+    button.type = "button";
+    button.title = "View Flood Analytics";
+    
+    // Large, prominent squircle design
+    button.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background-color: white;
+      color: #2563eb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 12px;
+    `;
+    
+    button.onmouseenter = () => {
+      button.style.backgroundColor = "#f8fafc";
+      button.style.transform = "scale(1.05)";
+    };
+    button.onmouseleave = () => {
+      button.style.backgroundColor = "white";
+      button.style.transform = "scale(1)";
+    };
+    button.onmousedown = () => {
+      button.style.transform = "scale(0.95)";
+    };
+    button.onmouseup = () => {
+      button.style.transform = "scale(1.05)";
+    };
+    
+    button.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`;
+    
+    button.onclick = () => {
+      this._onToggle();
+    };
+    
+    this._container.appendChild(button);
+    return this._container;
+  }
+
+  onRemove() {
+    this._container?.parentNode?.removeChild(this._container);
+    this._map = undefined;
+  }
+}
+
 export default function MapCanvas() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
@@ -112,6 +224,26 @@ export default function MapCanvas() {
   const isTouchDevice = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   const isTouchDeviceRef = useRef(isTouchDevice);
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const {
+    start, end, floodStart, floodEnd,
+    allRoutes, selectedRouteIndex,
+    setSelectedRouteIndex,
+    setPointFromMap, activePoint, setActivePoint, isPickingOnMap,
+    floodPreviewGeometry, activePanel, setActivePanel, hasBottomOffset,
+    isAnalyticsOpen, setIsAnalyticsOpen,
+  } = useMapContext();
+
+  const isDesktopAnalytics = pathname === "/admin/analytics";
+  const shouldShowHeatmap = isAnalyticsOpen || isDesktopAnalytics;
+
+  const { data: heatmapData } = useQuery({
+    queryKey: ["analytics", "heatmap"],
+    queryFn: () => apiClient.get<any>("/analytics/heatmap"),
+    enabled: shouldShowHeatmap,
+  });
 
   useEffect(() => {
     isTouchDeviceRef.current = isTouchDevice;
@@ -139,13 +271,6 @@ export default function MapCanvas() {
     }
   }, [searchParams, isLoaded]);
 
-  const {
-    start, end, floodStart, floodEnd,
-    allRoutes, selectedRouteIndex,
-    setSelectedRouteIndex,
-    setPointFromMap, activePoint, isPickingOnMap,
-    floodPreviewGeometry, activePanel, hasBottomOffset,
-  } = useMapContext();
   const setPointFromMapRef = useRef(setPointFromMap);
   setPointFromMapRef.current = setPointFromMap;
   const setSelectedRouteIndexRef = useRef(setSelectedRouteIndex);
@@ -196,16 +321,21 @@ export default function MapCanvas() {
     });
 
     mapInstance.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showAccuracyCircle: false,
+      new TopViewControlV3(),
+      "bottom-right"
+    );
+
+    mapInstance.addControl(
+      new maplibregl.NavigationControl({ 
+        showCompass: true, 
+        showZoom: true,
+        visualizePitch: false 
       }),
       "bottom-right"
     );
 
     mapInstance.addControl(
-      new maplibregl.NavigationControl({ showCompass: true, showZoom: true }),
+      new AnalyticsControl(() => setIsAnalyticsOpen(true)),
       "bottom-right"
     );
 
@@ -865,6 +995,46 @@ export default function MapCanvas() {
     });
   }, [floodPreviewGeometry, isLoaded]);
 
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+    
+    if (map.getLayer("heatmap-layer")) map.removeLayer("heatmap-layer");
+    if (map.getSource("heatmap-source")) map.removeSource("heatmap-source");
+
+    const showAnalytics = isAnalyticsOpen || pathname === "/admin/analytics";
+    if (!showAnalytics || !heatmapData || !heatmapData.features || heatmapData.features.length === 0) return;
+
+    map.addSource("heatmap-source", {
+      type: "geojson",
+      data: heatmapData
+    });
+
+    map.addLayer({
+      id: "heatmap-layer",
+      type: "heatmap",
+      source: "heatmap-source",
+      maxzoom: 15,
+      paint: {
+        "heatmap-weight": ["get", "weight"],
+        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 15, 3],
+        "heatmap-color": [
+          "interpolate",
+          ["linear"],
+          ["heatmap-density"],
+          0, "rgba(0, 0, 255, 0)",
+          0.2, "royalblue",
+          0.4, "cyan",
+          0.6, "lime",
+          0.8, "yellow",
+          1, "red"
+        ],
+        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 2, 15, 20],
+        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0.8, 15, 0]
+      }
+    });
+  }, [heatmapData, isLoaded, pathname]);
+
   return (
     <div className={`relative w-full h-full ${hasBottomOffset ? "flood-panel-open" : ""}`}>
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full bg-neutral-200" />
@@ -916,6 +1086,47 @@ export default function MapCanvas() {
           .flood-panel-open .maplibregl-ctrl-bottom-right {
             bottom: 16px !important;
           }
+        }
+
+        /* Redesign MapLibre Native Controls (Zoom, Compass, Geolocate) */
+        .maplibregl-ctrl-group {
+          background-color: white !important;
+          border-radius: 12px !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+          overflow: hidden !important;
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 12px !important;
+        }
+        .maplibregl-ctrl-group:not(:empty) {
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        }
+        .maplibregl-ctrl-group > button {
+          width: 48px !important;
+          height: 48px !important;
+          background-color: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          margin: 0 !important;
+        }
+        .maplibregl-ctrl-group > button + button {
+          border-top: 1px solid #e5e7eb !important;
+        }
+        .maplibregl-ctrl-group > button:hover {
+          background-color: #f8fafc !important;
+        }
+        .maplibregl-ctrl-group > button:active {
+          background-color: #f1f5f9 !important;
+        }
+        .maplibregl-ctrl-icon {
+          width: 22px !important;
+          height: 22px !important;
+          opacity: 0.8;
         }
       `}</style>
     </div>

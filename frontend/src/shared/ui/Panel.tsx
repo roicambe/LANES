@@ -5,6 +5,8 @@ import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/Card";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { useSidebarStore } from "@/shared/stores/sidebarStore";
 
 interface PanelProps {
   /** Text shown in the card header. */
@@ -49,6 +51,10 @@ interface PanelProps {
   initialPosition?: { x: number; y: number };
   /** Main panel body content. Rendered inside CardContent on desktop. */
   children: ReactNode;
+  /** Whether to hide the collapse chevron icon. */
+  hideCollapseIcon?: boolean;
+  /** Whether to show a close (X) button on desktop. */
+  showDesktopClose?: boolean;
 }
 
 /**
@@ -73,9 +79,20 @@ export function Panel({
   anchor = "left",
   initialPosition = { x: 16, y: 80 },
   children,
+  hideCollapseIcon = false,
+  showDesktopClose = false,
 }: PanelProps) {
   const dragControls = useDragControls();
   const dragStartPos = useRef({ x: 0, y: 0 });
+
+  const pathname = usePathname();
+  const isSidebarExpanded = useSidebarStore((state) => state.isSidebarExpanded);
+  const isAdmin = pathname?.startsWith("/admin");
+  const isRight = anchor === "right";
+
+  // Calculate actual left offset for left-anchored panels
+  const sidebarOffset = isAdmin ? (isSidebarExpanded ? 224 : 56) : 0;
+  const targetX = isRight ? initialPosition.x : initialPosition.x + sidebarOffset;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     dragStartPos.current = { x: e.clientX, y: e.clientY };
@@ -93,47 +110,46 @@ export function Panel({
   // ── Shared header markup ──────────────────────────────────────────────────
   const headerRow = (
     <div className="flex items-center justify-between">
-      <CardTitle className="flex items-center gap-2 text-base">
-        <div
-          className={cn(
-            "flex items-center justify-center w-7 h-7 rounded-lg shrink-0",
-            iconBgClassName
-          )}
-        >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={cn("p-2 rounded-lg shrink-0", iconBgClassName)}>
           {icon}
         </div>
-        <span>{title}</span>
-      </CardTitle>
-
-      <div className="flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+        <CardTitle className="text-[15px] font-bold tracking-tight text-gray-900 truncate">
+          {title}
+        </CardTitle>
+      </div>
+      <div className="flex items-center gap-1 shrink-0 ml-2">
         {headerActions}
-
-        {isMobile ? (
-          <button
-            type="button"
-            onClick={onCollapseToggle}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-            aria-label={isCollapsed ? "Expand panel" : "Minimize panel"}
-          >
-            {isCollapsed ? (
-              <ChevronUp className="w-6 h-6 text-gray-500" />
-            ) : (
-              <ChevronDown className="w-6 h-6 text-gray-500" />
+        {!isMobile && (
+          <>
+            {showDesktopClose && onClose && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="p-1 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"
+                title="Close panel"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
             )}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onCollapseToggle}
-            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-            title={isCollapsed ? "Expand panel" : "Collapse panel"}
-          >
-            {isCollapsed ? (
-              <ChevronDown className="w-5 h-5 text-gray-500" />
-            ) : (
-              <ChevronUp className="w-5 h-5 text-gray-500" />
+            {!hideCollapseIcon && (
+              <button
+                type="button"
+                onClick={onCollapseToggle}
+                className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                title={isCollapsed ? "Expand panel" : "Collapse panel"}
+              >
+                {isCollapsed ? (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
             )}
-          </button>
+          </>
         )}
       </div>
     </div>
@@ -166,39 +182,59 @@ export function Panel({
               } else if (info.offset.y < -60 && isCollapsed) {
                 onCollapseToggle();
               }
+              if (info.offset.y > 150 && onClose) {
+                onClose();
+              }
             }}
             initial={{ y: "100%" }}
-            animate={{ y: isCollapsed ? "calc(100% - 64px)" : 0 }}
+            animate={{ y: isCollapsed ? "calc(100% - 72px)" : 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col border-t border-gray-200 overflow-hidden h-[60vh] overscroll-y-none"
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] bg-white border-t border-gray-200"
+            style={{ maxHeight: "calc(100vh - 80px)" }}
           >
-            {/* Drag Handle Bar */}
             <div 
-              className="w-12 h-1 bg-gray-300 rounded-full mx-auto my-2.5 shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
-              onPointerDown={handlePointerDown}
-            />
-
-            {/* Mobile header */}
-            <div 
-              className="px-4 pb-3 border-b border-gray-100 bg-gray-50/50 shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+              className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
               onPointerDown={handlePointerDown}
               onClick={handleMobileHeaderClick}
             >
-              {headerRow}
+              <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
             </div>
 
-            {/* Mobile scrollable body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {children}
+            <div className="px-4 pb-4">
+              {headerRow}
+              <AnimatePresence>
+                {isCollapsed && collapsedSummary && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="pt-2"
+                  >
+                    {collapsedSummary}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="px-4 pb-8 overflow-y-auto max-h-[60vh]"
+                >
+                  {children}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
     );
   }
 
-  const isRight = anchor === "right";
   return (
     <motion.div
       drag
@@ -206,56 +242,67 @@ export function Panel({
       dragListener={false}
       dragMomentum={false}
       initial={{
-        x: isRight ? -initialPosition.x : initialPosition.x,
+        x: isRight ? -targetX : targetX,
         y: initialPosition.y,
       }}
+      animate={{
+        x: isRight ? -targetX : targetX,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "absolute top-0 z-40",
         isRight ? "right-0" : "left-0"
       )}
     >
-      <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-7.5rem)] overflow-hidden">
-        {/* Desktop header */}
-        <CardHeader 
-          className="pb-3 pt-4 rounded-t-xl cursor-move touch-none select-none transition-colors hover:bg-gray-50/50"
-          onPointerDown={handlePointerDown}
-          onClick={handleHeaderClick}
-        >
-          {headerRow}
+      <motion.div
+        initial={{ x: isRight ? 100 : -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: isRight ? 100 : -100, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
+        <Card className="w-[340px] rounded-xl border border-gray-200 shadow-xl bg-white flex flex-col max-h-[calc(100vh-7.5rem)] overflow-hidden">
+          {/* Desktop header */}
+          <CardHeader 
+            className="pb-3 pt-4 rounded-t-xl cursor-move touch-none select-none transition-colors hover:bg-gray-50/50"
+            onPointerDown={handlePointerDown}
+            onClick={handleHeaderClick}
+          >
+            {headerRow}
 
-          {/* Collapsed summary slot */}
+            {/* Collapsed summary slot */}
+            <AnimatePresence>
+              {isCollapsed && collapsedSummary && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="pt-2 overflow-hidden"
+                >
+                  {collapsedSummary}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardHeader>
+
+          {/* Collapsible body */}
           <AnimatePresence>
-            {isCollapsed && collapsedSummary && (
+            {!isCollapsed && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="pt-2 overflow-hidden"
+                className="overflow-y-auto flex-1 min-h-0"
               >
-                {collapsedSummary}
+                <CardContent className="space-y-4 pb-4">
+                  {children}
+                </CardContent>
               </motion.div>
             )}
           </AnimatePresence>
-        </CardHeader>
-
-        {/* Collapsible body */}
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="overflow-y-auto flex-1 min-h-0"
-            >
-              <CardContent className="space-y-4 pb-4">
-                {children}
-              </CardContent>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Card>
+        </Card>
+      </motion.div>
     </motion.div>
   );
 }

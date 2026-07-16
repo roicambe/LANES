@@ -31,6 +31,7 @@ class FloodReportBase(BaseModel):
     source: ReportSource
     severity: ReportSeverity = ReportSeverity.MEDIUM
     human_readable_location: Optional[str] = None
+    barangay: Optional[str] = None
     is_public: bool = False
 
 

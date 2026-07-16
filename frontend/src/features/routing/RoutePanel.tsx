@@ -152,11 +152,13 @@ export default function RoutePanel() {
   const {
     start,
     end,
-    activePoint,
     allRoutes,
     selectedRouteIndex,
     selectedRoute,
     setSelectedRouteIndex,
+    activePoint,
+    activePanel,
+    setActivePanel,
     routeInfo,
     isRouting,
     routeError,
@@ -165,16 +167,19 @@ export default function RoutePanel() {
     setEnd,
     setStartLabel,
     setEndLabel,
+    setPointFromMap,
+    clearRoute,
     resetAll,
     isPickingOnMap,
     setIsPickingOnMap,
-    activePanel,
-    setActivePanel,
     vehicleProfile,
     setVehicleProfile,
+    isAnalyticsOpen,
   } = useMapContext();
 
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
+  const isDesktop = !isMobile;
+  const isRight = isAnalyticsOpen && isDesktop;
   const isCollapsed = activePanel !== "route";
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
@@ -564,13 +569,15 @@ export default function RoutePanel() {
     <>
       <LoadingOverlay isVisible={isRouting} message="Calculating safe route..." />
       <Panel
+        key={isAnalyticsOpen ? "analytics-mode" : "default-mode"}
         title="Route Planner"
         icon={<Navigation className="h-4 w-4 text-blue-600" />}
         iconBgClassName="bg-blue-100"
         isCollapsed={isCollapsed}
         onCollapseToggle={() => setActivePanel(isCollapsed ? "route" : null)}
         isMobile={false}
-        initialPosition={{ x: 16, y: 80 }}
+        anchor={isAnalyticsOpen ? "right" : "left"}
+        initialPosition={{ x: isAnalyticsOpen ? 372 : 16, y: 80 }}
         headerActions={clearButton}
         collapsedSummary={collapsedSummary}
       >

@@ -31,6 +31,7 @@ interface MapContextValue {
   end: MapPoint | null;
   activePoint: ActivePoint;
   activePanel: ActivePanel;
+  isAnalyticsOpen: boolean;
 
   // --- Multi-route state ---
   allRoutes: RouteOption[] | null;
@@ -56,6 +57,7 @@ interface MapContextValue {
   setIsReportPanelOpen: (value: boolean) => void;
   setActivePoint: (point: ActivePoint) => void;
   setActivePanel: (panel: ActivePanel) => void;
+  setIsAnalyticsOpen: (open: boolean) => void;
   setStart: (coords: [number, number] | null, label?: string) => void;
   setEnd: (coords: [number, number] | null, label?: string) => void;
   setStartLabel: (label: string) => void;
@@ -89,7 +91,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [start, setStartState] = useState<MapPoint | null>(null);
   const [end, setEndState] = useState<MapPoint | null>(null);
   const [activePoint, setActivePoint] = useState<ActivePoint>(null);
-  const [activePanel, setActivePanel] = useState<ActivePanel>("route");
+  const [activePanel, setActivePanelState] = useState<ActivePanel>("route");
+  const [isAnalyticsOpen, setIsAnalyticsOpenState] = useState(false);
 
   // Multi-route state
   const [allRoutes, setAllRoutes] = useState<RouteOption[] | null>(null);
@@ -141,10 +144,21 @@ export function MapProvider({ children }: { children: ReactNode }) {
     }
   }, [locationParam, typeParam, labelParam]);
 
+  const setActivePanel = useCallback((panel: ActivePanel) => {
+    setActivePanelState(panel);
+  }, []);
+
+  const setIsAnalyticsOpen = useCallback((open: boolean) => {
+    setIsAnalyticsOpenState(open);
+  }, []);
+
   const clearRoute = useCallback(() => {
+    setStartState(null);
+    setEndState(null);
     setAllRoutes(null);
     setSelectedRouteIndexState(0);
     setRouteError(null);
+    setIsRouting(false);
   }, []);
 
   const setStart = useCallback((coords: [number, number] | null, label?: string) => {
@@ -306,6 +320,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       end,
       activePoint,
       activePanel,
+      isAnalyticsOpen,
       allRoutes,
       selectedRouteIndex,
       selectedRoute,
@@ -324,6 +339,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setIsReportPanelOpen,
       setActivePoint,
       setActivePanel,
+      setIsAnalyticsOpen,
       setStart,
       setEnd,
       setStartLabel,
@@ -343,6 +359,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       end,
       activePoint,
       activePanel,
+      isAnalyticsOpen,
       allRoutes,
       selectedRouteIndex,
       selectedRoute,
@@ -361,6 +378,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setIsReportPanelOpen,
       setActivePoint,
       setActivePanel,
+      setIsAnalyticsOpen,
       setStart,
       setEnd,
       setStartLabel,
