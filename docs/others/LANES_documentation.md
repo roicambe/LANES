@@ -21,61 +21,17 @@ Noreen A. Perez, DIT
 
 Adviser
 
-Month, 2026
+July, 2026
 
-# **TABLE OF CONTENTS** {#table-of-contents}
+# **TABLE OF CONTENTS**
 
-[**TABLE OF CONTENTS	1**](#table-of-contents)
+# 
 
-[**CHAPTER I	2**](#chapter-i)
-
-[The Problem and its Background	2](#1.1-the-problem-and-its-background)
-
-[Review of Related Literature	5](#1.2-review-of-related-literature)
-
-[Synthesis	12](#synthesis)
-
-[Significance of the Study	13](#1.3-significance-of-the-study)
-
-[Statement of the Problem	16](#1.4-statement-of-the-problem)
-
-[Scope and Limitation of the Study	17](#1.5-scope-and-limitation-of-the-study)
-
-[Scope	17](#scope)
-
-[Limitations	18](#limitations)
-
-[**CHAPTER II	20**](#chapter-ii)
-
-[Introduction	20](#2.1-introduction)
-
-[Research Design	20](#2.2-research-design)
-
-[Architectural Framework	21](#2.2.1-architectural-framework)
-
-[Algorithm	23](#2.2.2-algorithm)
-
-[SE Paradigm	27](#2.2.3-se-paradigm)
-
-T[ool to test for Accuracy	30](#2.2.4-tool-to-test-for-accuracy)
-
-[Population and Sampling	31](#2.3-population-and-sampling)
-
-[Data Collection Methods	32](#2.4-data-collection-methods)
-
-[Data Analysis Procedures	35](#2.5-data-analysis-procedures)
-
-[Ethical Considerations	37](#2.6-ethical-considerations)
-
-[Summary	39](#2.7-summary)
-
-[**REFERENCES	41**](#references)
-
-# **CHAPTER I** {#chapter-i}
+# **CHAPTER I**
 
 **INTRODUCTION**
 
-## **1.1 The Problem and its Background** {#1.1-the-problem-and-its-background}
+## **1.1 The Problem and its Background**
 
 Severe meteorological disruptions increasingly challenge urban mobility and commuter safety in coastal and tropical nations. In the geographic context of the Philippines, which experiences an average of 20 tropical cyclones annually, localized flooding has transitioned from a seasonal anomaly into a persistent logistical obstacle. During periods of torrential precipitation, metropolitan road networks frequently suffer structural or functional paralysis, stalling economic activities and trapping thousands of commuters in transit. Efficient transportation under these circumstances requires volatile, immediate structural data regarding roadway passability. However, the existing urban transit paradigm relies heavily on conventional navigation frameworks that assume static environmental conditions, leaving a distinct gap between active vehicle navigation and environmental risk mitigation.
 
@@ -95,7 +51,7 @@ In developing this software-driven solution. The primary client of the proposed 
 
 Ultimately, this study aims to demonstrate that combining Natural Language Processing (NLP) with open-source routing engines can automate the collection of disaster intelligence. This process transforms volatile social data into verified, actionable navigation commands, creating a reliable, proactive safety layer for the commuting public. 
 
-## **1.2 Review of Related Literature** {#1.2-review-of-related-literature}
+## **1.2 Review of Related Literature**
 
 The increasing frequency and velocity of meteorological disasters in the Philippines have exposed deep operational limitations in traditional, isolated transit frameworks. To ground the development of an adaptive computational system, this review evaluates current global and local literature across five core interconnected domains: macro level hazard systems, community-based alert interfaces, flood-routing spatial networks, multi-modal crowdsourced mining, and mobile Progressive Web Application (PWA) engineering. By analyzing the structural intersections and operational gaps within these separate fields, this study establishes the technical and conceptual rationale for LANES a real time, flood-adaptive navigation platform that uses text-driven Natural Language Processing (NLP) to convert unstructured public reports into actionable spatial routing intelligence for urban commuters.
 
@@ -187,7 +143,7 @@ Compare atleast 3 Algorithms related to your study then, select the best
 
 How about the dataset? Describe the dataset. The data to be trained
 
-### **Synthesis** {#synthesis}
+### **Synthesis**
 
 The review literature indicates a growing ecosystem of disaster response technologies within the Philippines, ranging from macro scale scientific forecasting models like UP NOAH (Lagmay et al., 2024\) to fixed community evacuation routing frameworks (Manligues et al., 2017\) and live public dashboards like LyfSaver and Project Agos. Nevertheless, a consistent operational gap emerges across these platforms: current systems are designed either for long term predictive planning, static crisis mapping, administrative resource dispatch, or emergency evacuation along pre-determined shelter pathways. None of these systems provides real-time, depth aware, turn by turn alternative route navigation for independent urban commuters trying to travel to arbitrary personal locations.
 
@@ -203,7 +159,7 @@ LANES addresses these overlapping gaps by bridging three domains that existing r
 
 ## 
 
-## **1.3 Significance of the Study** {#1.3-significance-of-the-study}
+## **1.3 Significance of the Study**
 
 The development and implementation of the LANES (Localised Alternative Navigation for Environs under Submersion) platform provides direct, measurable contributions across multiple institutional, public, and academic tiers. Guided by the project’s primary objectives, core scope, and technical features, the outcomes of this research will benefit the following entities:
 
@@ -227,7 +183,7 @@ As an academic contribution to the Information Technology Program of Pamantasan 
 
 	This research sets up a strong foundation for future developers aiming to build advanced, data-driven navigation systems. It gives them an excellent reference model to scale real time crisis informatics systems too. Moreover, the system could be retooled to include more sophisticated algorithms, like integrating deep neural networks for extracting depth information from user-submitted road photos. Plus, it could process real-time data from social media APIs. The study also serves as a dependable guide for moving from passive hazard mapping to more interactive, automated obstacle avoidance systems.
 
-## **1.4 Statement of the Problem** {#1.4-statement-of-the-problem}
+## **1.4 Statement of the Problem**
 
 Flooding continues to disrupt transportation and daily mobility in Pasig City by making roads inaccessible and limiting the availability of reliable route information. Although existing navigation and disaster monitoring systems provide useful information, they do not automatically extract flood-related reports from multiple sources and generate localized alternative routes for commuters. To address this gap, the proposed Localized Alternative Navigation for Environs under Submersion (LANES) aims to utilize Natural Language Processing (NLP) and Named Entity Recognition (NER) to process flood-related reports and provide flood-adaptive route recommendations. Specifically, this study seeks to answer the following questions:
 
@@ -236,11 +192,11 @@ Flooding continues to disrupt transportation and daily mobility in Pasig City by
 3. What software architecture and algorithmic strategies can be implemented to dynamically convert verified flood coordinates into impassable geometric barriers within an open-source routing network engine to automatically render alternative, clear detour paths?  
 4. How can the proposed system assist the Pasig City Disaster Risk Reduction and Management Office (DRRMO) in validating flood reports before providing route recommendations to users?
 
-## **1.5 Scope and Limitation of the Study** {#1.5-scope-and-limitation-of-the-study}
+## **1.5 Scope and Limitation of the Study**
 
 	The development of the LANES platform focuses on establishing a software-driven, real time navigation safety layer for urban commuters. To ensure a realistic and manageable development cycle, the technical features and operational boundaries of the project are defined as follows:
 
-### **Scope** {#scope}
+### **Scope**
 
 The development of the Progressive Web Application will include:
 
@@ -263,7 +219,7 @@ The development of the Progressive Web Application will include:
 10. **Real-Time Updates:** Synchronizing flood reports, detours, and map changes instantly across the platform using WebSocket integration.  
 11. **Offline Capability:** Supporting basic offline functionality through Progressive Web App (PWA) features, including cached maps and offline warning notifications during connectivity loss.
 
-### **Limitations** {#limitations}
+### **Limitations**
 
 The system will, however, not include or support the following features:
 
@@ -275,17 +231,17 @@ The system will, however, not include or support the following features:
 
 # 
 
-# **CHAPTER II** {#chapter-ii}
+# **CHAPTER II**
 
 **METHODOLOGY**
 
-## **2.1 Introduction** {#2.1-introduction}
+## **2.1 Introduction**
 
 	This chapter details the methodological framework used to design, build, and evaluate the LANES (Localised Alternative Navigation for Environs under Submersion) platform. This section acts as the technical blueprint for the study, clearly explaining how the research was done. It changes the project's conceptual goals into a solid, real world software engineering plan. The chapter lays out the research design, system structure, data pipelines, and user tests. Showing that the platform is not only technically sound but also super reliable, it highlights all the methodical steps taken.
 
 	The selected methodology is specifically structured to balance technical development rigor with real world utility in crisis environments. It provides a transparent, reproducible account of how raw, bilingual text data is programmatically captured, validated, and transformed into a life-saving navigation asset tailored for Filipino commuters and local disaster risk management units.
 
-## **2.2 Research Design** {#2.2-research-design}
+## **2.2 Research Design**
 
 	This study uses a Developmental Research Design with a quantitative approach. This design was chosen because the main output of this study is not just data or analysis, but an actual working system, the LANES platform, that needs to be built, tested, and evaluated. The research process moves through five general stages: analysis of the problem, design of the system, development of the software, implementation in a pilot area, and evaluation of its performance.
 
@@ -300,7 +256,7 @@ The quantitative part of this study is used mainly to evaluate the finished syst
 
 Respondents, including commuters, DRRM personnel, and IT experts, will answer questionnaires using a Likert scale for each of these areas. The results will be analyzed using basic statistics such as mean, standard deviation, and percentage, along with the precision, recall, and F1-score results from the NLP testing in Section 2.2.2. This combination of system development and ISO/IEC 25010-based evaluation will show whether LANES is not only technically working, but also usable and reliable for its intended users.
 
-### **2.2.1 Architectural Framework** {#2.2.1-architectural-framework}
+### **2.2.1 Architectural Framework**
 
 	The LANES platform uses a software driven, three-tier architecture to transform conversational public text reports into live, flood-adaptive navigation routes. By relying entirely on code and data streams, this setup completely eliminates the need for expensive physical water sensors or hardware installations. To process information smoothly, the system divides its operations into five simple layers: the Data Ingestion Layer, the Linguistic Processing Engine, the Spatial Persistence Layer, the Routing Topology Interface, and the Cross-Platform Presentation Layer. 
 
@@ -314,7 +270,7 @@ Respondents, including commuters, DRRM personnel, and IT experts, will answer qu
 
 	The Data Persistence Tier provides secure data storage, spatial indexing, and geometric buffering to convert linguistic variables into actionable geographic blockades. At the core of this tier sits the PostgreSQL and PostGIS Spatial Database, an enterprise-grade relational ledger that houses baseline urban road network datasets and maintains the active record of validated flood reports. Working alongside the database, the OSM Geocoder and Polygon Generator translates plain-text street tokens into precise OpenStreetMap coordinates. Once these coordinates are approved via the DRRM administrative confirmation step, the module uses PostGIS spatial functions to automatically expand the single coordinate point into a 50-meter geometric avoidance polygon covering the physical span of the flooded road segment. Through this pipeline, an informal string like Caruncho Avenue is geocoded, transformed into a spatial block upon administrative approval, and piped back to the logic and presentation tiers to trigger real-time route deflections.
 
-### **2.2.2 Algorithm**  {#2.2.2-algorithm}
+### **2.2.2 Algorithm** 
 
 	The LANES platform works through a series of data transformations that turn raw text reports into flood-adaptive navigation routes. Figure 2 shows the Level 1 Data Flow Diagram, which illustrates how the system processes information from data collection to route generation, including the point where human validation takes place. The system's execution flow is divided into three main phases: bilingual text extraction, spatial data transformation, and route recalculation. 
 
@@ -379,7 +335,7 @@ W(e)={ ∞, if ePflood ⊘ ds, if ePflood \=⊘  }
 
 Sample Data Transformation: A commuter requests a route passing through the city center. OSRM detects that the baseline route intersects the 50-meter avoidance polygon generated for Caruncho Ave. The system updates the cost matrix, changing the weight of the Caruncho Avenue edge from its standard travel time cost to ∞. The pathfinding engine recalculates the route, deflecting the polyline array onto adjacent, dry streets, and pipes the safe detour coordinates back to the Mapbox GL canvas on the commuter's Progressive Web Application.
 
-### **2.2.3 SE Paradigm** {#2.2.3-se-paradigm}
+### **2.2.3 SE Paradigm**
 
 	To effectively manage the development, algorithmic testing, and system integration of the platform, the project is executed using the Agile Software Development Methodology. Because the system relies heavily on interlocking data-driven modules—specifically the natural language parsing pipeline, the PostGIS geometric buffer engine, and the OSRM routing cost matrix—a rigid, sequential development model is impractical. The Agile framework allows the development lifecycle to be broken down into highly adaptive, repeating cycles known as sprints. This iterative approach ensures that the linguistic accuracy of the parsing model can be measured, evaluated, and refined continuously before deploying the dependent spatial and routing features.
 
@@ -389,7 +345,7 @@ Sample Data Transformation: A commuter requests a route passing through the city
 
 **1\. Requirements Planning and Analysis**
 
-In this phase, the core functional and non-functional requirements of the application are defined based on the operational needs of Pasig City commuters and municipal DRRM officers. The scope of data ingestion streams, the linguistic variations of Taglish flood reports, and the performance thresholds for dynamic routing calculations are mapped out. These requirements are broken down into discrete technical tasks and compiled into a product backlog to establish the baseline parameters for individual development sprints.
+In this phase, the core functional and non-functional requirements of the application are defined based on the operational needs of Pasig City commuters and municipal DRRMO officers. The scope of data ingestion streams, the linguistic variations of Taglish flood reports, and the performance thresholds for dynamic routing calculations are mapped out. These requirements are broken down into discrete technical tasks and compiled into a product backlog to establish the baseline parameters for individual development sprints.
 
 **2\. System and Architecture Design**
 
@@ -409,7 +365,7 @@ At the conclusion of a development cycle, the verified software increments are c
 
 	In conclusion, the Agile Software Development Methodology provides a structured, adaptive operational framework that directly mitigates the technical risks inherent in the LANES platform. By dividing the software architecture into independent sprint cycles, the development process shifts away from rigid linear development to focus on systematic module verification. This ensures that the foundational bilingual natural language processing pipeline is thoroughly tested, refined, and mathematically optimized for high precision and recall before initiating dependent spatial buffering and graph network routing workloads. Ultimately, this paradigm establishes a continuous feedback loop between iterative programming and rigorous algorithmic validation, guaranteeing that the integrated system functions as a cohesive, reliable, and entirely software-driven alternative to physical hardware infrastructure.
 
-### **2.2.4 Tool to test for Accuracy** {#2.2.4-tool-to-test-for-accuracy}
+### **2.2.4 Tool to test for Accuracy**
 
 	To evaluate the precision and behavioral integrity of the core system algorithms, the development architecture integrates specialized automated testing utilities and validation frameworks. Because the platform relies heavily on natural language processing to extract data, the machine learning components are subjected to isolated testing phases using Python-based machine learning assessment frameworks alongside the core Rust backend testing environment.
 
@@ -417,7 +373,7 @@ The custom, fine-tuned Bilingual Named Entity Recognition (NER) sequence-labelin
 
 Beyond the machine learning classification layers, the spatial and routing engines are systematically validated using integrated unit and integration testing workflows built directly into the Tauri and Rust application layer. The PostGIS geometric expansion routines are verified using automated database test suites that assert the spatial accuracy, vertex count, and proper Coordinate Reference System alignment of the generated 50-meter bounding polygons. Simultaneously, the Open Source Routing Machine (OSRM) integration is validated using simulated routing injection scripts. These scripts programmatically transmit origin and destination coordinate pairs that cross known, simulated flood zones. The testing tool then intercepts the output payload to programmatically assert that the generated detour polyline array does not intersect the active avoidance polygon vectors. This end-to-end algorithmic testing framework guarantees that both the machine learning predictions and downstream spatial calculations remain completely accurate and reliable throughout continuous development cycles.
 
-## **2.3 Population and Sampling** {#2.3-population-and-sampling}
+## **2.3 Population and Sampling**
 
 The study focuses on individuals who are the primary stakeholders in flood-affected urban mobility within Pasig City, where the development and pilot testing of the LANES system is being conducted. These are:
 
@@ -433,7 +389,7 @@ For the pilot testing site, the research team will purposively select a localize
 
 By using purposive sampling across all three respondent groups, the study ensures that feedback comes from individuals who are directly relevant to the system's development and evaluation. This approach allows for a more accurate and meaningful assessment of the system's usability, practical value, and technical reliability before broader implementation.
 
-## **2.4 Data Collection Methods** {#2.4-data-collection-methods}
+## **2.4 Data Collection Methods**
 
 This study will use a quantitative approach to evaluate the LANES (Localised Alternative Navigation for Environs under Submersion) system, consistent with the Developmental Research Design presented in Section 2.2. Data collection will focus on measurable, numerical indicators of the system's technical performance and user acceptance, gathered through structured testing and standardized questionnaires. Data collection will take place in three main phases: technical baseline testing, user simulation testing, and stakeholder evaluation.
 
@@ -451,7 +407,7 @@ IT and subject-matter experts will conduct a technical evaluation of the system'
 
 Before conducting the main data collection, a pilot test will be performed with a small group of three to five users to ensure that the navigation tasks, Google Forms questionnaires, and system configuration are clear, functional, and appropriately scoped. This step helps refine and validate the data collection instruments before they are administered to the full sample.
 
-## **2.5 Data Analysis Procedures** {#2.5-data-analysis-procedures}
+## **2.5 Data Analysis Procedures**
 
 This study will use several quantitative and qualitative analytical methods to examine the data collected from system performance logs, user testing sessions, and expert evaluations. These procedures aim to convert raw data into meaningful findings that directly address the research objectives related to NLP extraction accuracy, routing effectiveness, system usability, and practical value for flood navigation.
 
@@ -463,7 +419,7 @@ System usability will be assessed through the System Usability Scale (SUS) score
 
 Feedback from DRRM personnel and IT experts will be analyzed using a combination of descriptive statistics and thematic analysis. Scored items from technical evaluation checklists and dashboards will be summarized using mean ratings and percentage distributions. Open-ended responses from semi-structured interviews will be analyzed qualitatively using thematic coding to identify recurring patterns, concerns, and recommendations regarding the system's practical deployment potential. All statistical analyses will be carried out using established data analysis tools such as Python's data science libraries (NumPy, Pandas, SciPy) for quantitative metrics and standard qualitative coding software or manual thematic analysis for interview data. By combining objective performance metrics with subjective user feedback, the study will produce a well-rounded evaluation of the LANES system's technical robustness and real-world applicability.
 
-## **2.6 Ethical Considerations** {#2.6-ethical-considerations}
+## **2.6 Ethical Considerations**
 
 This study places strong emphasis on ethical standards, particularly because it involves collecting location-based data and user interaction data in a disaster-response context where participant safety and data privacy are paramount. All procedures are designed to ensure the safety, privacy, comfort, and well-being of every participant throughout the entire study. The ethical considerations focus on informed consent, data privacy, participant safety, responsible use of AI, transparency in flood information, and institutional approval.
 
@@ -477,7 +433,7 @@ Responsible use of AI is also an important ethical concern. The NLP model used i
 
 Finally, before implementation, the complete research protocol—including data collection instruments, consent forms, testing scripts, and system evaluation procedures—will be submitted to the appropriate Institutional Ethics Review Committee. This ensures compliance with national and international standards for research involving human participants and reinforces the commitment to conducting ethical, responsible, and transparent research.
 
-## **2.7 Summary** {#2.7-summary}
+## **2.7 Summary**
 
 The selected software driven, three tier architecture and Agile development methodology are uniquely suited to satisfy the research objectives of the LANES platform without requiring expensive physical hardware installations. By partitioning the system logic into distinct, specialized layers the Data Ingestion Layer, Linguistic Processing Engine, Spatial Persistence Layer, Routing Topology Interface, and Cross-Platform Presentation Layer the architecture provides a robust structure capable of transforming volatile, conversational Taglish text reports into live, flood-adaptive navigation paths.
 
@@ -485,7 +441,7 @@ The integration of a bilingual Named Entity Recognition (NER) model addresses th
 
 Executing this technical architecture under an Agile framework ensures that these high-dependency modules are progressively developed, integrated, and evaluated in structured sprint cycles. This iterative management strategy, combined with isolated machine learning testing libraries and automated routing validation scripts, guarantees that the system achieves high operational accuracy and system reliability. Ultimately, this methodology establishes a cohesive, entirely code-based framework that successfully demonstrates the viability of leveraging natural language processing and spatial analytics to deliver responsive, data-driven municipal disaster routing solutions for Pasig City.
 
-# **REFERENCES** {#references}
+# **REFERENCES**
 
 Abana, E., Dayag, C. V., Valencia, V. M., Talosig, P. H., Ratilla, J. P., & Galat, G. (2019). Road flood warning system with information dissemination via social media. International Journal of Electrical and Computer Engineering (IJECE), 9(6), 4979–4987. [https://doi.org/10.11591/ijece.v9i6.pp4979-4987](https://doi.org/10.11591/ijece.v9i6.pp4979-4987)
 
