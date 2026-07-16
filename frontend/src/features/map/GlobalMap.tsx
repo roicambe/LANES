@@ -84,8 +84,8 @@ function MapLayout() {
     }
   }, [searchParams, setIsReportPanelOpen, setActivePanel]);
 
-  // The panel is expanded when it is both open and actively selected.
-  const isPanelExpanded = isReportPanelOpen && activePanel === "flood";
+  // The panel is expanded when it is both open and actively selected, or when Analytics is open.
+  const isPanelExpanded = (isReportPanelOpen && activePanel === "flood") || isAnalyticsOpen;
   
   const pillBottomClass = hasBottomOffset 
     ? "bottom-[calc(64px+env(safe-area-inset-bottom)+160px)]" 

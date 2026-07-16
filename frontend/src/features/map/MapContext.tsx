@@ -32,6 +32,7 @@ interface MapContextValue {
   activePoint: ActivePoint;
   activePanel: ActivePanel;
   isAnalyticsOpen: boolean;
+  isAnalyticsCollapsed: boolean;
 
   // --- Multi-route state ---
   allRoutes: RouteOption[] | null;
@@ -58,6 +59,7 @@ interface MapContextValue {
   setActivePoint: (point: ActivePoint) => void;
   setActivePanel: (panel: ActivePanel) => void;
   setIsAnalyticsOpen: (open: boolean) => void;
+  setIsAnalyticsCollapsed: (collapsed: boolean) => void;
   setStart: (coords: [number, number] | null, label?: string) => void;
   setEnd: (coords: [number, number] | null, label?: string) => void;
   setStartLabel: (label: string) => void;
@@ -93,6 +95,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [activePoint, setActivePoint] = useState<ActivePoint>(null);
   const [activePanel, setActivePanelState] = useState<ActivePanel>("route");
   const [isAnalyticsOpen, setIsAnalyticsOpenState] = useState(false);
+  const [isAnalyticsCollapsed, setIsAnalyticsCollapsedState] = useState(false);
 
   // Multi-route state
   const [allRoutes, setAllRoutes] = useState<RouteOption[] | null>(null);
@@ -150,6 +153,13 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   const setIsAnalyticsOpen = useCallback((open: boolean) => {
     setIsAnalyticsOpenState(open);
+    if (!open) {
+      setIsAnalyticsCollapsedState(false);
+    }
+  }, []);
+
+  const setIsAnalyticsCollapsed = useCallback((collapsed: boolean) => {
+    setIsAnalyticsCollapsedState(collapsed);
   }, []);
 
   const clearRoute = useCallback(() => {
@@ -321,6 +331,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       activePoint,
       activePanel,
       isAnalyticsOpen,
+      isAnalyticsCollapsed,
       allRoutes,
       selectedRouteIndex,
       selectedRoute,
@@ -340,6 +351,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setActivePoint,
       setActivePanel,
       setIsAnalyticsOpen,
+      setIsAnalyticsCollapsed,
       setStart,
       setEnd,
       setStartLabel,
@@ -360,6 +372,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       activePoint,
       activePanel,
       isAnalyticsOpen,
+      isAnalyticsCollapsed,
       allRoutes,
       selectedRouteIndex,
       selectedRoute,
@@ -379,6 +392,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
       setActivePoint,
       setActivePanel,
       setIsAnalyticsOpen,
+      setIsAnalyticsCollapsed,
       setStart,
       setEnd,
       setStartLabel,

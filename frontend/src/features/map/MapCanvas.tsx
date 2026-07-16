@@ -74,14 +74,13 @@ class TopViewControlV3 {
   onAdd(map: maplibregl.Map) {
     this._map = map;
     this._container = document.createElement("div");
-    this._container.style.display = "none"; // Hide this wrapper container
+    this._container.className = "maplibregl-ctrl maplibregl-ctrl-group";
     
     this._button = document.createElement("button");
     this._button.type = "button";
     this._button.title = "Reset to Top View";
-    this._button.className = "maplibregl-ctrl-icon"; // MapLibre native class for icons
+    this._button.className = "maplibregl-ctrl-icon"; 
     
-    // Icon representing 2D top-down view
     this._button.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: auto;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>`;
     
     this._button.onclick = () => {
@@ -94,14 +93,7 @@ class TopViewControlV3 {
       }
     };
     
-    // Use a small timeout to let the NavigationControl render first
-    setTimeout(() => {
-      const navGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
-      if (navGroup && this._button) {
-        navGroup.appendChild(this._button);
-      }
-    }, 100);
-    
+    this._container.appendChild(this._button);
     return this._container;
   }
 
@@ -233,11 +225,11 @@ export default function MapCanvas() {
     setSelectedRouteIndex,
     setPointFromMap, activePoint, setActivePoint, isPickingOnMap,
     floodPreviewGeometry, activePanel, setActivePanel, hasBottomOffset,
-    isAnalyticsOpen, setIsAnalyticsOpen,
+    isAnalyticsOpen, setIsAnalyticsOpen, isAnalyticsCollapsed
   } = useMapContext();
 
   const isDesktopAnalytics = pathname === "/admin/analytics";
-  const shouldShowHeatmap = isAnalyticsOpen || isDesktopAnalytics;
+  const shouldShowHeatmap = (isAnalyticsOpen && !isAnalyticsCollapsed) || isDesktopAnalytics;
 
   const { data: heatmapData } = useQuery({
     queryKey: ["analytics", "heatmap"],
@@ -1002,7 +994,7 @@ export default function MapCanvas() {
     if (map.getLayer("heatmap-layer")) map.removeLayer("heatmap-layer");
     if (map.getSource("heatmap-source")) map.removeSource("heatmap-source");
 
-    const showAnalytics = isAnalyticsOpen || pathname === "/admin/analytics";
+    const showAnalytics = (isAnalyticsOpen && !isAnalyticsCollapsed) || pathname === "/admin/analytics";
     if (!showAnalytics || !heatmapData || !heatmapData.features || heatmapData.features.length === 0) return;
 
     map.addSource("heatmap-source", {
@@ -1033,7 +1025,7 @@ export default function MapCanvas() {
         "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0.8, 15, 0]
       }
     });
-  }, [heatmapData, isLoaded, pathname]);
+  }, [heatmapData, isLoaded, pathname, isAnalyticsOpen, isAnalyticsCollapsed]);
 
   return (
     <div className={`relative w-full h-full ${hasBottomOffset ? "flood-panel-open" : ""}`}>
