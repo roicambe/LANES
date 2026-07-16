@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -59,6 +59,10 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Incorrect username or password")
         
     if not user.is_active:
+        if datetime.utcnow() > user.created_at + timedelta(minutes=10):
+            crud.hard_delete_user(db, user.id)
+            raise HTTPException(status_code=400, detail="Registration expired. Please register again.")
+            
         crud.create_audit_log(
             db,
             audit_in=schemas.AuditLogCreate(
@@ -73,7 +77,7 @@ def login_access_token(
                 ip_address=client_ip
             )
         )
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=403, detail={"code": "UNVERIFIED_ACCOUNT", "email": user.email})
     
     if user.role.name != "Commuter":
         crud.create_audit_log(
@@ -121,10 +125,25 @@ async def register(
     """
     Registers a new user, creates profile and address, and sends OTP.
     """
-    if crud.get_user_by_username(db, username=request.user.username):
-        raise HTTPException(status_code=400, detail="Username already registered")
-    if crud.get_user_by_email(db, email=request.user.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
+    existing_username = crud.get_user_by_username(db, username=request.user.username)
+    if existing_username:
+        if not existing_username.is_active:
+            if datetime.utcnow() > existing_username.created_at + timedelta(minutes=10):
+                crud.hard_delete_user(db, existing_username.id)
+            else:
+                raise HTTPException(status_code=400, detail={"code": "UNVERIFIED_ACCOUNT", "email": existing_username.email})
+        else:
+            raise HTTPException(status_code=400, detail="Username already registered")
+        
+    existing_email = crud.get_user_by_email(db, email=request.user.email)
+    if existing_email:
+        if not existing_email.is_active:
+            if datetime.utcnow() > existing_email.created_at + timedelta(minutes=10):
+                crud.hard_delete_user(db, existing_email.id)
+            else:
+                raise HTTPException(status_code=400, detail={"code": "UNVERIFIED_ACCOUNT", "email": existing_email.email})
+        else:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
     request.user.is_active = False
     

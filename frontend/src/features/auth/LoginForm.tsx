@@ -44,6 +44,21 @@ export default function LoginForm() {
       
       // If Commuter, auth state is updated globally. No reload needed.
     } catch (err: any) {
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.code === "UNVERIFIED_ACCOUNT") {
+          const resendUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+          await fetch(`${resendUrl}/auth/resend-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: parsed.email })
+          });
+          router.push(`/verify?email=${encodeURIComponent(parsed.email)}`);
+          return;
+        }
+      } catch (e) {
+        // Not a JSON string
+      }
       setErrorMsg(err.message || "Login failed. Please check your credentials.");
     }
   };

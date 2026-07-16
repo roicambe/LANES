@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../api/authClient";
 import { LocationPickerModal, LocationItem } from "./LocationPickerModal";
@@ -27,6 +27,9 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
+  
+  const passwordReqRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [activePicker, setActivePicker] = useState<"province" | "city" | "barangay" | null>(null);
 
@@ -43,6 +46,22 @@ export function RegisterForm() {
     profile: { first_name: "", last_name: "", middle_initial: "", suffix: "", contact_number: "", birthdate: "" },
     address: { house_number: "", street: "", barangay: "", city_municipality: "", province: "", postal_code: "", country: "Philippines" },
   });
+
+  const showPasswordReqs = formData.user.password.length > 0;
+
+  // Immediately scroll down when the password requirements show up
+  useEffect(() => {
+    if (currentStep === 3 && showPasswordReqs && scrollContainerRef.current) {
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: "smooth"
+          });
+        }
+      });
+    }
+  }, [showPasswordReqs, currentStep]);
 
   // Load draft from session storage on mount
   useEffect(() => {
@@ -266,6 +285,20 @@ export function RegisterForm() {
       router.push(`/verify?email=${encodeURIComponent(formData.user.email)}`);
     } catch (err: any) {
       console.error(err);
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.code === "UNVERIFIED_ACCOUNT") {
+          showError("Account Unverified", "This account exists but is unverified. Redirecting to verification...");
+          const resendUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+          fetch(`${resendUrl}/auth/resend-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: parsed.email })
+          }).catch(() => {});
+          router.push(`/verify?email=${encodeURIComponent(parsed.email)}`);
+          return;
+        }
+      } catch (e) {}
       showError("Registration Failed", err.message || "An error occurred during registration.");
     } finally {
       setLoading(false);
@@ -343,7 +376,7 @@ export function RegisterForm() {
               }
             }}
           >
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-1 -m-1">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-1 -m-1">
               <AnimatePresence mode="wait">
               {currentStep === 1 && (
                 <motion.div
@@ -549,6 +582,17 @@ export function RegisterForm() {
                       required
                       value={formData.user.password} 
                       onChange={e => handleChange("user", "password", e.target.value)}
+                      onFocus={() => {
+                        // Small fallback scroll for when users tap the input again and keyboard appears
+                        if (scrollContainerRef.current) {
+                          setTimeout(() => {
+                            scrollContainerRef.current?.scrollTo({
+                              top: scrollContainerRef.current.scrollHeight,
+                              behavior: "smooth"
+                            });
+                          }, 50);
+                        }
+                      }}
                       rightIcon={
                         <button
                           type="button"
@@ -561,7 +605,9 @@ export function RegisterForm() {
                         </button>
                       }
                     />
-                    <PasswordStrength password={formData.user.password} />
+                    <div ref={passwordReqRef}>
+                      <PasswordStrength password={formData.user.password} />
+                    </div>
                   </div>
                 </motion.div>
               )}
