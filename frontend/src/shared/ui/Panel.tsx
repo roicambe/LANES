@@ -190,8 +190,11 @@ export function Panel({
             animate={{ y: isCollapsed ? "calc(100% - 72px)" : 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] bg-white border-t border-gray-200"
-            style={{ maxHeight: "calc(100vh - 80px)" }}
+            className="fixed inset-x-0 z-40 rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] bg-white border-t border-gray-200"
+            style={{ 
+              maxHeight: "calc(100vh - 80px - 4rem - env(safe-area-inset-bottom, 0px))",
+              bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))"
+            }}
           >
             <div 
               className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
@@ -223,7 +226,7 @@ export function Panel({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="px-4 pb-8 overflow-y-auto max-h-[60vh]"
+                  className="px-4 pb-0 overflow-y-auto max-h-[60vh]"
                 >
                   {children}
                 </motion.div>

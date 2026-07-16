@@ -175,6 +175,7 @@ export default function RoutePanel() {
     vehicleProfile,
     setVehicleProfile,
     isAnalyticsOpen,
+    isReportPanelOpen,
   } = useMapContext();
 
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
@@ -303,6 +304,10 @@ export default function RoutePanel() {
     }
     
     if (isPickingOnMap && (activePoint === "flood_start" || activePoint === "flood_end")) {
+      return null;
+    }
+
+    if (isMobile && (isReportPanelOpen || isAnalyticsOpen) && activePoint !== "start" && activePoint !== "end") {
       return null;
     }
 

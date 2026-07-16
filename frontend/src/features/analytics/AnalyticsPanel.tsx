@@ -25,8 +25,7 @@ export function AnalyticsPanel() {
   const pathname = usePathname();
   const isAdmin = pathname === "/admin/analytics";
   
-  const { isAnalyticsOpen, setIsAnalyticsOpen } = useMapContext();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isAnalyticsOpen, setIsAnalyticsOpen, isAnalyticsCollapsed, setIsAnalyticsCollapsed } = useMapContext();
   
   const { data, isLoading } = useQuery({
     queryKey: ["analyticsStats"],
@@ -38,9 +37,9 @@ export function AnalyticsPanel() {
       title="Flood Insights"
       icon={<TrendingUp className="w-5 h-5 text-red-600" />}
       iconBgClassName="bg-red-500/10"
-      isCollapsed={isAdmin ? false : isCollapsed}
+      isCollapsed={isAdmin ? false : isAnalyticsCollapsed}
       onCollapseToggle={() => {
-        if (!isAdmin) setIsCollapsed(!isCollapsed);
+        if (!isAdmin) setIsAnalyticsCollapsed(!isAnalyticsCollapsed);
       }}
       isMobile={isMobile}
       isOpen={isMobile ? (isAdmin ? true : isAnalyticsOpen) : true}
@@ -50,7 +49,7 @@ export function AnalyticsPanel() {
       anchor="left"
       initialPosition={{ x: 16, y: 80 }}
     >
-      <div className="flex-1 space-y-8 no-scrollbar">
+      <div className="flex-1 space-y-8 no-scrollbar pb-6">
         {isLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-slate-400" />

@@ -448,7 +448,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       </Link>
     </div>
   ) : (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+    <form onSubmit={handleSubmit} className="flex flex-col">
       {step === 1 && (
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
           {/* Point selectors */}
@@ -524,7 +524,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             </p>
           </div>
 
-          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto">
+          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-4 border-t border-gray-100 mt-auto">
             <Button
               type="button"
               disabled={!floodStart || !floodEnd}
@@ -638,7 +638,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             )}
           </div>
 
-          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto flex gap-2">
+          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-4 border-t border-gray-100 mt-auto flex gap-2">
             <Button
               type="button"
               variant="outline"
@@ -666,7 +666,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       )}
 
       {step === 2 && showSurvey && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full">
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col">
           {/* Survey Header */}
           <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
             <button
@@ -752,7 +752,7 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
             </div>
           </div>
           
-          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-1 border-t border-gray-100 mt-auto">
+          <div className="sticky bottom-0 left-0 right-0 bg-white pt-3 pb-4 border-t border-gray-100 mt-auto">
             <Button type="button" onClick={() => setShowSurvey(false)} className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold">
               Done & Return
             </Button>
