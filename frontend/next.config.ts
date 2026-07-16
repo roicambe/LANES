@@ -1,5 +1,19 @@
 import type { NextConfig } from "next";
 import withPWAInit from "@ducanh2912/next-pwa";
+import os from "os";
+
+const getLocalIPs = () => {
+  const interfaces = os.networkInterfaces();
+  const ips = ['localhost', '127.0.0.1'];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        ips.push(iface.address);
+      }
+    }
+  }
+  return ips;
+};
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -34,7 +48,7 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   // @ts-ignore - allowedDevOrigins is suggested by Next.js CLI but may lack TS definitions
-  allowedDevOrigins: ['192.168.0.119', '172.27.240.1', 'localhost', '127.0.0.1'],
+  allowedDevOrigins: getLocalIPs(),
   turbopack: {},
   async rewrites() {
     return [
