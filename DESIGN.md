@@ -349,7 +349,4 @@ To guarantee the platform runs successfully during weather-induced emergency sce
 
 To maintain administrative accountability and track disaster database updates:
 
-> [!IMPORTANT]
-> The `audit_logs` table is **planned** and not yet implemented. It will be introduced via an Alembic migration as part of the Admin Panel build (Phase 6 of `docs/admin-panel-plan.md`).
-
-* **`audit_logs`** *(Planned)*: Will track all admin actions in a single unified log — report approvals/rejections, zone deactivations, user management changes, and login events. Each entry will store the `admin_id`, `action_type`, `target_table`, `target_id`, optional `metadata_json` (JSONB), `ip_address`, and `created_at` timestamp. This design combines what was originally scoped as two separate tables (`moderation_logs` + `audit_logs`) into a single, filterable timeline for simplicity and 3NF compliance.
+* **`audit_logs`**: Tracks all admin actions in a single unified log — report approvals/rejections, zone deactivations, user management changes, and login events. Each entry stores the `admin_id`, `action_type`, `target_table`, `target_id`, optional `metadata_json` (JSONB), `ip_address`, and `created_at` timestamp. This design combines what was originally scoped as two separate tables (`moderation_logs` + `audit_logs`) into a single, filterable timeline for simplicity and 3NF compliance.

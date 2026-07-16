@@ -20,7 +20,7 @@ def get_feed_posts(
     tab: str = "recent"
 ):
     # Base query for community posts
-    base_query = db.query(CommunityPost)
+    base_query = db.query(CommunityPost).outerjoin(FloodReport, CommunityPost.flood_report_id == FloodReport.id)
 
     # Subqueries for upvotes and downvotes
     upvotes_query = db.query(
@@ -96,7 +96,6 @@ def get_feed_posts(
     query = base_query.with_entities(*select_fields)
     query = query.outerjoin(User, CommunityPost.user_id == User.id)
     query = query.outerjoin(Profile, User.id == Profile.user_id)
-    query = query.outerjoin(FloodReport, CommunityPost.flood_report_id == FloodReport.id)
     query = query.outerjoin(upvotes_query, CommunityPost.id == upvotes_query.c.post_id)
     query = query.outerjoin(downvotes_query, CommunityPost.id == downvotes_query.c.post_id)
     query = query.outerjoin(comments_query, CommunityPost.id == comments_query.c.post_id)
