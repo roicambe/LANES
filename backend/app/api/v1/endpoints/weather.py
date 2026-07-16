@@ -2,7 +2,7 @@
 from typing import Any, Optional, List
 from fastapi import APIRouter, HTTPException, Query
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.core.config import settings
 
@@ -16,8 +16,8 @@ CACHE_DURATION_MINUTES = 15
 
 @router.get("/current")
 async def get_current_weather(
-    lat: Optional[float] = Query(14.5731, description="Latitude, defaults to Pasig City"),
-    lon: Optional[float] = Query(121.0594, description="Longitude, defaults to Pasig City"),
+    lat: float = Query(14.5731, description="Latitude, defaults to Pasig City"),
+    lon: float = Query(121.0594, description="Longitude, defaults to Pasig City"),
 ) -> Any:
     """
     Fetch current weather from OpenWeatherMap API.
@@ -35,14 +35,14 @@ async def get_current_weather(
     cache_key = f"{round(lat, 2)},{round(lon, 2)}"
     
     cached = weather_cache.get(cache_key)
-    if cached and datetime.utcnow() < cached["expires_at"]:
+    if cached and datetime.now(timezone.utc) < cached["expires_at"]:
         return cached["data"]
         
     url = "https://api.openweathermap.org/data/2.5/weather"
     params = {
         "lat": lat,
         "lon": lon,
-        "appid": settings.OPENWEATHERMAP_API_KEY,
+        "appid": settings.OPENWEATHERMAP_API_KEY.strip('"\''),
         "units": "metric"
     }
     
@@ -62,7 +62,7 @@ async def get_current_weather(
             
             weather_cache[cache_key] = {
                 "data": parsed_data,
-                "expires_at": datetime.utcnow() + timedelta(minutes=CACHE_DURATION_MINUTES)
+                "expires_at": datetime.now(timezone.utc) + timedelta(minutes=CACHE_DURATION_MINUTES)
             }
             
             return parsed_data
@@ -79,8 +79,8 @@ async def get_current_weather(
 
 @router.get("/forecast")
 async def get_forecast(
-    lat: Optional[float] = Query(14.5731, description="Latitude, defaults to Pasig City"),
-    lon: Optional[float] = Query(121.0594, description="Longitude, defaults to Pasig City"),
+    lat: float = Query(14.5731, description="Latitude, defaults to Pasig City"),
+    lon: float = Query(121.0594, description="Longitude, defaults to Pasig City"),
     count: int = Query(8, description="Number of 3-hour slots to return (max 40)"),
 ) -> Any:
     """
@@ -95,14 +95,14 @@ async def get_forecast(
     cache_key = f"fc_{round(lat, 2)},{round(lon, 2)}_{count}"
 
     cached = forecast_cache.get(cache_key)
-    if cached and datetime.utcnow() < cached["expires_at"]:
+    if cached and datetime.now(timezone.utc) < cached["expires_at"]:
         return cached["data"]
 
     url = "https://api.openweathermap.org/data/2.5/forecast"
     params = {
         "lat": lat,
         "lon": lon,
-        "appid": settings.OPENWEATHERMAP_API_KEY,
+        "appid": settings.OPENWEATHERMAP_API_KEY.strip('"\''),
         "units": "metric",
         "cnt": min(count, 40),
     }
@@ -131,7 +131,7 @@ async def get_forecast(
 
             forecast_cache[cache_key] = {
                 "data": parsed_data,
-                "expires_at": datetime.utcnow() + timedelta(minutes=CACHE_DURATION_MINUTES),
+                "expires_at": datetime.now(timezone.utc) + timedelta(minutes=CACHE_DURATION_MINUTES),
             }
 
             return parsed_data

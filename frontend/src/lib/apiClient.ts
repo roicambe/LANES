@@ -95,7 +95,7 @@ export const apiClient = {
           if (errorData.detail) {
             errorMsg = Array.isArray(errorData.detail) 
               ? errorData.detail.map((e: any) => e.msg).join(", ") 
-              : errorData.detail;
+              : (typeof errorData.detail === 'object' ? JSON.stringify(errorData.detail) : String(errorData.detail));
           }
         } catch (e) {
           // Response wasn't JSON, ignore

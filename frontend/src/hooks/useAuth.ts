@@ -30,7 +30,11 @@ export function useAuth() {
       });
 
       if (!response.ok) {
-        throw new Error("Incorrect username or password");
+        const errorData = await response.json().catch(() => null);
+        if (errorData?.detail?.code === "UNVERIFIED_ACCOUNT") {
+          throw new Error(JSON.stringify(errorData.detail));
+        }
+        throw new Error(errorData?.detail || "Incorrect username or password");
       }
 
       return response.json();

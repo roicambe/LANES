@@ -1,7 +1,7 @@
 # CRUD index
 from app.crud.user import (
     get_password_hash, get_user, get_user_by_username, get_user_by_email, create_user,
-    get_users_filtered, update_user_status, delete_user
+    get_users_filtered, update_user_status, delete_user, hard_delete_user
 )
 from app.crud.report import (
     get_flood_report, get_flood_reports, get_pending_flood_reports, 

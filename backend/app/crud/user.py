@@ -115,3 +115,16 @@ def delete_user(db: Session, user_id: int) -> bool:
         db.commit()
         return True
     return False
+
+
+def hard_delete_user(db: Session, user_id: int) -> bool:
+    """
+    Physically removes a user from the database. 
+    Useful for wiping out unverified stale accounts.
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        db.delete(user)
+        db.commit()
+        return True
+    return False
