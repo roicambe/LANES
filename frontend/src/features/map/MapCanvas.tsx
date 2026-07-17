@@ -259,6 +259,26 @@ export default function MapCanvas() {
           zoom,
           duration: 1000
         });
+
+        // Create a custom pulsing marker element
+        const el = document.createElement('div');
+        el.className = 'relative flex items-center justify-center';
+        el.innerHTML = `
+          <div class="absolute w-10 h-10 bg-red-500 rounded-full animate-ping opacity-60"></div>
+          <div class="relative flex items-center justify-center w-6 h-6 bg-red-500 rounded-full border-[3px] border-white shadow-lg">
+            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+          </div>
+        `;
+
+        // Add a temporary pulsing red pin to highlight the specific location
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([lng, lat])
+          .addTo(mapRef.current);
+
+        // Remove the pin after 3 seconds
+        setTimeout(() => {
+          marker.remove();
+        }, 3000);
       }
     }
   }, [searchParams, isLoaded]);
@@ -415,9 +435,7 @@ export default function MapCanvas() {
     });
 
     mapInstance.on("click", (event: MapMouseEvent) => {
-      if (!isTouchDeviceRef.current) {
-        setPointFromMapRef.current([event.lngLat.lng, event.lngLat.lat]);
-      }
+      setPointFromMapRef.current([event.lngLat.lng, event.lngLat.lat]);
     });
 
     mapInstance.on("moveend", () => {

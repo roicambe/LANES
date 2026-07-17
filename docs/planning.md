@@ -77,7 +77,7 @@
 ### Phase 3: Community Feed & Notifications
 - [ ] **Report Hazard Button**: Jump straight to the Flood Report Panel.
 - [ ] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
-- [ ] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
+- [x] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
 
 ### Phase 4: Admin Panel & Report Moderation
 - [ ] **Active Zones Full View**: Show timeline, reporter details, and actions (View, Edit, Deactivate, Archive).

@@ -94,24 +94,40 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
                   </span>
                 </>
               )}
-              {post.report?.human_readable_location && (
-                <>
-                  <span>•</span>
-                  <span className="truncate max-w-[200px]" title={post.report.human_readable_location}>
-                    {post.report.human_readable_location}
-                  </span>
-                </>
-              )}
+
             </div>
           </div>
         </div>
 
-        {post.report && (
-          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getSeverityColor(post.report.severity)}`}>
-            <AlertTriangle className="w-3.5 h-3.5" />
-            {getSeverityLabel(post.report.severity)}
-          </span>
-        )}
+        <div className="flex flex-col items-end gap-1.5">
+          {post.report && (
+            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 ${getSeverityColor(post.report.severity)}`}>
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {getSeverityLabel(post.report.severity)}
+            </span>
+          )}
+          {post.report?.human_readable_location && onViewMap && (
+            <button 
+              onClick={() => {
+                if (post.report?.geometry?.type === 'Point') {
+                  const [lng, lat] = post.report.geometry.coordinates as number[];
+                  onViewMap(lat, lng);
+                } else if (post.report?.geometry?.type === 'LineString') {
+                  const coords = post.report.geometry.coordinates as number[][];
+                  if (coords.length > 0) {
+                    const [lng, lat] = coords[0];
+                    onViewMap(lat, lng);
+                  }
+                }
+              }}
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors max-w-[220px] sm:max-w-[300px]"
+              title="View on Map"
+            >
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate hover:underline">{post.report.human_readable_location}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content Area */}

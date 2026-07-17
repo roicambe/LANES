@@ -163,8 +163,6 @@ export function MapProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearRoute = useCallback(() => {
-    setStartState(null);
-    setEndState(null);
     setAllRoutes(null);
     setSelectedRouteIndexState(0);
     setRouteError(null);
