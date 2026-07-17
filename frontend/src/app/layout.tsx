@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import NavigationWrapper from "@/features/navigation/NavigationWrapper";
 import Providers from "./providers";
 import OfflineBanner from "@/features/offline/OfflineBanner";
+import { NotificationBell } from "@/features/notifications/NotificationBell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default function RootLayout({
         <NavigationWrapper>
           <Providers>
             {children}
+            <NotificationBell />
           </Providers>
         </NavigationWrapper>
       </body>
