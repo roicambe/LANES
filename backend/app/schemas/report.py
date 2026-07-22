@@ -30,6 +30,7 @@ class FloodReportBase(BaseModel):
     raw_text: str
     source: ReportSource
     severity: ReportSeverity = ReportSeverity.MEDIUM
+    depth: Optional[str] = None
     human_readable_location: Optional[str] = None
     barangay: Optional[str] = None
     is_public: bool = False
@@ -93,8 +94,16 @@ class FloodAvoidanceZoneResponse(FloodAvoidanceZoneBase):
     report_id: int
     geometry: PolygonGeometry
     severity: str
+    depth: Optional[str] = None
     report_geometry: Optional[Union[PointGeometry, LineStringGeometry]] = None
     created_at: datetime
+    
+    report_text: Optional[str] = None
+    report_source: Optional[str] = None
+    reporter_name: Optional[str] = None
+    reporter_trust_score: Optional[float] = None
+    reporter_reports_submitted: Optional[int] = None
+    reporter_reports_verified: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -154,3 +163,8 @@ class FloodAvoidanceZonesPaginatedResponse(BaseModel):
 
 class AvoidanceZoneDeactivateBulkRequest(BaseModel):
     zone_ids: list[int]
+
+
+class AvoidanceZoneUpdateRequest(BaseModel):
+    expires_at: Optional[datetime] = None
+    is_active: Optional[bool] = None

@@ -202,3 +202,94 @@ def get_all_avoidance_zones_filtered(
     total = query.count()
     zones = query.order_by(models.FloodAvoidanceZone.created_at.desc()).offset(skip).limit(limit).all()
     return zones, total
+
+
+def update_flood_avoidance_zone(
+    db: Session,
+    zone_id: int,
+    update_data: schemas.AvoidanceZoneUpdateRequest
+) -> Optional[models.FloodAvoidanceZone]:
+    zone = db.query(models.FloodAvoidanceZone).filter(models.FloodAvoidanceZone.id == zone_id).first()
+    if not zone:
+        return None
+    if update_data.expires_at is not None:
+        zone.expires_at = update_data.expires_at
+    if update_data.is_active is not None:
+        zone.is_active = update_data.is_active
+    db.commit()
+    db.refresh(zone)
+    return zone
+
+
+def get_admin_dashboard_charts(db: Session) -> dict:
+    """
+    Retrieve statistics for dashboard charts (severity, timeline, barangays).
+    """
+    from datetime import datetime, timedelta
+    from sqlalchemy import desc
+    
+    # 1. Severity Distribution
+    severity_stats = db.query(
+        models.FloodReport.severity,
+        func.count(models.FloodReport.id).label("count")
+    ).filter(
+        models.FloodReport.deleted_at.is_(None)
+    ).group_by(models.FloodReport.severity).all()
+    
+    severity_data = {}
+    for row in severity_stats:
+        k = row[0].value if hasattr(row[0], 'value') else str(row[0])
+        severity_data[k] = row[1]
+    
+    # Fill in missing severities with 0
+    for sev in ["low", "medium", "high", "extreme"]:
+        if sev not in severity_data:
+            severity_data[sev] = 0
+
+    # 2. Reports Over Time (Last 30 Days)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    # Group by date part using func.date (compatible with SQLite/Postgres)
+    timeline_stats = db.query(
+        func.date(models.FloodReport.created_at).label("day"),
+        func.count(models.FloodReport.id).label("count")
+    ).filter(
+        models.FloodReport.created_at >= thirty_days_ago,
+        models.FloodReport.deleted_at.is_(None)
+    ).group_by("day").order_by("day").all()
+    
+    # Pre-populate all 30 days to ensure there are no gaps
+    timeline_map = {}
+    for row in timeline_stats:
+        # handle SQLite vs Postgres date formats or datetime objects
+        day_str = str(row.day) if row.day else ""
+        if " " in day_str:
+            day_str = day_str.split(" ")[0]
+        timeline_map[day_str] = row.count
+
+    timeline_data = []
+    for i in range(30):
+        day_date = (datetime.utcnow() - timedelta(days=29 - i)).date()
+        day_str = day_date.isoformat()
+        timeline_data.append({
+            "date": day_str,
+            "count": timeline_map.get(day_str, 0)
+        })
+
+    # 3. Top 5 Flooded Barangays
+    top_barangays_query = db.query(
+        models.FloodReport.barangay,
+        func.count(models.FloodReport.id).label("count")
+    ).filter(
+        models.FloodReport.status == "approved",
+        models.FloodReport.deleted_at.is_(None),
+        models.FloodReport.barangay.is_not(None),
+        models.FloodReport.barangay != ""
+    ).group_by(models.FloodReport.barangay).order_by(desc("count")).limit(5).all()
+    
+    barangay_data = [{"barangay": row.barangay, "count": row.count} for row in top_barangays_query]
+
+    return {
+        "severity_distribution": severity_data,
+        "reports_timeline": timeline_data,
+        "top_barangays": barangay_data
+    }

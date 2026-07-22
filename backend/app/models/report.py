@@ -52,6 +52,7 @@ class FloodReport(Base):
     source_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     severity: Mapped[ReportSeverity] = mapped_column(Enum(ReportSeverity, native_enum=False, length=50, values_callable=lambda x: [e.value for e in x]))
+    depth: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     status: Mapped[ReportStatus] = mapped_column(Enum(ReportStatus, native_enum=False, length=50, values_callable=lambda x: [e.value for e in x]), default=ReportStatus.PENDING)
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
@@ -87,6 +88,10 @@ class FloodReport(Base):
         back_populates="report",
         cascade="all, delete-orphan",
         uselist=False
+    )
+    user: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[user_id]
     )
     survey: Mapped[Optional["FloodReportSurvey"]] = relationship(
         "FloodReportSurvey",
