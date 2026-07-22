@@ -1,10 +1,10 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, MapPin } from "lucide-react";
 import { MapProvider, useMapContext } from "./MapContext";
 import RoutePanel from "@/features/routing/RoutePanel";
 import { ReportFab } from "@/features/hazards/ReportFab";
@@ -49,6 +49,8 @@ const actionPillVariants = {
  * Because it is rendered inside MapProvider, it can fully access layout state.
  */
 function MapLayout() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px), (pointer: coarse)");
   
@@ -63,11 +65,13 @@ function MapLayout() {
     setIsReportPanelOpen,
     hasBottomOffset,
     isAnalyticsOpen,
-    setIsAnalyticsOpen
+    setIsAnalyticsOpen,
+    setIsPickingOnMap,
+    activePoint,
+    setActivePoint
   } = useMapContext();
 
   const searchParams = useSearchParams();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (pathname === "/admin/analytics") {
@@ -81,8 +85,11 @@ function MapLayout() {
     if (searchParams.get("action") === "report") {
       setIsReportPanelOpen(true);
       setActivePanel("flood");
+    } else if (searchParams.get("action") === "pickPostLocation") {
+      setIsPickingOnMap(true);
+      setActivePoint("post_location");
     }
-  }, [searchParams, setIsReportPanelOpen, setActivePanel]);
+  }, [searchParams, setIsReportPanelOpen, setActivePanel, setIsPickingOnMap, setActivePoint]);
 
   // The panel is expanded when it is both open and actively selected, or when Analytics is open.
   const isPanelExpanded = (isReportPanelOpen && activePanel === "flood") || isAnalyticsOpen;
@@ -169,6 +176,26 @@ function MapLayout() {
           />
           <RoutePanel />
         </>
+      )}
+
+      {activePoint === "post_location" && (
+        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl px-6 py-4 flex items-center gap-4 border border-gray-200 pointer-events-auto w-[90%] sm:w-auto">
+          <MapPin className="w-5 h-5 text-red-500 animate-bounce" />
+          <div className="text-sm font-semibold text-gray-800">
+            Click on the map to tag your post location
+          </div>
+          <button 
+            type="button"
+            onClick={() => {
+              setActivePoint(null);
+              setIsPickingOnMap(false);
+              router.push("/feed?openPostModal=true");
+            }}
+            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-bold transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
       )}
     </>
   );

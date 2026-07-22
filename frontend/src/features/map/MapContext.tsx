@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { parseCoords } from "@/features/geocoding/geocodingApi";
 import {
   getRoute,
@@ -18,7 +18,7 @@ import {
   type MultiRouteResponse,
 } from "@/features/routing/routingApi";
 
-export type ActivePoint = "start" | "end" | "flood_start" | "flood_end" | null;
+export type ActivePoint = "start" | "end" | "flood_start" | "flood_end" | "post_location" | null;
 export type ActivePanel = "route" | "flood" | null;
 
 export interface MapPoint {
@@ -86,6 +86,7 @@ function coordsLabel(coords: [number, number]): string {
 
 export function MapProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const locationParam = searchParams.get("location");
   const typeParam = searchParams.get("type") as ActivePoint | null;
   const labelParam = searchParams.get("label");
@@ -237,9 +238,28 @@ export function MapProvider({ children }: { children: ReactNode }) {
         setFloodEnd(coords, label);
         setActivePoint(null);
         setIsPickingOnMap(false);
+      } else if (activePoint === "post_location") {
+        setActivePoint(null);
+        setIsPickingOnMap(false);
+        fetch(`https://photon.komoot.io/reverse?lon=${coords[0]}&lat=${coords[1]}`)
+          .then(res => res.json())
+          .then(data => {
+            let labelVal = coordsLabel(coords);
+            if (data.features && data.features.length > 0) {
+              const props = data.features[0].properties;
+              const parts = [props.name, props.street, props.locality, props.city, props.state]
+                .filter(Boolean)
+                .filter((value, index, self) => self.indexOf(value) === index);
+              labelVal = parts.slice(0, 2).join(", ") || labelVal;
+            }
+            router.push(`/feed?openPostModal=true&location_tag=${encodeURIComponent(labelVal)}`);
+          })
+          .catch(() => {
+            router.push(`/feed?openPostModal=true&location_tag=${encodeURIComponent(coordsLabel(coords))}`);
+          });
       }
     },
-    [activePoint, setStart, setEnd, setFloodStart, setFloodEnd]
+    [activePoint, setStart, setEnd, setFloodStart, setFloodEnd, router]
   );
 
   const resetAll = useCallback(() => {

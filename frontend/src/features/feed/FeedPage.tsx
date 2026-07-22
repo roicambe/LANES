@@ -8,7 +8,7 @@ import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
 import { PostItem } from './PostItem';
 import { CreatePostModal } from './CreatePostModal';
-import { Loader2, Filter } from 'lucide-react';
+import { Loader2, Filter, Image as ImageIcon, Video, MapPin } from 'lucide-react';
 import { useToast } from '@/shared/ui';
 
 export function FeedPage() {
@@ -19,6 +19,9 @@ export function FeedPage() {
   const [tab, setTab] = useState<'recent' | 'nearby'>('recent');
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [preselectedFiles, setPreselectedFiles] = useState<File[]>([]);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
+  const videoInputRef = React.useRef<HTMLInputElement>(null);
 
   // Auto-open modal if user just logged in from a draft redirect
   useEffect(() => {
@@ -68,6 +71,13 @@ export function FeedPage() {
 
   const handleVote = (postId: number, type: 'upvote' | 'downvote') => {
     voteMutation.mutate({ postId, type });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setPreselectedFiles(Array.from(e.target.files));
+      setIsCreateModalOpen(true);
+    }
   };
 
   return (
@@ -133,6 +143,40 @@ export function FeedPage() {
             >
               What's happening in your area?
             </button>
+            
+            {/* Quick Media Actions */}
+            <div className="flex items-center gap-1 border-l border-gray-100 pl-2 shrink-0">
+              <input 
+                type="file" 
+                ref={photoInputRef}
+                accept="image/*" 
+                multiple 
+                className="hidden" 
+                onChange={handleFileChange} 
+              />
+              <input 
+                type="file" 
+                ref={videoInputRef}
+                accept="video/*" 
+                multiple 
+                className="hidden" 
+                onChange={handleFileChange} 
+              />
+              <button 
+                onClick={() => photoInputRef.current?.click()}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors flex items-center justify-center"
+                title="Add Photo"
+              >
+                <ImageIcon className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => videoInputRef.current?.click()}
+                className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors flex items-center justify-center"
+                title="Add Video"
+              >
+                <Video className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Feed Content */}
@@ -177,7 +221,13 @@ export function FeedPage() {
       </div>
 
       {isCreateModalOpen && (
-        <CreatePostModal onClose={() => setIsCreateModalOpen(false)} />
+        <CreatePostModal 
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setPreselectedFiles([]);
+          }} 
+          initialFiles={preselectedFiles}
+        />
       )}
     </div>
   );

@@ -85,6 +85,15 @@ export function PostItem({ post, onVote, onViewMap }: PostItemProps) {
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 flex-wrap">
               <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
+              {post.location_tag && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 font-semibold text-gray-600">
+                    <MapPin className="w-3 h-3 text-red-500" />
+                    {post.location_tag}
+                  </span>
+                </>
+              )}
               {post.distance_meters !== undefined && post.distance_meters !== null && (
                 <>
                   <span>•</span>
