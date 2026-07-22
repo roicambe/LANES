@@ -7,7 +7,8 @@ def create_community_post(db: Session, post_in: CommunityPostCreate, user_id: in
         user_id=user_id,
         flood_report_id=post_in.flood_report_id,
         content=post_in.content,
-        media_urls=post_in.media_urls
+        media_urls=post_in.media_urls,
+        location_tag=post_in.location_tag
     )
     db.add(db_post)
     db.commit()

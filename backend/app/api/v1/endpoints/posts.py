@@ -24,6 +24,7 @@ from typing import List
 @router.post("", response_model=CommunityPostResponse)
 def create_post(
     content: str = Form(...),
+    location_tag: Optional[str] = Form(None),
     images: List[UploadFile] = File([]),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -41,7 +42,8 @@ def create_post(
             
     post_in = CommunityPostCreate(
         content=content,
-        media_urls=media_urls if media_urls else None
+        media_urls=media_urls if media_urls else None,
+        location_tag=location_tag
     )
     post = crud_post.create_community_post(db=db, post_in=post_in, user_id=current_user.id)
     

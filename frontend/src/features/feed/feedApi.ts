@@ -4,6 +4,7 @@ export interface FeedPost {
   id: number;
   content: string;
   media_urls?: string[];
+  location_tag?: string;
   created_at: string;
   
   upvotes: number;
@@ -96,11 +97,15 @@ export const getTopReporters = async (limit: number = 5): Promise<TopReportersRe
 export interface CreatePostRequest {
   content: string;
   images?: File[];
+  location_tag?: string;
 }
 
 export const createPost = async (request: CreatePostRequest): Promise<FeedPost> => {
   const formData = new FormData();
   formData.append('content', request.content);
+  if (request.location_tag) {
+    formData.append('location_tag', request.location_tag);
+  }
   if (request.images && request.images.length > 0) {
     request.images.forEach((image) => {
       formData.append('images', image);

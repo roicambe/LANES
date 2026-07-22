@@ -18,16 +18,16 @@ export interface NotificationPaginatedResponse {
 }
 
 export const getNotifications = async (skip: number = 0, limit: number = 50): Promise<NotificationPaginatedResponse> => {
-  const response = await apiClient.get(`/api/v1/notifications/?skip=${skip}&limit=${limit}`);
+  const response = await apiClient.get(`/notifications/?skip=${skip}&limit=${limit}`);
   return response.data;
 };
 
 export const markAsRead = async (notificationId: number): Promise<Notification> => {
-  const response = await apiClient.post(`/api/v1/notifications/${notificationId}/read`);
+  const response = await apiClient.post(`/notifications/${notificationId}/read`);
   return response.data;
 };
 
 export const markAllAsRead = async (): Promise<{ message: string }> => {
-  const response = await apiClient.post(`/api/v1/notifications/read-all`);
+  const response = await apiClient.post(`/notifications/read-all`);
   return response.data;
 };

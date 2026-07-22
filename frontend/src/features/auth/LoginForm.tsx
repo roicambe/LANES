@@ -72,6 +72,7 @@ export default function LoginForm() {
       )}
       <Input
         label="Email or Username"
+        labelClassName="text-white lg:text-gray-700"
         type="text"
         placeholder="admin"
         value={username}
@@ -80,6 +81,7 @@ export default function LoginForm() {
       />
       <Input
         label="Password"
+        labelClassName="text-white lg:text-gray-700"
         type={showPassword ? "text" : "password"}
         placeholder="••••••••"
         value={password}
@@ -98,7 +100,7 @@ export default function LoginForm() {
         }
       />
       <div className="flex justify-end mt-1">
-        <a href="#" className="text-sm text-blue-600 hover:text-blue-500 font-medium hover:underline transition-colors">Forgot password?</a>
+        <a href="#" className="text-sm text-white lg:text-blue-600 font-bold lg:font-medium hover:text-blue-200 lg:hover:text-blue-500 hover:underline transition-colors">Forgot password?</a>
       </div>
       <div className="pt-2">
         <Button type="submit" className="w-full" disabled={isLoggingIn}>
@@ -113,9 +115,9 @@ export default function LoginForm() {
         </Button>
       </div>
       <div className="text-center pt-2">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-blue-100 lg:text-gray-600">
           Don't have an account?{" "}
-          <Link href="/register" className="text-blue-600 font-medium hover:text-blue-500 hover:underline transition-colors">
+          <Link href="/register" className="text-white lg:text-blue-600 font-bold lg:font-medium hover:text-blue-200 lg:hover:text-blue-500 hover:underline transition-colors">
             Sign up
           </Link>
         </p>

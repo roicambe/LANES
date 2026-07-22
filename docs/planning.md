@@ -49,6 +49,12 @@
 - [x] Restructured Flood Report Survey with 3NF database normalization (Checkbox UI and Inline Panel integration)
 - [x] Implemented custom animated and static Wave Dividers on the Landing Page for immersive UI flow
 - [x] Refined UX/UI on "Use Current Location" button to maximize visibility
+- [x] Implemented advanced location tagging view inside post composer with smooth sliding transitions
+- [x] Integrated Photon Autocomplete suggestions and browser geolocation reverse-geocoding in post location selector
+- [x] Moved map post location selection banner to bottom of the viewport (`bottom-28`) to avoid top navbar overlapping
+- [x] Wired Photo and Video quick action shortcut buttons next to feed input trigger to launch system file chooser directly
+- [x] Fixed React Strict Mode double-mount bug causing early preview object URL revocation
+- [x] Added "Create Post" quick media action buttons (Photo & Video) next to the feed composer input trigger
 
 ## Backlog
 
@@ -75,8 +81,8 @@
 - [x] **Flood Timelines**: Show when a flood was reported and approved directly on the map popup.
 
 ### Phase 3: Community Feed & Notifications
-- [ ] **Report Hazard Button**: Jump straight to the Flood Report Panel.
-- [ ] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
+- [x] **Report Hazard Button**: Jump straight to the Flood Report Panel.
+- [x] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
 - [x] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
 
 ### Phase 4: Admin Panel & Report Moderation
