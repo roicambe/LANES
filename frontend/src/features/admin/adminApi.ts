@@ -17,6 +17,7 @@ export interface FloodReport {
   source: string;
   raw_text: string;
   severity: "low" | "medium" | "high" | "extreme";
+  depth?: string;
   geometry: ReportGeometry | null;
   image_url?: string;
   status: "pending" | "approved" | "rejected";
@@ -97,6 +98,14 @@ export interface AvoidanceZone {
   is_active: boolean;
   created_at: string;
   expires_at: string | null;
+  severity: string;
+  depth?: string;
+  report_text?: string;
+  report_source?: string;
+  reporter_name?: string;
+  reporter_trust_score?: number;
+  reporter_reports_submitted?: number;
+  reporter_reports_verified?: number;
 }
 
 export interface PaginatedZonesResponse {
@@ -277,4 +286,22 @@ export async function getSettings(): Promise<SystemSettings> {
 
 export async function updateSettings(settings: SystemSettings): Promise<SystemSettings> {
   return apiClient.put<SystemSettings>('/admin/settings', { settings });
+}
+
+export interface DashboardChartsData {
+  severity_distribution: Record<string, number>;
+  reports_timeline: { date: string; count: number }[];
+  top_barangays: { barangay: string; count: number }[];
+}
+
+export async function getDashboardCharts(): Promise<DashboardChartsData> {
+  return apiClient.get<DashboardChartsData>('/admin/dashboard/charts');
+}
+
+export async function updateZoneExpiration(zoneId: number, expiresAt: string | null): Promise<AvoidanceZone> {
+  return apiClient.request<AvoidanceZone>(`/admin/zones/${zoneId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expires_at: expiresAt }),
+  });
 }

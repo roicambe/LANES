@@ -9,7 +9,8 @@ from app.crud.report import (
     get_active_avoidance_zones, create_flood_avoidance_zone,
     get_all_flood_reports_filtered, get_admin_dashboard_stats,
     deactivate_flood_avoidance_zone, deactivate_flood_avoidance_zones_bulk,
-    get_all_avoidance_zones_filtered
+    get_all_avoidance_zones_filtered, update_flood_avoidance_zone,
+    get_admin_dashboard_charts
 )
 
 from app.crud.post import create_community_post, get_post, get_posts, delete_post

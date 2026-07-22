@@ -113,3 +113,8 @@ Since Step 1 is a one-time setup, your daily development routine is just:
 * **setup_valhalla.ps1 Connection Timeout:** If the script fails to download the map data (e.g., `Connection timed out`), it is likely being blocked by your firewall or network proxy. Try temporarily disabling your firewall, disconnecting from a VPN, or using a different network. Alternatively, you can download the file manually from [https://download.geofabrik.de/asia/philippines-latest.osm.pbf](https://download.geofabrik.de/asia/philippines-latest.osm.pbf), place the `.pbf` file inside the `data/valhalla/custom_files/` directory, and run the script again.
 * **TypeError: Failed to fetch (Frontend):** Check that the backend server is running at `http://localhost:8000`.
 * **Database Connection Warnings:** If PostgreSQL is offline, the backend logs a startup warning and operates in fallback mode, letting you test routing options using Valhalla without crashing the server.
+* **Resetting the Database:** If you need to clear all dummy data (reports, zones, logs) but keep the default `admin` user intact, open a PowerShell terminal in the `backend` folder and run:
+  ```powershell
+  $env:PYTHONPATH="."; .\venv\Scripts\python.exe scripts\clear_db.py
+  ```
+  *(Note: If you completely wipe the database by dropping the tables, restarting the Uvicorn server will automatically re-seed the default roles and admin account on startup).*

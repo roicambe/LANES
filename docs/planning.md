@@ -85,9 +85,9 @@
 - [x] **Create Post Button**: Allows users to post text/photos to the community feed with an optional location tag.
 - [x] **In-App Notification Center**: Global Bell Icon for comments, likes, and critical system alerts pinned to the top.
 
-### Phase 4: Admin Panel & Report Moderation
-- [ ] **Active Zones Full View**: Show timeline, reporter details, and actions (View, Edit, Deactivate, Archive).
-- [ ] **Admin Dashboard Charts**: 
+### Phase 4: Admin Panel & Report Moderation (🟢 COMPLETED)
+- [x] **Active Zones Full View**: Show timeline, reporter details, and actions (View, Edit, Deactivate, Archive).
+- [x] **Admin Dashboard Charts**: 
   - Pie Chart: Flood Severity Distribution.
   - Line Chart: Reports over time (Dynamic: Last 7 Days, Month, Year).
   - Bar Graph: Top 5 Most Flooded Barangays.
@@ -99,6 +99,18 @@
 ### 6. Defense Talking Points (Future ML Architecture)
 - **Supervised Learning**: If DRMMO provides historical flood data (rainfall + expiration times), we can immediately train an ML model (using Python/scikit-learn) to predict future expirations.
 - **Online Learning ("Self-Learning")**: Without initial DRMMO data, the system relies on Rule-Based Expiration for immediate accuracy. However, the architecture is designed to continuously collect live data. Once enough floods are naturally recorded over time, the system can seamlessly transition to Online Machine Learning to predict expiration times automatically.
+
+### 7. Defense Talking Points: Defining "Real-Time" without Hardware Sensors
+- **WebSocket-Driven Real-Time Broadcast**: The platform implements **instantaneous communication latency**. Within milliseconds of an admin approving a report (or a user submitting a post), WebSocket connections broadcast the updated routing barriers and active zones to all connected commuter clients globally. The *propagation of routing data* is true real-time.
+- **Plug-and-Play IoT Sensor Hooks (MQTT/REST Webhooks)**: The database layer utilizes standard PostGIS geometry points and polygons. The architecture is explicitly designed to ingest coordinates. In the future, telemetry devices (e.g., ultrasonic water-level sensors installed on bridges or lamp posts) can write data directly to the `/api/v1/reports` endpoint via secure webhook keys, bypassing human input entirely.
+
+### 8. Future Architecture: Duplicate Resolution & Auto-Approval
+- **Spatial Deduplication & Bounding Polygon Merging (Admin Panel)**:
+  - If multiple users report the same street with overlapping boundaries or conflicting depths, the admin panel will flag them as **"Potential Overlaps"** (using PostGIS `ST_Intersects` or `ST_DWithin` queries).
+  - Admins can select duplicate reports and click **"Merge & Resolve"** to compute a unified boundary (`ST_Union`) or upgrade the severity scale based on the most recent/authoritative user input.
+- **Trust-Based Auto-Approval Engine**:
+  - To eliminate the admin bottleneck, reports from users with a **high Trust Score** (e.g., verified local authorities or commuters with >95% historical accuracy) can bypass the moderation queue and auto-approve instantly.
+  - **Crowd Consensus Rule**: If `N` (e.g. 3) independent users report a flood within the same barangay and spatial radius within `T` minutes, the system automatically marks it as approved and updates the Valhalla routing network.
 
 ## Known Issues
 

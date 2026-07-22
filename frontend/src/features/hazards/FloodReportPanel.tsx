@@ -42,8 +42,8 @@ type ReportVisualOption = "gutter" | "half-knee" | "half-tire" | "knee" | "tires
 
 const SEVERITY_COLORS = {
   low: {
-    pill: "border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100",
-    active: "border-slate-400 bg-slate-100 text-slate-800 ring-2 ring-slate-300/50",
+    pill: "border-lime-300 text-lime-700 bg-lime-50 hover:bg-lime-100",
+    active: "border-lime-400 bg-lime-100 text-lime-800 ring-2 ring-lime-300/50",
   },
   medium: {
     pill: "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100",
@@ -66,8 +66,8 @@ const VISUAL_OPTIONS: {
   label: string;
   description: string;
 }[] = [
-  { id: "gutter", severity: "low", emoji: "⬜", label: "Gutter", description: "8 inches" },
-  { id: "half-knee", severity: "low", emoji: "⬜", label: "Half-Knee", description: "10 inches" },
+  { id: "gutter", severity: "low", emoji: "🟢", label: "Gutter", description: "8 inches" },
+  { id: "half-knee", severity: "low", emoji: "🟢", label: "Half-Knee", description: "10 inches" },
   { id: "half-tire", severity: "medium", emoji: "🟨", label: "Half-Tire", description: "13 inches" },
   { id: "knee", severity: "medium", emoji: "🟨", label: "Knee", description: "19 inches" },
   { id: "tires", severity: "high", emoji: "🟧", label: "Tires", description: "26 inches" },
@@ -321,12 +321,16 @@ export function FloodReportPanel({ isOpen, onClose }: FloodReportPanelProps) {
       // 2. Map visual option to backend severity
       const selectedOption = VISUAL_OPTIONS.find((opt) => opt.id === visualOption);
       const severity = selectedOption ? selectedOption.severity : "low";
+      const depth = selectedOption ? selectedOption.label : null;
 
       // 3. Submit as multipart/form-data
       const formData = new FormData();
       formData.append("raw_text", description.trim());
       formData.append("source", "direct_user");
       formData.append("severity", severity);
+      if (depth) {
+        formData.append("depth", depth);
+      }
       formData.append("is_public", isPublic.toString());
       formData.append("geometry", JSON.stringify(roadGeometry));
       formData.append(

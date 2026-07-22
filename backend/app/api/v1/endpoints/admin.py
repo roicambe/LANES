@@ -219,6 +219,18 @@ def get_dashboard_stats(
     return crud.get_admin_dashboard_stats(db=db)
 
 
+@router.get("/dashboard/charts")
+def get_dashboard_charts(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Retrieve statistics for dashboard charts (severity, timeline, barangays).
+    Requires admin privileges.
+    """
+    return crud.get_admin_dashboard_charts(db=db)
+
+
 @router.get("/zones/all", response_model=schemas.FloodAvoidanceZonesPaginatedResponse)
 def get_all_zones(
     db: Session = Depends(get_db),
@@ -237,6 +249,35 @@ def get_all_zones(
         limit=limit,
         active_only=active_only
     )
+    
+    # Populate future-proofed reporter details and trust metrics
+    for zone in zones:
+        if zone.report:
+            zone.report_text = zone.report.raw_text
+            zone.report_source = zone.report.source.value if hasattr(zone.report.source, 'value') else str(zone.report.source)
+            zone.depth = zone.report.depth
+            if zone.report.user:
+                zone.reporter_name = zone.report.user.username
+                user_id = zone.report.user_id
+                reports_submitted = db.query(models.FloodReport).filter(
+                    models.FloodReport.user_id == user_id,
+                    models.FloodReport.deleted_at.is_(None)
+                ).count()
+                reports_verified = db.query(models.FloodReport).filter(
+                    models.FloodReport.user_id == user_id,
+                    models.FloodReport.status == "approved",
+                    models.FloodReport.deleted_at.is_(None)
+                ).count()
+                zone.reporter_reports_submitted = reports_submitted
+                zone.reporter_reports_verified = reports_verified
+                zone.reporter_trust_score = round((reports_verified / reports_submitted) * 100.0, 1) if reports_submitted > 0 else 100.0
+            else:
+                # Default for automated/social scraper reports
+                zone.reporter_name = "System Parser"
+                zone.reporter_trust_score = 100.0
+                zone.reporter_reports_submitted = 0
+                zone.reporter_reports_verified = 0
+                
     return {"zones": zones, "total": total}
 
 
@@ -273,6 +314,49 @@ async def deactivate_zone(
     await manager.broadcast({
         "event": "zone_deactivated",
         "data": {"zone_id": zone_id}
+    })
+
+    return zone
+
+
+@router.patch("/zones/{zone_id}", response_model=schemas.FloodAvoidanceZoneResponse)
+async def update_zone(
+    zone_id: int,
+    payload: schemas.AvoidanceZoneUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin),
+) -> Any:
+    """
+    Update detour zone settings (is_active, expires_at).
+    Requires admin privileges.
+    """
+    zone = crud.update_flood_avoidance_zone(db=db, zone_id=zone_id, update_data=payload)
+    if not zone:
+        raise HTTPException(status_code=404, detail="Avoidance zone not found")
+
+    client_ip = request.client.host if request.client else None
+    crud.create_audit_log(
+        db,
+        audit_in=schemas.AuditLogCreate(
+            admin_id=current_user.id,
+            action_type="UPDATE_ZONE",
+            target_table="flood_avoidance_zones",
+            target_id=zone_id,
+            metadata_json={"zone_id": zone_id, "expires_at": payload.expires_at.isoformat() if payload.expires_at else None},
+            ip_address=client_ip
+        )
+    )
+
+    # Broadcast real-time signal
+    from app.core.websocket import manager
+    await manager.broadcast({
+        "event": "zone_updated",
+        "data": {
+            "zone_id": zone_id,
+            "is_active": zone.is_active,
+            "expires_at": zone.expires_at.isoformat() if zone.expires_at else None
+        }
     })
 
     return zone

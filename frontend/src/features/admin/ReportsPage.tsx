@@ -315,6 +315,11 @@ export default function ReportsPage() {
 
                   <div className="flex flex-wrap gap-3 pt-2">
                     {getSeverityBadge(report.severity)}
+                    {report.depth && (
+                      <div className="flex items-center text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full">
+                        Depth: {report.depth}
+                      </div>
+                    )}
                     {report.geometry ? (
                       <div className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
                         <MapPin className="w-3.5 h-3.5 mr-1" />
